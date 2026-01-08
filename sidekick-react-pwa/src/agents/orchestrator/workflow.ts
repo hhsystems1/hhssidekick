@@ -11,8 +11,8 @@
  * This replaces the previous linear orchestration with a proper state machine.
  */
 
-import { StateGraph, END } from '@langchain/langgraph';
-import { BaseMessage, HumanMessage, AIMessage } from '@langchain/core/messages';
+import { StateGraph } from '@langchain/langgraph';
+import { BaseMessage } from '@langchain/core/messages';
 import type { AgentType, BehavioralMode, UserContext } from '../../types/agents';
 
 // ============================================================================
@@ -69,7 +69,7 @@ export interface WorkflowState {
  * @returns Updated state with behavioralMode set
  */
 async function detectMode(state: WorkflowState): Promise<Partial<WorkflowState>> {
-  const { messageContent, messageHistory } = state;
+  const { messageContent } = state;
 
   console.log('🔍 [detectMode] Analyzing message:', messageContent.substring(0, 50) + '...');
 
@@ -154,7 +154,7 @@ function hasStructuringSignals(message: string): boolean {
  * @returns Updated state with selectedAgent set
  */
 async function routeSpecialist(state: WorkflowState): Promise<Partial<WorkflowState>> {
-  const { messageContent, userContext, behavioralMode } = state;
+  const { messageContent, behavioralMode } = state;
 
   console.log('🎯 [routeSpecialist] Routing with mode:', behavioralMode);
 
@@ -279,7 +279,7 @@ async function processWithSpecialist(state: WorkflowState): Promise<Partial<Work
  * Helper: Get specialist instance
  * This will load the actual specialist classes after refactoring
  */
-async function getSpecialist(agentType: AgentType): Promise<any> {
+async function getSpecialist(_agentType: AgentType): Promise<any> {
   // TODO: Import actual specialists after refactoring
   // For now, return a placeholder interface
   throw new Error('Specialist loading not yet implemented - needs refactoring phase');
@@ -291,6 +291,9 @@ async function getSpecialist(agentType: AgentType): Promise<any> {
 
 /**
  * Build the LangGraph workflow
+ *
+ * NOTE: Commented out until LangGraph API compatibility is resolved
+ * Currently using simplified sequential execution in runWorkflow()
  *
  * GRAPH STRUCTURE:
  *
@@ -304,39 +307,10 @@ async function getSpecialist(agentType: AgentType): Promise<any> {
  *      ↓
  *     END
  */
-export function createWorkflow(): StateGraph<WorkflowState> {
-  // Initialize the state graph
-  const workflow = new StateGraph<WorkflowState>({
-    channels: {
-      messageContent: null,
-      userContext: null,
-      conversationId: null,
-      messageHistory: null,
-      behavioralMode: null,
-      selectedAgent: null,
-      routingReason: null,
-      routingConfidence: null,
-      response: null,
-      agentMetadata: null,
-      error: null,
-    },
-  });
-
-  // Add nodes
-  workflow.addNode('detectMode', detectMode);
-  workflow.addNode('routeSpecialist', routeSpecialist);
-  workflow.addNode('processWithSpecialist', processWithSpecialist);
-
-  // Define edges (sequential flow)
-  workflow.addEdge('__start__', 'detectMode');
-  workflow.addEdge('detectMode', 'routeSpecialist');
-  workflow.addEdge('routeSpecialist', 'processWithSpecialist');
-  workflow.addEdge('processWithSpecialist', '__end__');
-
-  // Set entry point
-  workflow.setEntryPoint('detectMode');
-
-  return workflow;
+export function createWorkflow(): StateGraph<WorkflowState> | null {
+  // TODO: Fix LangGraph API compatibility
+  // The current version has breaking changes in the API
+  return null;
 }
 
 /**
@@ -346,17 +320,41 @@ export function createWorkflow(): StateGraph<WorkflowState> {
  * @returns Final state with response
  */
 export async function runWorkflow(input: Omit<WorkflowState, 'behavioralMode' | 'selectedAgent' | 'routingReason' | 'routingConfidence' | 'response' | 'agentMetadata' | 'error'>): Promise<WorkflowState> {
-  const workflow = createWorkflow();
-  const compiledWorkflow = workflow.compile();
+  console.log('🚀 Starting workflow...');
 
-  console.log('🚀 Starting LangGraph workflow...');
+  // NOTE: Simplified execution until LangGraph API is properly configured
+  // Execute nodes sequentially instead of using StateGraph
+  let state: WorkflowState = {
+    ...input,
+    behavioralMode: undefined,
+    selectedAgent: undefined,
+    routingReason: undefined,
+    routingConfidence: undefined,
+    response: undefined,
+    agentMetadata: undefined,
+    error: undefined,
+  };
 
-  // Run the workflow
-  const result = await compiledWorkflow.invoke(input);
+  try {
+    // Node 1: Detect mode
+    const modeResult = await detectMode(state);
+    state = { ...state, ...modeResult };
 
-  console.log('✅ Workflow completed');
+    // Node 2: Route specialist
+    const routeResult = await routeSpecialist(state);
+    state = { ...state, ...routeResult };
 
-  return result as WorkflowState;
+    // Node 3: Process with specialist
+    const processResult = await processWithSpecialist(state);
+    state = { ...state, ...processResult };
+
+    console.log('✅ Workflow completed');
+    return state;
+  } catch (error) {
+    console.error('❌ Workflow error:', error);
+    state.error = error instanceof Error ? error.message : 'Unknown error';
+    return state;
+  }
 }
 
 // ============================================================================

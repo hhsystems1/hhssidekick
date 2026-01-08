@@ -15,7 +15,7 @@
     "langchain": "^0.3.12",
     "@langchain/community": "^0.3.17",
     "@langchain/core": "^0.3.27",
-    "langgraph": "^0.2.34",
+    "@langchain/langgraph": "^0.2.34",
     "ollama": "^0.5.15",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

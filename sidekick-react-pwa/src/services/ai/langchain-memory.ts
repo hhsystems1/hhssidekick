@@ -54,10 +54,10 @@ export class SupabaseChatMessageHistory extends ChatMessageHistory {
       return;
     }
 
-    if (messages) {
+    if (messages && messages.length > 0) {
       // Convert DB messages to LangChain message objects
       const langchainMessages = messages.map((msg) => this.dbMessageToLangChain(msg));
-      this.messages = langchainMessages;
+      await this.addMessages(langchainMessages);
     }
 
     this.loaded = true;
@@ -131,7 +131,7 @@ export class SupabaseChatMessageHistory extends ChatMessageHistory {
  */
 export async function createSupabaseMemory(
   conversationId: string,
-  maxTokenLimit: number = 2000
+  _maxTokenLimit: number = 2000
 ): Promise<BufferMemory> {
   const chatHistory = new SupabaseChatMessageHistory(conversationId);
 
