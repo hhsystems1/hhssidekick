@@ -1,0 +1,15 @@
+{
+  "name": "hhssidekick",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "cd sidekick-react-pwa && npm run dev",
+    "build": "cd sidekick-react-pwa && npm run build",
+    "preview": "cd sidekick-react-pwa && npm run preview",
+    "install": "cd sidekick-react-pwa && npm install"
+  },
+  "description": "Sidekick AI Agent System - Root workspace",
+  "workspaces": [
+    "sidekick-react-pwa"
+  ]
+}
