@@ -2,14 +2,15 @@
  * AI Model Configuration
  *
  * Maps agent types to their recommended models across different providers.
- * Supports Ollama (local), OpenAI, and Anthropic.
+ * Supports Groq (recommended), Ollama (local), OpenAI, and Anthropic.
  */
 
 import type { AgentType } from '../types/agents';
 
-export type AIProvider = 'ollama' | 'openai' | 'anthropic';
+export type AIProvider = 'groq' | 'ollama' | 'openai' | 'anthropic';
 
 export interface ModelConfig {
+  groq: string;
   ollama: string;
   openai?: string;
   anthropic?: string;
@@ -20,22 +21,29 @@ export interface ModelConfig {
 /**
  * Model recommendations per agent type
  *
- * OLLAMA MODELS:
+ * GROQ MODELS (Recommended - Fast & Free):
+ * - llama-3.1-8b-instant - Ultra-fast, general purpose (500+ tokens/sec)
+ * - llama-3.1-70b-versatile - High quality reasoning
+ * - mixtral-8x7b-32768 - Excellent for complex reasoning, 32k context
+ * - gemma2-9b-it - Fast alternative
+ *
+ * OLLAMA MODELS (Local Privacy):
  * - llama3.1:8b - Fast, general purpose, good for reflection/creative tasks
  * - qwen2.5:14b - Excellent reasoning, good for strategy/systems
  * - deepseek-r1:14b - Strong technical reasoning, best for code/architecture
  * - mistral:7b - Alternative lightweight model
  *
- * OPENAI MODELS:
+ * OPENAI MODELS (Highest Quality):
  * - gpt-4o-mini - Fast, cost-effective
  * - gpt-4o - Best quality
  *
- * ANTHROPIC MODELS:
+ * ANTHROPIC MODELS (Best Instruction Following):
  * - claude-3-5-haiku-20241022 - Fast, efficient
  * - claude-3-5-sonnet-20241022 - Best quality
  */
 export const AGENT_MODELS: Record<AgentType, ModelConfig> = {
   reflection: {
+    groq: 'llama-3.1-8b-instant',
     ollama: 'llama3.1:8b',
     openai: 'gpt-4o-mini',
     anthropic: 'claude-3-5-haiku-20241022',
@@ -44,6 +52,7 @@ export const AGENT_MODELS: Record<AgentType, ModelConfig> = {
   },
 
   strategy: {
+    groq: 'mixtral-8x7b-32768',
     ollama: 'qwen2.5:14b',
     openai: 'gpt-4o',
     anthropic: 'claude-3-5-sonnet-20241022',
@@ -52,6 +61,7 @@ export const AGENT_MODELS: Record<AgentType, ModelConfig> = {
   },
 
   systems: {
+    groq: 'mixtral-8x7b-32768',
     ollama: 'qwen2.5:14b',
     openai: 'gpt-4o',
     anthropic: 'claude-3-5-sonnet-20241022',
@@ -60,6 +70,7 @@ export const AGENT_MODELS: Record<AgentType, ModelConfig> = {
   },
 
   technical: {
+    groq: 'llama-3.1-70b-versatile',
     ollama: 'deepseek-r1:14b',
     openai: 'gpt-4o',
     anthropic: 'claude-3-5-sonnet-20241022',
@@ -68,6 +79,7 @@ export const AGENT_MODELS: Record<AgentType, ModelConfig> = {
   },
 
   creative: {
+    groq: 'llama-3.1-8b-instant',
     ollama: 'llama3.1:8b',
     openai: 'gpt-4o',
     anthropic: 'claude-3-5-sonnet-20241022',
@@ -76,6 +88,7 @@ export const AGENT_MODELS: Record<AgentType, ModelConfig> = {
   },
 
   orchestrator: {
+    groq: 'llama-3.1-8b-instant',
     ollama: 'llama3.1:8b',
     openai: 'gpt-4o-mini',
     anthropic: 'claude-3-5-haiku-20241022',
@@ -90,12 +103,12 @@ export const AGENT_MODELS: Record<AgentType, ModelConfig> = {
 export function getAIProvider(): AIProvider {
   const provider = import.meta.env.VITE_AI_PROVIDER?.toLowerCase();
 
-  if (provider === 'openai' || provider === 'anthropic' || provider === 'ollama') {
+  if (provider === 'groq' || provider === 'ollama' || provider === 'openai' || provider === 'anthropic') {
     return provider;
   }
 
-  // Default to Ollama
-  return 'ollama';
+  // Default to Groq (fast, free, easy to set up)
+  return 'groq';
 }
 
 /**
@@ -115,7 +128,7 @@ export function getModelForAgent(agentType: AgentType, provider?: AIProvider): s
 
   // Use default from config
   const config = AGENT_MODELS[agentType];
-  return config[currentProvider] || config.ollama;
+  return config[currentProvider] || config.groq;
 }
 
 /**
@@ -128,6 +141,10 @@ export function getOllamaURL(): string {
 /**
  * Check if API keys are available for fallback providers
  */
+export function hasGroqKey(): boolean {
+  return !!import.meta.env.VITE_GROQ_API_KEY;
+}
+
 export function hasOpenAIKey(): boolean {
   return !!import.meta.env.VITE_OPENAI_API_KEY;
 }
@@ -140,14 +157,23 @@ export function hasAnthropicKey(): boolean {
  * Get available providers based on configuration
  */
 export function getAvailableProviders(): AIProvider[] {
-  const providers: AIProvider[] = ['ollama']; // Always available (assumes local Ollama)
+  const providers: AIProvider[] = [];
+
+  // Groq first (recommended)
+  if (hasGroqKey()) {
+    providers.push('groq');
+  }
+
+  // Ollama (always available if running locally)
+  providers.push('ollama');
+
+  // Cloud fallbacks
+  if (hasAnthropicKey()) {
+    providers.push('anthropic');
+  }
 
   if (hasOpenAIKey()) {
     providers.push('openai');
-  }
-
-  if (hasAnthropicKey()) {
-    providers.push('anthropic');
   }
 
   return providers;

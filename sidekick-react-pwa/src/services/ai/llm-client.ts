@@ -2,6 +2,7 @@
  * LLM Client - Provider Abstraction Layer
  *
  * Unified interface for calling different LLM providers:
+ * - Groq (recommended - fast & free)
  * - Ollama (local open source models)
  * - OpenAI (API fallback)
  * - Anthropic (API fallback)
@@ -14,6 +15,7 @@ import {
   getAIProvider,
   getModelForAgent,
   getParametersForMode,
+  hasGroqKey,
   hasOpenAIKey,
   hasAnthropicKey,
   type AIProvider
@@ -116,6 +118,9 @@ async function callProvider(
   }
 ): Promise<LLMResponse> {
   switch (provider) {
+    case 'groq':
+      return await callGroqProvider(params);
+
     case 'ollama':
       return await callOllamaProvider(params);
 
@@ -128,6 +133,60 @@ async function callProvider(
     default:
       throw new Error(`Unknown provider: ${provider}`);
   }
+}
+
+/**
+ * Groq provider implementation
+ * Requires VITE_GROQ_API_KEY environment variable
+ * Uses OpenAI-compatible API
+ */
+async function callGroqProvider(params: {
+  model: string;
+  systemPrompt: string;
+  userMessage: string;
+  temperature: number;
+  maxTokens: number;
+}): Promise<LLMResponse> {
+  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+
+  if (!apiKey) {
+    throw new Error('Groq API key not configured (VITE_GROQ_API_KEY)');
+  }
+
+  const startTime = Date.now();
+
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: params.model,
+      messages: [
+        { role: 'system', content: params.systemPrompt },
+        { role: 'user', content: params.userMessage }
+      ],
+      temperature: params.temperature,
+      max_tokens: params.maxTokens
+    })
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Groq API error: ${response.status} - ${error}`);
+  }
+
+  const data = await response.json();
+  const executionTimeMs = Date.now() - startTime;
+
+  return {
+    content: data.choices[0].message.content,
+    provider: 'groq',
+    model: params.model,
+    tokensUsed: data.usage?.total_tokens,
+    executionTimeMs
+  };
 }
 
 /**
@@ -275,15 +334,27 @@ async function callAnthropicProvider(params: {
 function getFallbackProviders(primaryProvider: AIProvider): AIProvider[] {
   const fallbacks: AIProvider[] = [];
 
-  // If Ollama is primary and fails, try API providers
-  if (primaryProvider === 'ollama') {
+  // Priority fallback chain based on primary provider
+  if (primaryProvider === 'groq') {
+    // Groq fails → try Ollama, then Anthropic, then OpenAI
+    fallbacks.push('ollama');
     if (hasAnthropicKey()) fallbacks.push('anthropic');
     if (hasOpenAIKey()) fallbacks.push('openai');
-  }
-
-  // If API provider fails, try Ollama as last resort
-  if (primaryProvider !== 'ollama') {
+  } else if (primaryProvider === 'ollama') {
+    // Ollama fails → try Groq, then Anthropic, then OpenAI
+    if (hasGroqKey()) fallbacks.push('groq');
+    if (hasAnthropicKey()) fallbacks.push('anthropic');
+    if (hasOpenAIKey()) fallbacks.push('openai');
+  } else if (primaryProvider === 'openai') {
+    // OpenAI fails → try Groq, then Ollama, then Anthropic
+    if (hasGroqKey()) fallbacks.push('groq');
     fallbacks.push('ollama');
+    if (hasAnthropicKey()) fallbacks.push('anthropic');
+  } else if (primaryProvider === 'anthropic') {
+    // Anthropic fails → try Groq, then Ollama, then OpenAI
+    if (hasGroqKey()) fallbacks.push('groq');
+    fallbacks.push('ollama');
+    if (hasOpenAIKey()) fallbacks.push('openai');
   }
 
   return fallbacks;
@@ -300,6 +371,13 @@ export async function checkProviderHealth(): Promise<{
   const provider = getAIProvider();
 
   switch (provider) {
+    case 'groq':
+      return {
+        provider,
+        available: hasGroqKey(),
+        error: hasGroqKey() ? undefined : 'Groq API key not configured'
+      };
+
     case 'ollama':
       const ollamaAvailable = await checkOllamaAvailable();
       return {
