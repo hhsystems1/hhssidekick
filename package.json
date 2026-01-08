@@ -3,13 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "cd sidekick-react-pwa && npm run dev",
-    "build": "cd sidekick-react-pwa && npm run build",
-    "preview": "cd sidekick-react-pwa && npm run preview",
-    "install": "cd sidekick-react-pwa && npm install"
+    "dev": "npm --prefix sidekick-react-pwa run dev",
+    "build": "npm --prefix sidekick-react-pwa run build",
+    "preview": "npm --prefix sidekick-react-pwa run preview"
   },
-  "description": "Sidekick AI Agent System - Root workspace",
-  "workspaces": [
-    "sidekick-react-pwa"
-  ]
+  "description": "Sidekick AI Agent System - Root convenience wrapper"
 }
