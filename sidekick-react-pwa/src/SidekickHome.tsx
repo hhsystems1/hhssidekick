@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, ChevronRight, Play, Pause, Plus, CheckCircle, Circle, X } from 'lucide-react';
+import { useTasks, useAgents, useCalendarEvents } from './hooks/useDatabase';
 
 interface Task {
   id: string;
@@ -22,18 +23,10 @@ export const SidekickHome: React.FC = () => {
   const [showNewAgentDialog, setShowNewAgentDialog] = useState(false);
   const [showBrainDumpDialog, setShowBrainDumpDialog] = useState(false);
 
-  // Sample data with state
-  const [tasks, setTasks] = useState<Task[]>([
-    { id: '1', title: 'Launch Victoria Commercial Outreach', completed: false, priority: 'high' },
-    { id: '2', title: 'Review AZ Quiz Funnel Performance', completed: true, priority: 'medium' },
-    { id: '3', title: 'Update Solar PPA Lead Script', completed: false, priority: 'low' },
-  ]);
-
-  const [agents, setAgents] = useState<Agent[]>([
-    { id: '1', name: 'Lead Gen Bot', status: 'active', metric: '12 leads today' },
-    { id: '2', name: 'Follow-up Automator', status: 'idle', metric: 'Last run: 2h ago' },
-    { id: '3', name: 'Email Qualifier', status: 'active', metric: '8 emails processed' },
-  ]);
+  // Load data from database
+  const { tasks, loading: tasksLoading, toggleTask } = useTasks();
+  const { agents, loading: agentsLoading, toggleAgent } = useAgents();
+  const { events, nextEvent, loading: eventsLoading } = useCalendarEvents();
 
   useEffect(() => {
     const now = new Date();
@@ -53,12 +46,6 @@ export const SidekickHome: React.FC = () => {
   };
 
   // Task handlers
-  const toggleTaskCompletion = (taskId: string) => {
-    setTasks(tasks.map(task =>
-      task.id === taskId ? { ...task, completed: !task.completed } : task
-    ));
-  };
-
   const handleAddTask = () => {
     setShowNewTaskDialog(true);
   };
@@ -66,15 +53,6 @@ export const SidekickHome: React.FC = () => {
   const handleTaskClick = (taskId: string) => {
     console.log(`Opening task: ${taskId}`);
     // TODO: Open task detail dialog or navigate to task page
-  };
-
-  // Agent handlers
-  const toggleAgentStatus = (agentId: string) => {
-    setAgents(agents.map(agent =>
-      agent.id === agentId
-        ? { ...agent, status: agent.status === 'active' ? 'idle' : 'active' }
-        : agent
-    ));
   };
 
   const handleDeployAgent = () => {
@@ -169,14 +147,20 @@ export const SidekickHome: React.FC = () => {
                 </button>
               </div>
 
-              {tasks.map(task => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  onToggle={() => toggleTaskCompletion(task.id)}
-                  onClick={() => handleTaskClick(task.id)}
-                />
-              ))}
+              {tasksLoading ? (
+                <div className="text-slate-400 text-sm">Loading tasks...</div>
+              ) : tasks.length === 0 ? (
+                <div className="text-slate-400 text-sm">No tasks for today</div>
+              ) : (
+                tasks.map(task => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    onToggle={() => toggleTask(task.id)}
+                    onClick={() => handleTaskClick(task.id)}
+                  />
+                ))
+              )}
 
               <div className="pt-4">
                 <p className="text-sm text-slate-500">{completedTasksCount} of {tasks.length} tasks complete</p>
@@ -190,24 +174,29 @@ export const SidekickHome: React.FC = () => {
                 <span className="text-sm text-slate-500">{todayLabel}</span>
               </div>
 
-              <CalendarEvent
-                time="9:00 AM"
-                title="Team Standup"
-                attendees={["Jo", "Brendon"]}
-                onClick={() => handleEventClick('Team Standup')}
-              />
-              <CalendarEvent
-                time="2:00 PM"
-                title="Jeromy - AZ Market Review"
-                attendees={["Jeromy"]}
-                onClick={() => handleEventClick('Jeromy - AZ Market Review')}
-              />
+              {eventsLoading ? (
+                <div className="text-slate-400 text-sm">Loading events...</div>
+              ) : events.length === 0 ? (
+                <div className="text-slate-400 text-sm">No events today</div>
+              ) : (
+                events.map(event => (
+                  <CalendarEvent
+                    key={event.id}
+                    time={event.time}
+                    title={event.title}
+                    attendees={event.attendees}
+                    onClick={() => handleEventClick(event.title)}
+                  />
+                ))
+              )}
 
-              <div className="bg-slate-900/60 rounded-xl p-6 mt-6 border border-slate-800">
-                <p className="text-sm text-slate-400 mb-2">Next up</p>
-                <p className="font-medium text-slate-100">Team Standup</p>
-                <p className="text-sm text-slate-500 mt-1">in 45 minutes</p>
-              </div>
+              {nextEvent && (
+                <div className="bg-slate-900/60 rounded-xl p-6 mt-6 border border-slate-800">
+                  <p className="text-sm text-slate-400 mb-2">Next up</p>
+                  <p className="font-medium text-slate-100">{nextEvent.title}</p>
+                  <p className="text-sm text-slate-500 mt-1">Coming soon</p>
+                </div>
+              )}
             </div>
 
             {/* Column 3: Agent Activity */}
@@ -222,13 +211,19 @@ export const SidekickHome: React.FC = () => {
                 </button>
               </div>
 
-              {agents.map(agent => (
-                <AgentCard
-                  key={agent.id}
-                  agent={agent}
-                  onToggle={() => toggleAgentStatus(agent.id)}
-                />
-              ))}
+              {agentsLoading ? (
+                <div className="text-slate-400 text-sm">Loading agents...</div>
+              ) : agents.length === 0 ? (
+                <div className="text-slate-400 text-sm">No agents deployed</div>
+              ) : (
+                agents.map(agent => (
+                  <AgentCard
+                    key={agent.id}
+                    agent={agent}
+                    onToggle={() => toggleAgent(agent.id)}
+                  />
+                ))
+              )}
 
               <button
                 onClick={handleDeployAgent}
