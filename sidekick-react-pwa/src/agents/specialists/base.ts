@@ -4,7 +4,7 @@
  * Common interface and utilities for all specialist agents.
  */
 
-import { callLLM, type LLMResponse } from '../../services/ai/llm-client';
+import { callLLM } from '../../services/ai/llm-client';
 import type { AgentType, BehavioralMode, UserContext } from '../../types/agents';
 import { BaseMessage } from '@langchain/core/messages';
 
