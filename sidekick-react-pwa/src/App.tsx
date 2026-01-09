@@ -96,22 +96,13 @@ function App() {
 
   return (
     <div className="h-screen w-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
-      {/* Navbar */}
-      <header className="flex h-12 items-center justify-between border-b border-slate-200 bg-white px-4 dark:border-slate-800 dark:bg-slate-900/60">
-        <div className="text-sm font-semibold tracking-wide">Sidekick <span className="text-emerald-400">{view === 'chat' ? 'Chat' : 'Home'}</span></div>
-        <nav className="flex items-center gap-1 text-xs">
-          <button onClick={() => setView('home')} className={`rounded-full px-3 py-1 border ${view === 'home' ? 'border-emerald-500 text-emerald-400' : 'border-slate-300 text-slate-600 dark:border-slate-700 dark:text-slate-300'}`}>Home</button>
-          <button onClick={() => setView('chat')} className={`rounded-full px-3 py-1 border ${view === 'chat' ? 'border-emerald-500 text-emerald-400' : 'border-slate-300 text-slate-600 dark:border-slate-700 dark:text-slate-300'}`}>Chat</button>
-        </nav>
-      </header>
-
       {view === 'home' ? (
-        <div className="h-[calc(100vh-48px)] overflow-auto">
-          <SidekickHome />
+        <div className="h-full overflow-auto">
+          <SidekickHome onNavigate={setView} />
         </div>
       ) : (
       /* Layout */
-      <div className="grid h-[calc(100vh-48px)] grid-cols-[280px,1fr]">
+      <div className="grid h-full grid-cols-[280px,1fr]">
         {/* Sidebar */}
         <aside className="flex flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60">
           <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2 dark:border-slate-800">

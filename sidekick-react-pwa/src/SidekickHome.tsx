@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, ChevronRight, Play, Pause, Plus, CheckCircle, Circle } from 'lucide-react';
 
-export const SidekickHome: React.FC = () => {
+interface SidekickHomeProps {
+  onNavigate?: (view: 'home' | 'chat') => void;
+}
+
+export const SidekickHome: React.FC<SidekickHomeProps> = ({ onNavigate }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [todayLabel, setTodayLabel] = useState('');
 
@@ -28,11 +32,12 @@ export const SidekickHome: React.FC = () => {
 
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-2">
-            <NavItem icon="🏠" label="Dashboard" active />
-            <NavItem icon="🤖" label="Agents" />
-            <NavItem icon="📚" label="Training" />
-            <NavItem icon="🛒" label="Marketplace" />
-            <NavItem icon="👤" label="Profile" />
+            <NavItem icon="🏠" label="Dashboard" active onClick={() => {}} />
+            <NavItem icon="💬" label="Chat" onClick={() => onNavigate?.('chat')} />
+            <NavItem icon="🤖" label="Agents" onClick={() => {}} />
+            <NavItem icon="📚" label="Training" onClick={() => {}} />
+            <NavItem icon="🛒" label="Marketplace" onClick={() => {}} />
+            <NavItem icon="👤" label="Profile" onClick={() => {}} />
           </nav>
 
           {/* Bottom action */}
@@ -171,9 +176,9 @@ export const SidekickHome: React.FC = () => {
 };
 
 // Components
-function NavItem({ icon, label, active = false }: { icon: string; label: string; active?: boolean }) {
+function NavItem({ icon, label, active = false, onClick }: { icon: string; label: string; active?: boolean; onClick?: () => void }) {
   return (
-    <button className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${active ? 'bg-slate-950/60 border border-slate-800' : 'hover:bg-slate-800'}`}>
+    <button onClick={onClick} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${active ? 'bg-slate-950/60 border border-slate-800' : 'hover:bg-slate-800'}`}>
       <span className="text-xl">{icon}</span>
       <span className={`font-medium ${active ? 'text-slate-100' : 'text-slate-400'}`}>{label}</span>
     </button>
