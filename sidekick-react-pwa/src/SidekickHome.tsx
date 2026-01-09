@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Menu, ChevronRight, Play, Pause, Plus, CheckCircle, Circle } from 'lucide-react';
 
 export const SidekickHome: React.FC = () => {
-  const [captureText, setCaptureText] = useState('');
-  const [captureStatus, setCaptureStatus] = useState('Nothing saved yet.');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [todayLabel, setTodayLabel] = useState('');
 
   useEffect(() => {
@@ -11,292 +11,241 @@ export const SidekickHome: React.FC = () => {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
+      year: 'numeric',
     });
     setTodayLabel(formatted);
   }, []);
 
-  const handleSave = () => {
-    const trimmed = captureText.trim();
-    if (!trimmed) {
-      setCaptureStatus('Nothing to save yet.');
-      return;
-    }
-    setCaptureStatus('Saved to Sidekick inbox (demo only).');
-  };
-
-  const handleClear = () => {
-    setCaptureText('');
-    setCaptureStatus('Cleared. Nothing saved yet.');
-  };
-
   return (
-    <div className="min-h-full bg-slate-950 bg-[radial-gradient(circle_at_top_left,rgba(80,200,120,0.15),transparent_55%),radial-gradient(circle_at_bottom_right,rgba(56,181,255,0.15),transparent_55%)] text-slate-100">
-      <div className="mx-auto max-w-5xl px-4 pb-8 pt-4 md:px-6">
-        {/* Top bar */}
-        <header className="mb-4 flex items-center justify-between border-b border-slate-800 pb-3">
-          <div className="flex flex-col gap-0.5">
-            <div className="text-lg font-semibold tracking-wide">
-              Sidekick <span className="text-emerald-400">Home</span>
-            </div>
-            <div className="text-[11px] text-slate-400">
-              Daily control center for Helping Hands Systems
-            </div>
+    <div className="min-h-screen bg-slate-950 bg-[radial-gradient(circle_at_top_left,rgba(80,200,120,0.15),transparent_55%),radial-gradient(circle_at_bottom_right,rgba(56,181,255,0.15),transparent_55%)]">
+      {/* Sidebar */}
+      <div className={`fixed inset-y-0 left-0 w-64 bg-slate-900 border-r border-slate-800 transform transition-transform duration-200 ease-in-out z-50 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
+        <div className="flex flex-col h-full">
+          {/* Logo */}
+          <div className="h-16 flex items-center px-6 border-b border-slate-800">
+            <h1 className="text-2xl font-bold text-slate-100">Sidekick</h1>
           </div>
-          <nav className="flex gap-1 text-[11px]">
-            <button className="rounded-full border border-slate-700 bg-slate-950 px-3 py-1 text-slate-100">
-              Today
-            </button>
-            <button className="cursor-not-allowed rounded-full border border-transparent px-3 py-1 text-slate-500 opacity-40">
-              Agents
-            </button>
-            <button className="cursor-not-allowed rounded-full border border-transparent px-3 py-1 text-slate-500 opacity-40">
-              Workflows
-            </button>
-            <button className="cursor-not-allowed rounded-full border border-transparent px-3 py-1 text-slate-500 opacity-40">
-              Brain
-            </button>
-            <button className="cursor-not-allowed rounded-full border border-transparent px-3 py-1 text-slate-500 opacity-40">
-              Analytics
-            </button>
+
+          {/* Navigation */}
+          <nav className="flex-1 px-4 py-6 space-y-2">
+            <NavItem icon="🏠" label="Dashboard" active />
+            <NavItem icon="🤖" label="Agents" />
+            <NavItem icon="📚" label="Training" />
+            <NavItem icon="🛒" label="Marketplace" />
+            <NavItem icon="👤" label="Profile" />
           </nav>
-        </header>
 
-        <p className="mb-4 text-xs text-slate-400">
-          Snapshot of today: what matters, what your agents are doing, and a place to dump
-          thoughts so nothing gets lost.
-        </p>
+          {/* Bottom action */}
+          <div className="p-4 border-t border-slate-800">
+            <button className="w-full py-3 px-4 bg-emerald-700 text-emerald-50 rounded-lg font-medium hover:bg-emerald-600 transition-colors">
+              New Brain Dump
+            </button>
+          </div>
+        </div>
+      </div>
 
-        {/* Main layout */}
-        <div className="grid gap-3 md:grid-cols-[1.6fr,1.4fr]">
-          {/* LEFT COLUMN */}
-          <div className="space-y-3">
-            {/* Priority Focus */}
-            <section className="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
-              <div className="mb-1 flex items-baseline justify-between gap-2">
-                <h2 className="text-[13px] font-semibold">Priority focus</h2>
-                <span className="rounded-full border border-slate-700 px-2 py-0.5 text-[10px] text-slate-300">
-                  {todayLabel || 'Today'}
-                </span>
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Main Content */}
+      <div className="lg:pl-64">
+        {/* Top bar */}
+        <div className="h-16 border-b border-slate-800 flex items-center justify-between px-4 lg:px-8 bg-slate-950/60 sticky top-0 z-30">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="lg:hidden p-2 text-slate-100"
+          >
+            <Menu size={24} />
+          </button>
+          <h2 className="text-xl font-semibold text-slate-100">Dashboard</h2>
+          <div className="w-10 h-10 rounded-full bg-slate-700" />
+        </div>
+
+        {/* Dashboard Content */}
+        <div className="p-4 lg:p-8 max-w-7xl mx-auto">
+          {/* 3 Column Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            {/* Column 1: Tasks */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-slate-100">Today's Tasks</h3>
+                <button className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-100">
+                  <Plus size={20} />
+                </button>
               </div>
-              <p className="mb-2 text-[11px] text-slate-400">
-                Three things that would actually move the needle if you got them done.
-              </p>
-              <ul className="mt-1 divide-y divide-slate-800 text-[12px]">
-                <li className="flex items-baseline justify-between gap-3 py-2">
-                  <div>
-                    <div className="text-[12px]">
-                      Review new residential solar leads
-                    </div>
-                    <div className="text-[11px] text-slate-400">
-                      From: Facebook &amp; Clean Energy Experts
-                    </div>
-                  </div>
-                  <span className="whitespace-nowrap rounded-full border border-emerald-500/60 px-2 py-0.5 text-[10px] text-emerald-400">
-                    Needs decision
-                  </span>
-                </li>
-                <li className="flex items-baseline justify-between gap-3 py-2">
-                  <div>
-                    <div className="text-[12px]">
-                      Check agent calls + appointment calendar
-                    </div>
-                    <div className="text-[11px] text-slate-400">
-                      Make sure follow-ups are covered
-                    </div>
-                  </div>
-                  <span className="whitespace-nowrap rounded-full border border-slate-700 px-2 py-0.5 text-[10px] text-slate-300">
-                    15–20 min
-                  </span>
-                </li>
-                <li className="flex items-baseline justify-between gap-3 py-2">
-                  <div>
-                    <div className="text-[12px]">
-                      Outline one content asset (solar or health)
-                    </div>
-                    <div className="text-[11px] text-slate-400">
-                      Keeps traffic and awareness compounding
-                    </div>
-                  </div>
-                  <span className="whitespace-nowrap rounded-full border border-slate-700 px-2 py-0.5 text-[10px] text-slate-300">
-                    Deep work
-                  </span>
-                </li>
-              </ul>
-            </section>
 
-            {/* Quick Capture */}
-            <section className="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
-              <div className="mb-1 flex items-baseline justify-between gap-2">
-                <h2 className="text-[13px] font-semibold">Quick capture</h2>
-                <span className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-950 px-2 py-0.5 text-[10px] text-slate-300">
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  Sidekick inbox
-                </span>
-              </div>
-              <p className="mb-2 text-[11px] text-slate-400">
-                Drop ideas, tasks, or notes here. Sidekick will categorize them later into
-                projects, workflows, or content.
-              </p>
+              <TaskCard
+                title="Launch Victoria Commercial Outreach"
+                completed={false}
+                priority="high"
+              />
+              <TaskCard
+                title="Review AZ Quiz Funnel Performance"
+                completed={true}
+                priority="medium"
+              />
+              <TaskCard
+                title="Update Solar PPA Lead Script"
+                completed={false}
+                priority="low"
+              />
 
-              <div className="flex flex-col gap-2">
-                <textarea
-                  className="min-h-[72px] max-h-[140px] w-full resize-y rounded-md border border-slate-800 bg-slate-950 px-2.5 py-1.5 text-[12px] text-slate-100 outline-none focus:border-emerald-400"
-                  placeholder="Example: 'Remind me to test new PPA ad in Colorado and send Jo the numbers'"
-                  value={captureText}
-                  onChange={(e) => setCaptureText(e.target.value)}
-                />
-                <div className="flex items-center justify-between gap-2">
-                  <button
-                    type="button"
-                    onClick={handleSave}
-                    className="rounded-full border border-emerald-500 bg-emerald-700 px-3 py-1.5 text-[11px] font-medium text-emerald-50 hover:bg-emerald-600"
-                  >
-                    Save to inbox
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleClear}
-                    className="rounded-full border border-slate-700 bg-slate-950 px-3 py-1.5 text-[11px] text-slate-100 hover:border-slate-500"
-                  >
-                    Clear
-                  </button>
-                </div>
-                <div className="text-[11px] text-slate-400">{captureStatus}</div>
+              <div className="pt-4">
+                <p className="text-sm text-slate-500">3 of 8 tasks complete</p>
               </div>
-            </section>
+            </div>
+
+            {/* Column 2: Calendar/Schedule */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-slate-100">Schedule</h3>
+                <span className="text-sm text-slate-500">{todayLabel}</span>
+              </div>
+
+              <CalendarEvent
+                time="9:00 AM"
+                title="Team Standup"
+                attendees={["Jo", "Brendon"]}
+              />
+              <CalendarEvent
+                time="2:00 PM"
+                title="Jeromy - AZ Market Review"
+                attendees={["Jeromy"]}
+              />
+
+              <div className="bg-slate-900/60 rounded-xl p-6 mt-6 border border-slate-800">
+                <p className="text-sm text-slate-400 mb-2">Next up</p>
+                <p className="font-medium text-slate-100">Team Standup</p>
+                <p className="text-sm text-slate-500 mt-1">in 45 minutes</p>
+              </div>
+            </div>
+
+            {/* Column 3: Agent Activity */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-slate-100">Agents</h3>
+                <button className="text-sm text-slate-400 hover:text-slate-100">
+                  View all
+                </button>
+              </div>
+
+              <AgentCard
+                name="Lead Gen Bot"
+                status="active"
+                metric="12 leads today"
+              />
+              <AgentCard
+                name="Follow-up Automator"
+                status="idle"
+                metric="Last run: 2h ago"
+              />
+              <AgentCard
+                name="Email Qualifier"
+                status="active"
+                metric="8 emails processed"
+              />
+
+              <button className="w-full py-4 border-2 border-dashed border-slate-700 rounded-xl text-slate-400 hover:border-slate-600 hover:text-slate-100 transition-colors font-medium">
+                + Deploy New Agent
+              </button>
+            </div>
           </div>
 
-          {/* RIGHT COLUMN */}
-          <div className="space-y-3">
-            {/* Agent Activity */}
-            <section className="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
-              <div className="mb-1 flex items-baseline justify-between gap-2">
-                <h2 className="text-[13px] font-semibold">Agent activity</h2>
-                <span className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-950 px-2 py-0.5 text-[10px] text-slate-300">
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-300" />
-                  Status: demo data
-                </span>
-              </div>
-              <p className="mb-2 text-[11px] text-slate-400">
-                Last few things your AI agents handled or queued.
-              </p>
-
-              <ul className="mt-1 space-y-2 text-[12px]">
-                <li className="border-t border-slate-800 pt-2 first:border-t-0 first:pt-0">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div>Sales agent called 5 new solar leads</div>
-                      <div className="text-[11px] text-slate-400">
-                        Source: Clean Energy Experts → inbound call workflow
-                      </div>
-                    </div>
-                    <div className="whitespace-nowrap text-[10px] text-slate-400">
-                      2 min ago
-                    </div>
-                  </div>
-                  <div className="mt-1 flex flex-wrap gap-1.5">
-                    <span className="inline-flex items-center gap-1 rounded-full border border-slate-700 px-2 py-0.5 text-[10px] text-slate-300">
-                      <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                      appointments: 2 booked
-                    </span>
-                  </div>
-                </li>
-
-                <li className="border-t border-slate-800 pt-2">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div>Ops agent synced Discord notes to Notion</div>
-                      <div className="text-[11px] text-slate-400">
-                        Channel: #ideas → Sidekick brain
-                      </div>
-                    </div>
-                    <div className="whitespace-nowrap text-[10px] text-slate-400">
-                      18 min ago
-                    </div>
-                  </div>
-                  <div className="mt-1 flex flex-wrap gap-1.5">
-                    <span className="inline-flex items-center rounded-full border border-slate-700 px-2 py-0.5 text-[10px] text-slate-300">
-                      3 new entries tagged “solar system”
-                    </span>
-                  </div>
-                </li>
-
-                <li className="border-t border-slate-800 pt-2">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div>Content agent drafted 3 social posts</div>
-                      <div className="text-[11px] text-slate-400">
-                        Topic: PPA explainer, backup power, payments
-                      </div>
-                    </div>
-                    <div className="whitespace-nowrap text-[10px] text-slate-400">
-                      45 min ago
-                    </div>
-                  </div>
-                  <div className="mt-1 flex flex-wrap gap-1.5">
-                    <span className="inline-flex items-center gap-1 rounded-full border border-slate-700 px-2 py-0.5 text-[10px] text-slate-300">
-                      <span className="inline-block h-1.5 w-1.5 rounded-full bg-sky-400" />
-                      queued for review
-                    </span>
-                  </div>
-                </li>
-              </ul>
-            </section>
-
-            {/* Today at a glance */}
-            <section className="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
-              <div className="mb-1 flex items-baseline justify-between gap-2">
-                <h2 className="text-[13px] font-semibold">Today at a glance</h2>
-              </div>
-              <p className="mb-2 text-[11px] text-slate-400">
-                Quick stats so you don’t have to log into five other tools.
-              </p>
-
-              <div className="mt-1 flex flex-wrap gap-2 text-[11px]">
-                <div className="min-w-[90px] flex-1 rounded-lg border border-slate-800 bg-slate-950 px-2.5 py-2">
-                  <div className="text-[10px] text-slate-400">New leads</div>
-                  <div className="text-[13px] font-medium" id="metricLeads">
-                    12
-                  </div>
-                  <div className="mt-0.5 text-[10px] text-slate-500">
-                    Residential + commercial
-                  </div>
-                </div>
-                <div className="min-w-[90px] flex-1 rounded-lg border border-slate-800 bg-slate-950 px-2.5 py-2">
-                  <div className="text-[10px] text-slate-400">Booked calls</div>
-                  <div className="text-[13px] font-medium" id="metricCalls">
-                    3
-                  </div>
-                  <div className="mt-0.5 text-[10px] text-slate-500">
-                    Next 24–48 hours
-                  </div>
-                </div>
-                <div className="min-w-[90px] flex-1 rounded-lg border border-slate-800 bg-slate-950 px-2.5 py-2">
-                  <div className="text-[10px] text-slate-400">Agent actions</div>
-                  <div className="text-[13px] font-medium" id="metricActions">
-                    27
-                  </div>
-                  <div className="mt-0.5 text-[10px] text-slate-500">
-                    Workflows &amp; tasks run
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-2 flex flex-wrap gap-1.5 text-[10px]">
-                <span className="rounded-full border border-emerald-500/60 px-2 py-0.5 text-emerald-300">
-                  Solar focus
-                </span>
-                <span className="rounded-full border border-sky-500/60 px-2 py-0.5 text-sky-300">
-                  Content queued
-                </span>
-                <span className="rounded-full border border-slate-700 px-2 py-0.5 text-slate-300">
-                  Payments &amp; web: light load
-                </span>
-              </div>
-            </section>
+          {/* Quick Stats Bar */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8 pt-8 border-t border-slate-800">
+            <StatCard label="Active Campaigns" value="3" />
+            <StatCard label="Leads This Week" value="47" />
+            <StatCard label="SOPs Created" value="12" />
+            <StatCard label="Training Complete" value="68%" />
           </div>
         </div>
       </div>
     </div>
   );
 };
+
+// Components
+function NavItem({ icon, label, active = false }: { icon: string; label: string; active?: boolean }) {
+  return (
+    <button className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${active ? 'bg-slate-950/60 border border-slate-800' : 'hover:bg-slate-800'}`}>
+      <span className="text-xl">{icon}</span>
+      <span className={`font-medium ${active ? 'text-slate-100' : 'text-slate-400'}`}>{label}</span>
+    </button>
+  );
+}
+
+function TaskCard({ title, completed, priority }: { title: string; completed: boolean; priority: 'high' | 'medium' | 'low' }) {
+  const priorityColors = {
+    high: 'border-red-500/60 bg-red-950/30',
+    medium: 'border-yellow-500/60 bg-yellow-950/30',
+    low: 'border-slate-700 bg-slate-950/60'
+  };
+
+  return (
+    <div className={`border-l-4 ${priorityColors[priority]} rounded-lg p-4 hover:shadow-lg hover:shadow-slate-900/50 transition-shadow cursor-pointer border border-slate-800`}>
+      <div className="flex items-start space-x-3">
+        {completed ? (
+          <CheckCircle size={20} className="text-emerald-400 mt-0.5 flex-shrink-0" />
+        ) : (
+          <Circle size={20} className="text-slate-500 mt-0.5 flex-shrink-0" />
+        )}
+        <span className={`${completed ? 'line-through text-slate-500' : 'text-slate-100'}`}>
+          {title}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function CalendarEvent({ time, title, attendees }: { time: string; title: string; attendees: string[] }) {
+  return (
+    <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-4 hover:shadow-lg hover:shadow-slate-900/50 transition-shadow cursor-pointer">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-sm text-slate-500 mb-1">{time}</p>
+          <p className="font-medium text-slate-100">{title}</p>
+          <div className="flex items-center space-x-1 mt-2">
+            {attendees.map((name, i) => (
+              <span key={i} className="text-xs bg-slate-800 px-2 py-1 rounded text-slate-300">{name}</span>
+            ))}
+          </div>
+        </div>
+        <ChevronRight size={16} className="text-slate-500 mt-1" />
+      </div>
+    </div>
+  );
+}
+
+function AgentCard({ name, status, metric }: { name: string; status: 'active' | 'idle'; metric: string }) {
+  const isActive = status === 'active';
+
+  return (
+    <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-4 hover:shadow-lg hover:shadow-slate-900/50 transition-shadow">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center space-x-2">
+          <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-emerald-400' : 'bg-slate-500'}`} />
+          <span className="font-medium text-slate-100">{name}</span>
+        </div>
+        <button className="p-1 hover:bg-slate-800 rounded transition-colors text-slate-400 hover:text-slate-100">
+          {isActive ? <Pause size={16} /> : <Play size={16} />}
+        </button>
+      </div>
+      <p className="text-sm text-slate-400">{metric}</p>
+    </div>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-slate-900/60 rounded-lg p-4 border border-slate-800">
+      <p className="text-sm text-slate-400 mb-1">{label}</p>
+      <p className="text-2xl font-semibold text-slate-100">{value}</p>
+    </div>
+  );
+}
