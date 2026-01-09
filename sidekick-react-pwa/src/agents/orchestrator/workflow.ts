@@ -277,12 +277,36 @@ async function processWithSpecialist(state: WorkflowState): Promise<Partial<Work
 
 /**
  * Helper: Get specialist instance
- * This will load the actual specialist classes after refactoring
+ * Loads the appropriate specialist based on agent type
  */
-async function getSpecialist(_agentType: AgentType): Promise<any> {
-  // TODO: Import actual specialists after refactoring
-  // For now, return a placeholder interface
-  throw new Error('Specialist loading not yet implemented - needs refactoring phase');
+async function getSpecialist(agentType: AgentType): Promise<any> {
+  switch (agentType) {
+    case 'reflection': {
+      const { ReflectionAgent } = await import('../specialists/reflection');
+      return new ReflectionAgent();
+    }
+    case 'strategy': {
+      const { StrategyAgent } = await import('../specialists/strategy');
+      return new StrategyAgent();
+    }
+    case 'systems': {
+      const { SystemsAgent } = await import('../specialists/systems');
+      return new SystemsAgent();
+    }
+    case 'technical': {
+      const { TechnicalAgent } = await import('../specialists/technical');
+      return new TechnicalAgent();
+    }
+    case 'creative': {
+      const { CreativeAgent } = await import('../specialists/creative');
+      return new CreativeAgent();
+    }
+    case 'orchestrator':
+      // Orchestrator doesn't need a specialist - it's handled by the workflow itself
+      throw new Error('Orchestrator should not be called as a specialist');
+    default:
+      throw new Error(`Unknown agent type: ${agentType}`);
+  }
 }
 
 // ============================================================================
