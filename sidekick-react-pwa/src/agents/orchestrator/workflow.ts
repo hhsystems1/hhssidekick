@@ -11,7 +11,9 @@
  * This replaces the previous linear orchestration with a proper state machine.
  */
 
-import { StateGraph } from '@langchain/langgraph';
+// NOTE: StateGraph commented out due to browser compatibility issues with node:async_hooks
+// Using sequential execution instead (see runWorkflow() below)
+// import { StateGraph } from '@langchain/langgraph';
 import { BaseMessage } from '@langchain/core/messages';
 import type { AgentType, BehavioralMode, UserContext } from '../../types/agents';
 
@@ -277,12 +279,31 @@ async function processWithSpecialist(state: WorkflowState): Promise<Partial<Work
 
 /**
  * Helper: Get specialist instance
- * This will load the actual specialist classes after refactoring
+ * Dynamically instantiates the appropriate specialist based on agent type
  */
-async function getSpecialist(_agentType: AgentType): Promise<any> {
-  // TODO: Import actual specialists after refactoring
-  // For now, return a placeholder interface
-  throw new Error('Specialist loading not yet implemented - needs refactoring phase');
+async function getSpecialist(agentType: AgentType): Promise<any> {
+  const {
+    ReflectionAgent,
+    StrategyAgent,
+    SystemsAgent,
+    TechnicalAgent,
+    CreativeAgent,
+  } = await import('../specialists');
+
+  switch (agentType) {
+    case 'reflection':
+      return new ReflectionAgent();
+    case 'strategy':
+      return new StrategyAgent();
+    case 'systems':
+      return new SystemsAgent();
+    case 'technical':
+      return new TechnicalAgent();
+    case 'creative':
+      return new CreativeAgent();
+    default:
+      throw new Error(`Unknown agent type: ${agentType}`);
+  }
 }
 
 // ============================================================================
@@ -307,7 +328,7 @@ async function getSpecialist(_agentType: AgentType): Promise<any> {
  *      ↓
  *     END
  */
-export function createWorkflow(): StateGraph<WorkflowState> | null {
+export function createWorkflow(): null {
   // TODO: Fix LangGraph API compatibility
   // The current version has breaking changes in the API
   return null;
