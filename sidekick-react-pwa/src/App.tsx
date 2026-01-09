@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import './index.css';
 import { SidekickHome } from './SidekickHome';
+import { processWithAgents } from './agents';
 
 type Message = {
   id: string;
@@ -29,7 +30,6 @@ function App() {
   const activeMessages = chats.find((c) => c.id === activeChat)?.messages || [];
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const WEBHOOK_URL = 'https://n8n.helpinghandsystems.com/webhook/chat-webhook';
 
   const handleNewChat = () => {
     const id = Date.now().toString();
@@ -190,34 +190,55 @@ function App() {
                     prev.map((c) => (c.id === activeChat ? { ...c, messages: [...c.messages, newMessage], lastMessage: text } : c))
                   );
 
-                  // Send to webhook
+                  // Process with agent system
                   setIsSending(true);
                   try {
-                    const res = await fetch(WEBHOOK_URL, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ message: text, chatId: activeChat }),
+                    // Build user context (using default for now)
+                    const userContext = {
+                      userId: 'demo-user',
+                      currentProject: 'Helping Hands Systems',
+                      recentTopics: [],
+                    };
+
+                    // Convert message history to the format expected by agents
+                    const activeChat_ = chats.find((c) => c.id === activeChat);
+                    const messageHistory = activeChat_?.messages.map((msg) => ({
+                      id: msg.id,
+                      conversationId: activeChat!,
+                      sender: msg.sender as 'user' | 'assistant' | 'system',
+                      content: msg.text,
+                      timestamp: msg.timestamp,
+                    })) || [];
+
+                    // Call the agent system
+                    const agentResponse = await processWithAgents({
+                      messageContent: text,
+                      userContext,
+                      conversationId: activeChat!,
+                      messageHistory,
                     });
-                    const data = await res.json().catch(() => ({}));
 
-                    // Try to extract a reply
-                    const replyText =
-                      (data && (data.reply || data.message || data.text)) ||
-                      (Array.isArray(data) && (data[0]?.text || data[0]?.message)) ||
-                      (typeof data === 'string' ? data : null) ||
-                      'Received.';
-
+                    // Create bot message with agent metadata
                     const botMsg: Message = {
                       id: (Date.now() + 1).toString(),
-                      text: replyText,
+                      text: agentResponse.content,
                       sender: 'bot',
                       timestamp: new Date(),
                     };
+
                     setChats((prev) =>
-                      prev.map((c) => (c.id === activeChat ? { ...c, messages: [...c.messages, botMsg], lastMessage: replyText } : c))
+                      prev.map((c) => (c.id === activeChat ? { ...c, messages: [...c.messages, botMsg], lastMessage: agentResponse.content } : c))
                     );
+
+                    console.log('🤖 Agent Response:', {
+                      agentType: agentResponse.agentType,
+                      behavioralMode: agentResponse.behavioralMode,
+                      tokensUsed: agentResponse.metadata.tokensUsed,
+                      executionTimeMs: agentResponse.metadata.executionTimeMs,
+                    });
                   } catch (err: any) {
-                    setError('Failed to contact webhook');
+                    setError(`Agent error: ${err.message}`);
+                    console.error('Agent processing failed:', err);
                   } finally {
                     setIsSending(false);
                   }
