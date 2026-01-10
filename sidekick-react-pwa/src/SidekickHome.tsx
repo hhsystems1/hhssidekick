@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, ChevronRight, Play, Pause, Plus, CheckCircle, Circle, X } from 'lucide-react';
 import { useTasks, useAgents, useCalendarEvents } from './hooks/useDatabase';
+import { NewTaskDialog } from './components/NewTaskDialog';
+import { DeployAgentDialog } from './components/DeployAgentDialog';
+import { BRANDING, getLogo } from './config/branding';
 
 interface Task {
   id: string;
@@ -28,8 +31,8 @@ export const SidekickHome: React.FC<SidekickHomeProps> = ({ onNavigate }) => {
   const [showBrainDumpDialog, setShowBrainDumpDialog] = useState(false);
 
   // Load data from database
-  const { tasks, loading: tasksLoading, toggleTask } = useTasks();
-  const { agents, loading: agentsLoading, toggleAgent } = useAgents();
+  const { tasks, loading: tasksLoading, toggleTask, addTask } = useTasks();
+  const { agents, loading: agentsLoading, toggleAgent, addAgent } = useAgents();
   const { events, nextEvent, loading: eventsLoading } = useCalendarEvents();
 
   useEffect(() => {
@@ -82,8 +85,9 @@ export const SidekickHome: React.FC<SidekickHomeProps> = ({ onNavigate }) => {
       <div className={`fixed inset-y-0 left-0 w-64 bg-slate-900 border-r border-slate-800 transform transition-transform duration-200 ease-in-out z-50 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="h-16 flex items-center px-6 border-b border-slate-800">
-            <h1 className="text-2xl font-bold text-slate-100">Sidekick</h1>
+          <div className="h-16 flex items-center gap-3 px-6 border-b border-slate-800">
+            <span className="text-2xl">{getLogo()}</span>
+            <h1 className="text-2xl font-bold text-slate-100">{BRANDING.appName}</h1>
           </div>
 
           {/* Navigation */}
@@ -251,20 +255,47 @@ export const SidekickHome: React.FC<SidekickHomeProps> = ({ onNavigate }) => {
 
       {/* Dialogs */}
       {showNewTaskDialog && (
-        <Dialog title="Add New Task" onClose={() => setShowNewTaskDialog(false)}>
-          <p className="text-slate-400">Task creation form coming soon...</p>
-        </Dialog>
+        <NewTaskDialog
+          onClose={() => setShowNewTaskDialog(false)}
+          onSubmit={async (title, priority) => {
+            const success = await addTask(title, priority);
+            if (success) {
+              console.log('Task added successfully');
+            }
+            return success;
+          }}
+        />
       )}
 
       {showNewAgentDialog && (
-        <Dialog title="Deploy New Agent" onClose={() => setShowNewAgentDialog(false)}>
-          <p className="text-slate-400">Agent deployment wizard coming soon...</p>
-        </Dialog>
+        <DeployAgentDialog
+          onClose={() => setShowNewAgentDialog(false)}
+          onSubmit={async (name, agentType) => {
+            const success = await addAgent(name, agentType);
+            if (success) {
+              console.log('Agent deployed successfully');
+            }
+            return success;
+          }}
+        />
       )}
 
       {showBrainDumpDialog && (
         <Dialog title="New Brain Dump" onClose={() => setShowBrainDumpDialog(false)}>
-          <p className="text-slate-400">Brain dump interface coming soon...</p>
+          <div className="space-y-4">
+            <p className="text-slate-300">
+              Brain Dump lets you have an open conversation with your AI agents.
+            </p>
+            <button
+              onClick={() => {
+                setShowBrainDumpDialog(false);
+                onNavigate?.('chat');
+              }}
+              className="w-full py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition-colors"
+            >
+              Open Chat
+            </button>
+          </div>
         </Dialog>
       )}
     </div>
