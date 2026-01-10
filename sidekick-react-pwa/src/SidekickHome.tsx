@@ -1,5 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, ChevronRight, Play, Pause, Plus, CheckCircle, Circle } from 'lucide-react';
+import { Menu, ChevronRight, Play, Pause, Plus, CheckCircle, Circle, X } from 'lucide-react';
+import { useTasks, useAgents, useCalendarEvents } from './hooks/useDatabase';
+
+interface Task {
+  id: string;
+  title: string;
+  completed: boolean;
+  priority: 'high' | 'medium' | 'low';
+}
+
+interface Agent {
+  id: string;
+  name: string;
+  status: 'active' | 'idle';
+  metric: string;
+}
 
 interface SidekickHomeProps {
   onNavigate?: (view: 'home' | 'chat') => void;
@@ -8,6 +23,14 @@ interface SidekickHomeProps {
 export const SidekickHome: React.FC<SidekickHomeProps> = ({ onNavigate }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [todayLabel, setTodayLabel] = useState('');
+  const [showNewTaskDialog, setShowNewTaskDialog] = useState(false);
+  const [showNewAgentDialog, setShowNewAgentDialog] = useState(false);
+  const [showBrainDumpDialog, setShowBrainDumpDialog] = useState(false);
+
+  // Load data from database
+  const { tasks, loading: tasksLoading, toggleTask } = useTasks();
+  const { agents, loading: agentsLoading, toggleAgent } = useAgents();
+  const { events, nextEvent, loading: eventsLoading } = useCalendarEvents();
 
   useEffect(() => {
     const now = new Date();
@@ -19,6 +42,39 @@ export const SidekickHome: React.FC<SidekickHomeProps> = ({ onNavigate }) => {
     });
     setTodayLabel(formatted);
   }, []);
+
+  // Navigation handlers
+  const handleNavigate = (page: string) => {
+    console.log(`Navigating to: ${page}`);
+    // TODO: Implement actual navigation when routing is set up
+  };
+
+  // Task handlers
+  const handleAddTask = () => {
+    setShowNewTaskDialog(true);
+  };
+
+  const handleTaskClick = (taskId: string) => {
+    console.log(`Opening task: ${taskId}`);
+    // TODO: Open task detail dialog or navigate to task page
+  };
+
+  const handleDeployAgent = () => {
+    setShowNewAgentDialog(true);
+  };
+
+  // Calendar handlers
+  const handleEventClick = (eventTitle: string) => {
+    console.log(`Opening event: ${eventTitle}`);
+    // TODO: Open event detail dialog
+  };
+
+  // Brain dump handler
+  const handleBrainDump = () => {
+    setShowBrainDumpDialog(true);
+  };
+
+  const completedTasksCount = tasks.filter(t => t.completed).length;
 
   return (
     <div className="min-h-screen bg-slate-950 bg-[radial-gradient(circle_at_top_left,rgba(80,200,120,0.15),transparent_55%),radial-gradient(circle_at_bottom_right,rgba(56,181,255,0.15),transparent_55%)]">
@@ -42,7 +98,10 @@ export const SidekickHome: React.FC<SidekickHomeProps> = ({ onNavigate }) => {
 
           {/* Bottom action */}
           <div className="p-4 border-t border-slate-800">
-            <button className="w-full py-3 px-4 bg-emerald-700 text-emerald-50 rounded-lg font-medium hover:bg-emerald-600 transition-colors">
+            <button
+              onClick={handleBrainDump}
+              className="w-full py-3 px-4 bg-emerald-700 text-emerald-50 rounded-lg font-medium hover:bg-emerald-600 transition-colors"
+            >
               New Brain Dump
             </button>
           </div>
@@ -68,7 +127,11 @@ export const SidekickHome: React.FC<SidekickHomeProps> = ({ onNavigate }) => {
             <Menu size={24} />
           </button>
           <h2 className="text-xl font-semibold text-slate-100">Dashboard</h2>
-          <div className="w-10 h-10 rounded-full bg-slate-700" />
+          <button
+            onClick={() => handleNavigate('profile')}
+            className="w-10 h-10 rounded-full bg-slate-700 hover:bg-slate-600 transition-colors"
+            aria-label="Profile"
+          />
         </div>
 
         {/* Dashboard Content */}
@@ -80,29 +143,32 @@ export const SidekickHome: React.FC<SidekickHomeProps> = ({ onNavigate }) => {
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-slate-100">Today's Tasks</h3>
-                <button className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-100">
+                <button
+                  onClick={handleAddTask}
+                  className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-100"
+                  aria-label="Add task"
+                >
                   <Plus size={20} />
                 </button>
               </div>
 
-              <TaskCard
-                title="Launch Victoria Commercial Outreach"
-                completed={false}
-                priority="high"
-              />
-              <TaskCard
-                title="Review AZ Quiz Funnel Performance"
-                completed={true}
-                priority="medium"
-              />
-              <TaskCard
-                title="Update Solar PPA Lead Script"
-                completed={false}
-                priority="low"
-              />
+              {tasksLoading ? (
+                <div className="text-slate-400 text-sm">Loading tasks...</div>
+              ) : tasks.length === 0 ? (
+                <div className="text-slate-400 text-sm">No tasks for today</div>
+              ) : (
+                tasks.map(task => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    onToggle={() => toggleTask(task.id)}
+                    onClick={() => handleTaskClick(task.id)}
+                  />
+                ))
+              )}
 
               <div className="pt-4">
-                <p className="text-sm text-slate-500">3 of 8 tasks complete</p>
+                <p className="text-sm text-slate-500">{completedTasksCount} of {tasks.length} tasks complete</p>
               </div>
             </div>
 
@@ -113,50 +179,61 @@ export const SidekickHome: React.FC<SidekickHomeProps> = ({ onNavigate }) => {
                 <span className="text-sm text-slate-500">{todayLabel}</span>
               </div>
 
-              <CalendarEvent
-                time="9:00 AM"
-                title="Team Standup"
-                attendees={["Jo", "Brendon"]}
-              />
-              <CalendarEvent
-                time="2:00 PM"
-                title="Jeromy - AZ Market Review"
-                attendees={["Jeromy"]}
-              />
+              {eventsLoading ? (
+                <div className="text-slate-400 text-sm">Loading events...</div>
+              ) : events.length === 0 ? (
+                <div className="text-slate-400 text-sm">No events today</div>
+              ) : (
+                events.map(event => (
+                  <CalendarEvent
+                    key={event.id}
+                    time={event.time}
+                    title={event.title}
+                    attendees={event.attendees}
+                    onClick={() => handleEventClick(event.title)}
+                  />
+                ))
+              )}
 
-              <div className="bg-slate-900/60 rounded-xl p-6 mt-6 border border-slate-800">
-                <p className="text-sm text-slate-400 mb-2">Next up</p>
-                <p className="font-medium text-slate-100">Team Standup</p>
-                <p className="text-sm text-slate-500 mt-1">in 45 minutes</p>
-              </div>
+              {nextEvent && (
+                <div className="bg-slate-900/60 rounded-xl p-6 mt-6 border border-slate-800">
+                  <p className="text-sm text-slate-400 mb-2">Next up</p>
+                  <p className="font-medium text-slate-100">{nextEvent.title}</p>
+                  <p className="text-sm text-slate-500 mt-1">Coming soon</p>
+                </div>
+              )}
             </div>
 
             {/* Column 3: Agent Activity */}
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-slate-100">Agents</h3>
-                <button className="text-sm text-slate-400 hover:text-slate-100">
+                <button
+                  onClick={() => handleNavigate('agents')}
+                  className="text-sm text-slate-400 hover:text-slate-100 transition-colors"
+                >
                   View all
                 </button>
               </div>
 
-              <AgentCard
-                name="Lead Gen Bot"
-                status="active"
-                metric="12 leads today"
-              />
-              <AgentCard
-                name="Follow-up Automator"
-                status="idle"
-                metric="Last run: 2h ago"
-              />
-              <AgentCard
-                name="Email Qualifier"
-                status="active"
-                metric="8 emails processed"
-              />
+              {agentsLoading ? (
+                <div className="text-slate-400 text-sm">Loading agents...</div>
+              ) : agents.length === 0 ? (
+                <div className="text-slate-400 text-sm">No agents deployed</div>
+              ) : (
+                agents.map(agent => (
+                  <AgentCard
+                    key={agent.id}
+                    agent={agent}
+                    onToggle={() => toggleAgent(agent.id)}
+                  />
+                ))
+              )}
 
-              <button className="w-full py-4 border-2 border-dashed border-slate-700 rounded-xl text-slate-400 hover:border-slate-600 hover:text-slate-100 transition-colors font-medium">
+              <button
+                onClick={handleDeployAgent}
+                className="w-full py-4 border-2 border-dashed border-slate-700 rounded-xl text-slate-400 hover:border-slate-600 hover:text-slate-100 transition-colors font-medium"
+              >
                 + Deploy New Agent
               </button>
             </div>
@@ -164,13 +241,32 @@ export const SidekickHome: React.FC<SidekickHomeProps> = ({ onNavigate }) => {
 
           {/* Quick Stats Bar */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8 pt-8 border-t border-slate-800">
-            <StatCard label="Active Campaigns" value="3" />
-            <StatCard label="Leads This Week" value="47" />
-            <StatCard label="SOPs Created" value="12" />
-            <StatCard label="Training Complete" value="68%" />
+            <StatCard label="Active Campaigns" value="3" onClick={() => console.log('View campaigns')} />
+            <StatCard label="Leads This Week" value="47" onClick={() => console.log('View leads')} />
+            <StatCard label="SOPs Created" value="12" onClick={() => console.log('View SOPs')} />
+            <StatCard label="Training Complete" value="68%" onClick={() => console.log('View training')} />
           </div>
         </div>
       </div>
+
+      {/* Dialogs */}
+      {showNewTaskDialog && (
+        <Dialog title="Add New Task" onClose={() => setShowNewTaskDialog(false)}>
+          <p className="text-slate-400">Task creation form coming soon...</p>
+        </Dialog>
+      )}
+
+      {showNewAgentDialog && (
+        <Dialog title="Deploy New Agent" onClose={() => setShowNewAgentDialog(false)}>
+          <p className="text-slate-400">Agent deployment wizard coming soon...</p>
+        </Dialog>
+      )}
+
+      {showBrainDumpDialog && (
+        <Dialog title="New Brain Dump" onClose={() => setShowBrainDumpDialog(false)}>
+          <p className="text-slate-400">Brain dump interface coming soon...</p>
+        </Dialog>
+      )}
     </div>
   );
 };
@@ -185,7 +281,13 @@ function NavItem({ icon, label, active = false, onClick }: { icon: string; label
   );
 }
 
-function TaskCard({ title, completed, priority }: { title: string; completed: boolean; priority: 'high' | 'medium' | 'low' }) {
+interface TaskCardProps {
+  task: Task;
+  onToggle: () => void;
+  onClick: () => void;
+}
+
+function TaskCard({ task, onToggle, onClick }: TaskCardProps) {
   const priorityColors = {
     high: 'border-red-500/60 bg-red-950/30',
     medium: 'border-yellow-500/60 bg-yellow-950/30',
@@ -193,24 +295,46 @@ function TaskCard({ title, completed, priority }: { title: string; completed: bo
   };
 
   return (
-    <div className={`border-l-4 ${priorityColors[priority]} rounded-lg p-4 hover:shadow-lg hover:shadow-slate-900/50 transition-shadow cursor-pointer border border-slate-800`}>
+    <div
+      className={`border-l-4 ${priorityColors[task.priority]} rounded-lg p-4 hover:shadow-lg hover:shadow-slate-900/50 transition-shadow cursor-pointer border border-slate-800`}
+      onClick={onClick}
+    >
       <div className="flex items-start space-x-3">
-        {completed ? (
-          <CheckCircle size={20} className="text-emerald-400 mt-0.5 flex-shrink-0" />
-        ) : (
-          <Circle size={20} className="text-slate-500 mt-0.5 flex-shrink-0" />
-        )}
-        <span className={`${completed ? 'line-through text-slate-500' : 'text-slate-100'}`}>
-          {title}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle();
+          }}
+          className="flex-shrink-0 mt-0.5 hover:scale-110 transition-transform"
+          aria-label={task.completed ? 'Mark incomplete' : 'Mark complete'}
+        >
+          {task.completed ? (
+            <CheckCircle size={20} className="text-emerald-400" />
+          ) : (
+            <Circle size={20} className="text-slate-500" />
+          )}
+        </button>
+        <span className={`${task.completed ? 'line-through text-slate-500' : 'text-slate-100'}`}>
+          {task.title}
         </span>
       </div>
     </div>
   );
 }
 
-function CalendarEvent({ time, title, attendees }: { time: string; title: string; attendees: string[] }) {
+interface CalendarEventProps {
+  time: string;
+  title: string;
+  attendees: string[];
+  onClick: () => void;
+}
+
+function CalendarEvent({ time, title, attendees, onClick }: CalendarEventProps) {
   return (
-    <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-4 hover:shadow-lg hover:shadow-slate-900/50 transition-shadow cursor-pointer">
+    <div
+      onClick={onClick}
+      className="bg-slate-950/60 border border-slate-800 rounded-lg p-4 hover:shadow-lg hover:shadow-slate-900/50 transition-shadow cursor-pointer"
+    >
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm text-slate-500 mb-1">{time}</p>
@@ -227,30 +351,76 @@ function CalendarEvent({ time, title, attendees }: { time: string; title: string
   );
 }
 
-function AgentCard({ name, status, metric }: { name: string; status: 'active' | 'idle'; metric: string }) {
-  const isActive = status === 'active';
+interface AgentCardProps {
+  agent: Agent;
+  onToggle: () => void;
+}
+
+function AgentCard({ agent, onToggle }: AgentCardProps) {
+  const isActive = agent.status === 'active';
 
   return (
     <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-4 hover:shadow-lg hover:shadow-slate-900/50 transition-shadow">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center space-x-2">
           <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-emerald-400' : 'bg-slate-500'}`} />
-          <span className="font-medium text-slate-100">{name}</span>
+          <span className="font-medium text-slate-100">{agent.name}</span>
         </div>
-        <button className="p-1 hover:bg-slate-800 rounded transition-colors text-slate-400 hover:text-slate-100">
+        <button
+          onClick={onToggle}
+          className="p-1 hover:bg-slate-800 rounded transition-colors text-slate-400 hover:text-slate-100"
+          aria-label={isActive ? 'Pause agent' : 'Start agent'}
+        >
           {isActive ? <Pause size={16} /> : <Play size={16} />}
         </button>
       </div>
-      <p className="text-sm text-slate-400">{metric}</p>
+      <p className="text-sm text-slate-400">{agent.metric}</p>
     </div>
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+interface StatCardProps {
+  label: string;
+  value: string;
+  onClick: () => void;
+}
+
+function StatCard({ label, value, onClick }: StatCardProps) {
   return (
-    <div className="bg-slate-900/60 rounded-lg p-4 border border-slate-800">
+    <div
+      onClick={onClick}
+      className="bg-slate-900/60 rounded-lg p-4 border border-slate-800 hover:border-slate-700 transition-colors cursor-pointer"
+    >
       <p className="text-sm text-slate-400 mb-1">{label}</p>
       <p className="text-2xl font-semibold text-slate-100">{value}</p>
+    </div>
+  );
+}
+
+interface DialogProps {
+  title: string;
+  onClose: () => void;
+  children: React.ReactNode;
+}
+
+function Dialog({ title, onClose, children }: DialogProps) {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-slate-900 rounded-xl border border-slate-800 max-w-md w-full p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-semibold text-slate-100">{title}</h3>
+          <button
+            onClick={onClose}
+            className="p-1 hover:bg-slate-800 rounded transition-colors text-slate-400 hover:text-slate-100"
+            aria-label="Close"
+          >
+            <X size={20} />
+          </button>
+        </div>
+        <div className="text-slate-300">
+          {children}
+        </div>
+      </div>
     </div>
   );
 }
