@@ -11,7 +11,9 @@
  * This replaces the previous linear orchestration with a proper state machine.
  */
 
-import { StateGraph } from '@langchain/langgraph';
+// NOTE: StateGraph commented out due to browser compatibility issues with node:async_hooks
+// Using sequential execution instead (see runWorkflow() below)
+// import { StateGraph } from '@langchain/langgraph';
 import { BaseMessage } from '@langchain/core/messages';
 import type { AgentType, BehavioralMode, UserContext } from '../../types/agents';
 
@@ -277,33 +279,28 @@ async function processWithSpecialist(state: WorkflowState): Promise<Partial<Work
 
 /**
  * Helper: Get specialist instance
- * Loads the appropriate specialist based on agent type
+ * Dynamically instantiates the appropriate specialist based on agent type
  */
 async function getSpecialist(agentType: AgentType): Promise<any> {
+  const {
+    ReflectionAgent,
+    StrategyAgent,
+    SystemsAgent,
+    TechnicalAgent,
+    CreativeAgent,
+  } = await import('../specialists');
+
   switch (agentType) {
-    case 'reflection': {
-      const { ReflectionAgent } = await import('../specialists/reflection');
+    case 'reflection':
       return new ReflectionAgent();
-    }
-    case 'strategy': {
-      const { StrategyAgent } = await import('../specialists/strategy');
+    case 'strategy':
       return new StrategyAgent();
-    }
-    case 'systems': {
-      const { SystemsAgent } = await import('../specialists/systems');
+    case 'systems':
       return new SystemsAgent();
-    }
-    case 'technical': {
-      const { TechnicalAgent } = await import('../specialists/technical');
+    case 'technical':
       return new TechnicalAgent();
-    }
-    case 'creative': {
-      const { CreativeAgent } = await import('../specialists/creative');
+    case 'creative':
       return new CreativeAgent();
-    }
-    case 'orchestrator':
-      // Orchestrator doesn't need a specialist - it's handled by the workflow itself
-      throw new Error('Orchestrator should not be called as a specialist');
     default:
       throw new Error(`Unknown agent type: ${agentType}`);
   }
@@ -331,7 +328,7 @@ async function getSpecialist(agentType: AgentType): Promise<any> {
  *      ↓
  *     END
  */
-export function createWorkflow(): StateGraph<WorkflowState> | null {
+export function createWorkflow(): null {
   // TODO: Fix LangGraph API compatibility
   // The current version has breaking changes in the API
   return null;

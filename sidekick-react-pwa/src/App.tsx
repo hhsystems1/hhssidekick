@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import './index.css';
 import { SidekickHome } from './SidekickHome';
+import { processWithAgents } from './agents';
 
 type Message = {
   id: string;
@@ -29,7 +30,6 @@ function App() {
   const activeMessages = chats.find((c) => c.id === activeChat)?.messages || [];
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const WEBHOOK_URL = 'https://n8n.helpinghandsystems.com/webhook/chat-webhook';
 
   const handleNewChat = () => {
     const id = Date.now().toString();
@@ -96,22 +96,13 @@ function App() {
 
   return (
     <div className="h-screen w-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
-      {/* Navbar */}
-      <header className="flex h-12 items-center justify-between border-b border-slate-200 bg-white px-4 dark:border-slate-800 dark:bg-slate-900/60">
-        <div className="text-sm font-semibold tracking-wide">Sidekick <span className="text-emerald-400">{view === 'chat' ? 'Chat' : 'Home'}</span></div>
-        <nav className="flex items-center gap-1 text-xs">
-          <button onClick={() => setView('home')} className={`rounded-full px-3 py-1 border ${view === 'home' ? 'border-emerald-500 text-emerald-400' : 'border-slate-300 text-slate-600 dark:border-slate-700 dark:text-slate-300'}`}>Home</button>
-          <button onClick={() => setView('chat')} className={`rounded-full px-3 py-1 border ${view === 'chat' ? 'border-emerald-500 text-emerald-400' : 'border-slate-300 text-slate-600 dark:border-slate-700 dark:text-slate-300'}`}>Chat</button>
-        </nav>
-      </header>
-
       {view === 'home' ? (
-        <div className="h-[calc(100vh-48px)] overflow-auto">
-          <SidekickHome />
+        <div className="h-full overflow-auto">
+          <SidekickHome onNavigate={setView} />
         </div>
       ) : (
       /* Layout */
-      <div className="grid h-[calc(100vh-48px)] grid-cols-[280px,1fr]">
+      <div className="grid h-full grid-cols-[280px,1fr]">
         {/* Sidebar */}
         <aside className="flex flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60">
           <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2 dark:border-slate-800">
@@ -199,34 +190,55 @@ function App() {
                     prev.map((c) => (c.id === activeChat ? { ...c, messages: [...c.messages, newMessage], lastMessage: text } : c))
                   );
 
-                  // Send to webhook
+                  // Process with agent system
                   setIsSending(true);
                   try {
-                    const res = await fetch(WEBHOOK_URL, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ message: text, chatId: activeChat }),
+                    // Build user context (using default for now)
+                    const userContext = {
+                      userId: 'demo-user',
+                      currentProject: 'Helping Hands Systems',
+                      recentTopics: [],
+                    };
+
+                    // Convert message history to the format expected by agents
+                    const activeChat_ = chats.find((c) => c.id === activeChat);
+                    const messageHistory = activeChat_?.messages.map((msg) => ({
+                      id: msg.id,
+                      conversationId: activeChat!,
+                      sender: msg.sender as 'user' | 'assistant' | 'system',
+                      content: msg.text,
+                      timestamp: msg.timestamp,
+                    })) || [];
+
+                    // Call the agent system
+                    const agentResponse = await processWithAgents({
+                      messageContent: text,
+                      userContext,
+                      conversationId: activeChat!,
+                      messageHistory,
                     });
-                    const data = await res.json().catch(() => ({}));
 
-                    // Try to extract a reply
-                    const replyText =
-                      (data && (data.reply || data.message || data.text)) ||
-                      (Array.isArray(data) && (data[0]?.text || data[0]?.message)) ||
-                      (typeof data === 'string' ? data : null) ||
-                      'Received.';
-
+                    // Create bot message with agent metadata
                     const botMsg: Message = {
                       id: (Date.now() + 1).toString(),
-                      text: replyText,
+                      text: agentResponse.content,
                       sender: 'bot',
                       timestamp: new Date(),
                     };
+
                     setChats((prev) =>
-                      prev.map((c) => (c.id === activeChat ? { ...c, messages: [...c.messages, botMsg], lastMessage: replyText } : c))
+                      prev.map((c) => (c.id === activeChat ? { ...c, messages: [...c.messages, botMsg], lastMessage: agentResponse.content } : c))
                     );
+
+                    console.log('🤖 Agent Response:', {
+                      agentType: agentResponse.agentType,
+                      behavioralMode: agentResponse.behavioralMode,
+                      tokensUsed: agentResponse.metadata.tokensUsed,
+                      executionTimeMs: agentResponse.metadata.executionTimeMs,
+                    });
                   } catch (err: any) {
-                    setError('Failed to contact webhook');
+                    setError(`Agent error: ${err.message}`);
+                    console.error('Agent processing failed:', err);
                   } finally {
                     setIsSending(false);
                   }

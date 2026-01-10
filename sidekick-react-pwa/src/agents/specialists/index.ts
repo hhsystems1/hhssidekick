@@ -1,12 +1,14 @@
 /**
- * Specialist Agents Export
+ * Specialist Agents Index
+ *
+ * Exports all specialist agent implementations
  */
 
-export { BaseSpecialist } from './base';
-export { ReflectionAgent } from './reflection';
-export { StrategyAgent } from './strategy';
-export { SystemsAgent } from './systems';
-export { TechnicalAgent } from './technical';
-export { CreativeAgent } from './creative';
+export { BaseSpecialist } from './BaseSpecialist';
+export { ReflectionAgent } from './ReflectionAgent';
+export { StrategyAgent } from './StrategyAgent';
+export { SystemsAgent } from './SystemsAgent';
+export { TechnicalAgent } from './TechnicalAgent';
+export { CreativeAgent } from './CreativeAgent';
 
-export type { SpecialistRequest, SpecialistResponse } from './base';
+export type { SpecialistProcessRequest, SpecialistProcessResponse } from './BaseSpecialist';

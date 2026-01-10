@@ -16,7 +16,11 @@ interface Agent {
   metric: string;
 }
 
-export const SidekickHome: React.FC = () => {
+interface SidekickHomeProps {
+  onNavigate?: (view: 'home' | 'chat') => void;
+}
+
+export const SidekickHome: React.FC<SidekickHomeProps> = ({ onNavigate }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [todayLabel, setTodayLabel] = useState('');
   const [showNewTaskDialog, setShowNewTaskDialog] = useState(false);
@@ -84,11 +88,12 @@ export const SidekickHome: React.FC = () => {
 
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-2">
-            <NavItem icon="🏠" label="Dashboard" active onClick={() => handleNavigate('dashboard')} />
-            <NavItem icon="🤖" label="Agents" onClick={() => handleNavigate('agents')} />
-            <NavItem icon="📚" label="Training" onClick={() => handleNavigate('training')} />
-            <NavItem icon="🛒" label="Marketplace" onClick={() => handleNavigate('marketplace')} />
-            <NavItem icon="👤" label="Profile" onClick={() => handleNavigate('profile')} />
+            <NavItem icon="🏠" label="Dashboard" active onClick={() => {}} />
+            <NavItem icon="💬" label="Chat" onClick={() => onNavigate?.('chat')} />
+            <NavItem icon="🤖" label="Agents" onClick={() => {}} />
+            <NavItem icon="📚" label="Training" onClick={() => {}} />
+            <NavItem icon="🛒" label="Marketplace" onClick={() => {}} />
+            <NavItem icon="👤" label="Profile" onClick={() => {}} />
           </nav>
 
           {/* Bottom action */}
@@ -267,19 +272,9 @@ export const SidekickHome: React.FC = () => {
 };
 
 // Components
-interface NavItemProps {
-  icon: string;
-  label: string;
-  active?: boolean;
-  onClick: () => void;
-}
-
-function NavItem({ icon, label, active = false, onClick }: NavItemProps) {
+function NavItem({ icon, label, active = false, onClick }: { icon: string; label: string; active?: boolean; onClick?: () => void }) {
   return (
-    <button
-      onClick={onClick}
-      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${active ? 'bg-slate-950/60 border border-slate-800' : 'hover:bg-slate-800'}`}
-    >
+    <button onClick={onClick} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${active ? 'bg-slate-950/60 border border-slate-800' : 'hover:bg-slate-800'}`}>
       <span className="text-xl">{icon}</span>
       <span className={`font-medium ${active ? 'text-slate-100' : 'text-slate-400'}`}>{label}</span>
     </button>
