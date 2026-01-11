@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import './index.css';
 import { SidekickHome } from './SidekickHome';
+import { TestPage } from './TestPage';
 import { processWithAgents } from './agents';
 
 type Message = {
@@ -21,7 +22,7 @@ type Chat = {
 };
 
 function App() {
-  type View = 'chat' | 'home';
+  type View = 'chat' | 'home' | 'test';
   const [view, setView] = useState<View>('home');
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [message, setMessage] = useState('');
@@ -99,6 +100,10 @@ function App() {
       {view === 'home' ? (
         <div className="h-full overflow-auto">
           <SidekickHome onNavigate={setView} />
+        </div>
+      ) : view === 'test' ? (
+        <div className="h-full overflow-auto">
+          <TestPage />
         </div>
       ) : (
       /* Layout */

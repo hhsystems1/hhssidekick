@@ -20,7 +20,7 @@ interface Agent {
 }
 
 interface SidekickHomeProps {
-  onNavigate?: (view: 'home' | 'chat') => void;
+  onNavigate?: (view: 'home' | 'chat' | 'test') => void;
 }
 
 export const SidekickHome: React.FC<SidekickHomeProps> = ({ onNavigate }) => {
@@ -98,6 +98,7 @@ export const SidekickHome: React.FC<SidekickHomeProps> = ({ onNavigate }) => {
             <NavItem icon="📚" label="Training" onClick={() => {}} />
             <NavItem icon="🛒" label="Marketplace" onClick={() => {}} />
             <NavItem icon="👤" label="Profile" onClick={() => {}} />
+            <NavItem icon="🧪" label="Tests" onClick={() => onNavigate?.('test')} />
           </nav>
 
           {/* Bottom action */}
