@@ -49,7 +49,13 @@ export const SidekickHome: React.FC<SidekickHomeProps> = ({ onNavigate }) => {
   // Navigation handlers
   const handleNavigate = (page: string) => {
     console.log(`Navigating to: ${page}`);
-    // TODO: Implement actual navigation when routing is set up
+
+    // Show "Coming Soon" message for features not yet implemented
+    const comingSoonFeatures = ['agents', 'training', 'marketplace', 'profile', 'campaigns', 'leads', 'sops'];
+    if (comingSoonFeatures.includes(page.toLowerCase())) {
+      alert(`${page.charAt(0).toUpperCase() + page.slice(1)} feature coming soon!`);
+      return;
+    }
   };
 
   // Task handlers
@@ -59,7 +65,8 @@ export const SidekickHome: React.FC<SidekickHomeProps> = ({ onNavigate }) => {
 
   const handleTaskClick = (taskId: string) => {
     console.log(`Opening task: ${taskId}`);
-    // TODO: Open task detail dialog or navigate to task page
+    // TODO: Implement task detail view in future update
+    alert('Task detail view coming soon!');
   };
 
   const handleDeployAgent = () => {
@@ -69,7 +76,8 @@ export const SidekickHome: React.FC<SidekickHomeProps> = ({ onNavigate }) => {
   // Calendar handlers
   const handleEventClick = (eventTitle: string) => {
     console.log(`Opening event: ${eventTitle}`);
-    // TODO: Open event detail dialog
+    // TODO: Implement event detail view in future update
+    alert(`Event details for "${eventTitle}" coming soon!`);
   };
 
   // Brain dump handler
@@ -92,12 +100,12 @@ export const SidekickHome: React.FC<SidekickHomeProps> = ({ onNavigate }) => {
 
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-2">
-            <NavItem icon="🏠" label="Dashboard" active onClick={() => {}} />
+            <NavItem icon="🏠" label="Dashboard" active />
             <NavItem icon="💬" label="Chat" onClick={() => onNavigate?.('chat')} />
-            <NavItem icon="🤖" label="Agents" onClick={() => {}} />
-            <NavItem icon="📚" label="Training" onClick={() => {}} />
-            <NavItem icon="🛒" label="Marketplace" onClick={() => {}} />
-            <NavItem icon="👤" label="Profile" onClick={() => {}} />
+            <NavItem icon="🤖" label="Agents" onClick={() => handleNavigate('agents')} />
+            <NavItem icon="📚" label="Training" onClick={() => handleNavigate('training')} />
+            <NavItem icon="🛒" label="Marketplace" onClick={() => handleNavigate('marketplace')} />
+            <NavItem icon="👤" label="Profile" onClick={() => handleNavigate('profile')} />
             <NavItem icon="🧪" label="Tests" onClick={() => onNavigate?.('test')} />
           </nav>
 
@@ -246,10 +254,10 @@ export const SidekickHome: React.FC<SidekickHomeProps> = ({ onNavigate }) => {
 
           {/* Quick Stats Bar */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8 pt-8 border-t border-slate-800">
-            <StatCard label="Active Campaigns" value="3" onClick={() => console.log('View campaigns')} />
-            <StatCard label="Leads This Week" value="47" onClick={() => console.log('View leads')} />
-            <StatCard label="SOPs Created" value="12" onClick={() => console.log('View SOPs')} />
-            <StatCard label="Training Complete" value="68%" onClick={() => console.log('View training')} />
+            <StatCard label="Active Campaigns" value="3" onClick={() => handleNavigate('campaigns')} />
+            <StatCard label="Leads This Week" value="47" onClick={() => handleNavigate('leads')} />
+            <StatCard label="SOPs Created" value="12" onClick={() => handleNavigate('sops')} />
+            <StatCard label="Training Complete" value="68%" onClick={() => handleNavigate('training')} />
           </div>
         </div>
       </div>
