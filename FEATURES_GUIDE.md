@@ -66,6 +66,35 @@ export const BRANDING = {
 
 ### 3. **Comprehensive Agent Testing**
 
+**Browser-Based Testing (Recommended):**
+
+Access the test page in your deployed app by clicking the 🧪 **Tests** button in the sidebar navigation.
+
+**What you can test:**
+- 🤖 **Agent System Tab**:
+  - Test all 5 specialist agents with real Groq API calls
+  - Pre-loaded test messages for quick testing
+  - Custom message input for your own tests
+  - Real-time response display with metadata
+  - Performance metrics (response time, tokens used)
+  - Agent routing and behavioral mode selection
+
+- 🗄️ **Database Tab**:
+  - Task creation and retrieval
+  - Task status toggling
+  - Agent creation and retrieval
+  - Conversation creation and retrieval
+  - Database connectivity verification
+
+**Features:**
+- ✅ Tests run in the browser using your actual deployment
+- ✅ Works with Netlify environment variables
+- ✅ Real-time error reporting and troubleshooting tips
+- ✅ Detailed response metadata and debugging info
+- ✅ No local setup required
+
+**Alternative: Command-Line Testing**
+
 Location: `sidekick-react-pwa/tests/agent-test-suite.mjs`
 
 **Run the test suite:**
@@ -88,32 +117,7 @@ node tests/agent-test-suite.mjs
 - API architecture (Technical)
 - Landing page copy (Creative)
 
-**Expected output:**
-```
-╔════════════════════════════════════════════════════════════╗
-║        COMPREHENSIVE AGENT TEST SUITE                     ║
-║              Testing All 5 Agents                         ║
-╚════════════════════════════════════════════════════════════╝
-
-🤖 REFLECTION AGENT
-Mode: mirror
-═════════════════════════════════════════════════════════════
-  📝 Testing: Career decision exploration
-     ✅ Response generated (850ms, 234 tokens)
-     ✓ Contains expected elements: explore, thinking
-...
-
-FINAL SUMMARY
-═════════════════════════════════════════════════════════════
-Total Tests: 10
-Passed: 10 ✅
-Failed: 0
-
-Average Response Time: 780ms
-Average Tokens Used: 298
-
-🎉 Test suite completed successfully!
-```
+**Note:** Command-line tests require local `.env` file with API keys
 
 ## 🎯 How to Use
 
@@ -144,7 +148,21 @@ Average Tokens Used: 298
 2. Click "Open Chat" in the dialog
 3. Start chatting with your AI agents
 
-### Testing Agents
+### Testing the System
+
+**In-Browser Testing (Recommended):**
+1. Deploy your app to Netlify or run locally with `npm run dev`
+2. Click the 🧪 **Tests** button in the sidebar
+3. Switch between **Agent System** and **Database** tabs
+4. For Agent tests:
+   - Click any pre-loaded test message
+   - Or enter your own custom message
+   - Review the response, agent type, and performance metrics
+5. For Database tests:
+   - Click "Run All Database Tests"
+   - Review results for each operation
+
+**Command-Line Testing:**
 1. Make sure Groq API key is in `.env`
 2. Run: `node tests/agent-test-suite.mjs`
 3. Review results to see agent performance
