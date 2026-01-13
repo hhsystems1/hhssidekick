@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, ChevronRight, Play, Pause, Plus, CheckCircle, Circle, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ChevronRight, Play, Pause, Plus, CheckCircle, Circle } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useTasks, useAgents, useCalendarEvents } from './hooks/useDatabase';
 import { NewTaskDialog } from './components/NewTaskDialog';
+import { TaskDetailDialog } from './components/TaskDetailDialog';
+import { CalendarEventDialog } from './components/CalendarEventDialog';
 import { DeployAgentDialog } from './components/DeployAgentDialog';
-import { BRANDING, getLogo } from './config/branding';
 
 interface Task {
   id: string;
@@ -19,21 +22,19 @@ interface Agent {
   metric: string;
 }
 
-interface SidekickHomeProps {
-  onNavigate?: (view: 'home' | 'chat' | 'test') => void;
-}
-
-export const SidekickHome: React.FC<SidekickHomeProps> = ({ onNavigate }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+export const SidekickHome: React.FC = () => {
   const [todayLabel, setTodayLabel] = useState('');
   const [showNewTaskDialog, setShowNewTaskDialog] = useState(false);
+  const [showTaskDetailDialog, setShowTaskDetailDialog] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<any>(null);
+  const [showEventDialog, setShowEventDialog] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [showNewAgentDialog, setShowNewAgentDialog] = useState(false);
-  const [showBrainDumpDialog, setShowBrainDumpDialog] = useState(false);
 
   // Load data from database
-  const { tasks, loading: tasksLoading, toggleTask, addTask } = useTasks();
+  const { tasks, loading: tasksLoading, toggleTask, addTask, reload: reloadTasks } = useTasks();
   const { agents, loading: agentsLoading, toggleAgent, addAgent } = useAgents();
-  const { events, nextEvent, loading: eventsLoading } = useCalendarEvents();
+  const { events, nextEvent, loading: eventsLoading, reload: reloadEvents } = useCalendarEvents();
 
   useEffect(() => {
     const now = new Date();
@@ -46,101 +47,64 @@ export const SidekickHome: React.FC<SidekickHomeProps> = ({ onNavigate }) => {
     setTodayLabel(formatted);
   }, []);
 
-  // Navigation handlers
-  const handleNavigate = (page: string) => {
-    console.log(`Navigating to: ${page}`);
-    // TODO: Implement actual navigation when routing is set up
-  };
-
   // Task handlers
   const handleAddTask = () => {
     setShowNewTaskDialog(true);
   };
 
   const handleTaskClick = (taskId: string) => {
-    console.log(`Opening task: ${taskId}`);
-    // TODO: Open task detail dialog or navigate to task page
+    const task = tasks.find(t => t.id === taskId);
+    if (task) {
+      setSelectedTask(task);
+      setShowTaskDetailDialog(true);
+    }
+  };
+
+  const handleToggleTask = async (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    try {
+      await toggleTask(taskId);
+      toast.success(task.completed ? 'Task marked as incomplete' : 'Task completed!');
+    } catch (error: any) {
+      toast.error('Failed to update task');
+      console.error('Error toggling task:', error);
+    }
   };
 
   const handleDeployAgent = () => {
     setShowNewAgentDialog(true);
   };
 
-  // Calendar handlers
-  const handleEventClick = (eventTitle: string) => {
-    console.log(`Opening event: ${eventTitle}`);
-    // TODO: Open event detail dialog
+  const handleToggleAgent = async (agentId: string) => {
+    const agent = agents.find(a => a.id === agentId);
+    if (!agent) return;
+
+    try {
+      await toggleAgent(agentId);
+      toast.success(agent.status === 'active' ? 'Agent paused' : 'Agent activated!');
+    } catch (error: any) {
+      toast.error('Failed to update agent');
+      console.error('Error toggling agent:', error);
+    }
   };
 
-  // Brain dump handler
-  const handleBrainDump = () => {
-    setShowBrainDumpDialog(true);
+  // Calendar handlers
+  const handleEventClick = (eventId: string) => {
+    const event = events.find(e => e.id === eventId);
+    if (event) {
+      setSelectedEvent(event);
+      setShowEventDialog(true);
+    }
   };
 
   const completedTasksCount = tasks.filter(t => t.completed).length;
 
   return (
     <div className="min-h-screen bg-slate-950 bg-[radial-gradient(circle_at_top_left,rgba(80,200,120,0.15),transparent_55%),radial-gradient(circle_at_bottom_right,rgba(56,181,255,0.15),transparent_55%)]">
-      {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 w-64 bg-slate-900 border-r border-slate-800 transform transition-transform duration-200 ease-in-out z-50 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
-        <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="h-16 flex items-center gap-3 px-6 border-b border-slate-800">
-            <span className="text-2xl">{getLogo()}</span>
-            <h1 className="text-2xl font-bold text-slate-100">{BRANDING.appName}</h1>
-          </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-2">
-            <NavItem icon="🏠" label="Dashboard" active onClick={() => {}} />
-            <NavItem icon="💬" label="Chat" onClick={() => onNavigate?.('chat')} />
-            <NavItem icon="🤖" label="Agents" onClick={() => {}} />
-            <NavItem icon="📚" label="Training" onClick={() => {}} />
-            <NavItem icon="🛒" label="Marketplace" onClick={() => {}} />
-            <NavItem icon="👤" label="Profile" onClick={() => {}} />
-            <NavItem icon="🧪" label="Tests" onClick={() => onNavigate?.('test')} />
-          </nav>
-
-          {/* Bottom action */}
-          <div className="p-4 border-t border-slate-800">
-            <button
-              onClick={handleBrainDump}
-              className="w-full py-3 px-4 bg-emerald-700 text-emerald-50 rounded-lg font-medium hover:bg-emerald-600 transition-colors"
-            >
-              New Brain Dump
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Main Content */}
-      <div className="lg:pl-64">
-        {/* Top bar */}
-        <div className="h-16 border-b border-slate-800 flex items-center justify-between px-4 lg:px-8 bg-slate-950/60 sticky top-0 z-30">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="lg:hidden p-2 text-slate-100"
-          >
-            <Menu size={24} />
-          </button>
-          <h2 className="text-xl font-semibold text-slate-100">Dashboard</h2>
-          <button
-            onClick={() => handleNavigate('profile')}
-            className="w-10 h-10 rounded-full bg-slate-700 hover:bg-slate-600 transition-colors"
-            aria-label="Profile"
-          />
-        </div>
-
-        {/* Dashboard Content */}
-        <div className="p-4 lg:p-8 max-w-7xl mx-auto">
+      {/* Dashboard Content */}
+      <div className="p-4 lg:p-8 max-w-7xl mx-auto">
           {/* 3 Column Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
@@ -166,7 +130,7 @@ export const SidekickHome: React.FC<SidekickHomeProps> = ({ onNavigate }) => {
                   <TaskCard
                     key={task.id}
                     task={task}
-                    onToggle={() => toggleTask(task.id)}
+                    onToggle={() => handleToggleTask(task.id)}
                     onClick={() => handleTaskClick(task.id)}
                   />
                 ))
@@ -195,7 +159,7 @@ export const SidekickHome: React.FC<SidekickHomeProps> = ({ onNavigate }) => {
                     time={event.time}
                     title={event.title}
                     attendees={event.attendees}
-                    onClick={() => handleEventClick(event.title)}
+                    onClick={() => handleEventClick(event.id)}
                   />
                 ))
               )}
@@ -213,12 +177,12 @@ export const SidekickHome: React.FC<SidekickHomeProps> = ({ onNavigate }) => {
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-slate-100">Agents</h3>
-                <button
-                  onClick={() => handleNavigate('agents')}
+                <Link
+                  to="/agents"
                   className="text-sm text-slate-400 hover:text-slate-100 transition-colors"
                 >
                   View all
-                </button>
+                </Link>
               </div>
 
               {agentsLoading ? (
@@ -230,7 +194,7 @@ export const SidekickHome: React.FC<SidekickHomeProps> = ({ onNavigate }) => {
                   <AgentCard
                     key={agent.id}
                     agent={agent}
-                    onToggle={() => toggleAgent(agent.id)}
+                    onToggle={() => handleToggleAgent(agent.id)}
                   />
                 ))
               )}
@@ -252,18 +216,51 @@ export const SidekickHome: React.FC<SidekickHomeProps> = ({ onNavigate }) => {
             <StatCard label="Training Complete" value="68%" onClick={() => console.log('View training')} />
           </div>
         </div>
-      </div>
 
       {/* Dialogs */}
       {showNewTaskDialog && (
         <NewTaskDialog
           onClose={() => setShowNewTaskDialog(false)}
-          onSubmit={async (title, priority) => {
-            const success = await addTask(title, priority);
-            if (success) {
-              console.log('Task added successfully');
+          onSubmit={async (title, priority, _dueDate) => {
+            const loadingToast = toast.loading('Creating task...');
+            try {
+              const success = await addTask(title, priority);
+              if (success) {
+                toast.success('Task created successfully!', { id: loadingToast });
+              } else {
+                toast.error('Failed to create task', { id: loadingToast });
+              }
+              return success;
+            } catch (error: any) {
+              toast.error(`Error: ${error.message}`, { id: loadingToast });
+              return false;
             }
-            return success;
+          }}
+        />
+      )}
+
+      {showTaskDetailDialog && selectedTask && (
+        <TaskDetailDialog
+          task={selectedTask}
+          onClose={() => {
+            setShowTaskDetailDialog(false);
+            setSelectedTask(null);
+          }}
+          onUpdate={() => {
+            reloadTasks();
+          }}
+        />
+      )}
+
+      {showEventDialog && selectedEvent && (
+        <CalendarEventDialog
+          event={selectedEvent}
+          onClose={() => {
+            setShowEventDialog(false);
+            setSelectedEvent(null);
+          }}
+          onUpdate={() => {
+            reloadEvents();
           }}
         />
       )}
@@ -272,47 +269,27 @@ export const SidekickHome: React.FC<SidekickHomeProps> = ({ onNavigate }) => {
         <DeployAgentDialog
           onClose={() => setShowNewAgentDialog(false)}
           onSubmit={async (name, agentType) => {
-            const success = await addAgent(name, agentType);
-            if (success) {
-              console.log('Agent deployed successfully');
+            const loadingToast = toast.loading('Deploying agent...');
+            try {
+              const success = await addAgent(name, agentType);
+              if (success) {
+                toast.success('Agent deployed successfully!', { id: loadingToast });
+              } else {
+                toast.error('Failed to deploy agent', { id: loadingToast });
+              }
+              return success;
+            } catch (error: any) {
+              toast.error(`Error: ${error.message}`, { id: loadingToast });
+              return false;
             }
-            return success;
           }}
         />
-      )}
-
-      {showBrainDumpDialog && (
-        <Dialog title="New Brain Dump" onClose={() => setShowBrainDumpDialog(false)}>
-          <div className="space-y-4">
-            <p className="text-slate-300">
-              Brain Dump lets you have an open conversation with your AI agents.
-            </p>
-            <button
-              onClick={() => {
-                setShowBrainDumpDialog(false);
-                onNavigate?.('chat');
-              }}
-              className="w-full py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition-colors"
-            >
-              Open Chat
-            </button>
-          </div>
-        </Dialog>
       )}
     </div>
   );
 };
 
 // Components
-function NavItem({ icon, label, active = false, onClick }: { icon: string; label: string; active?: boolean; onClick?: () => void }) {
-  return (
-    <button onClick={onClick} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${active ? 'bg-slate-950/60 border border-slate-800' : 'hover:bg-slate-800'}`}>
-      <span className="text-xl">{icon}</span>
-      <span className={`font-medium ${active ? 'text-slate-100' : 'text-slate-400'}`}>{label}</span>
-    </button>
-  );
-}
-
 interface TaskCardProps {
   task: Task;
   onToggle: () => void;
@@ -425,34 +402,6 @@ function StatCard({ label, value, onClick }: StatCardProps) {
     >
       <p className="text-sm text-slate-400 mb-1">{label}</p>
       <p className="text-2xl font-semibold text-slate-100">{value}</p>
-    </div>
-  );
-}
-
-interface DialogProps {
-  title: string;
-  onClose: () => void;
-  children: React.ReactNode;
-}
-
-function Dialog({ title, onClose, children }: DialogProps) {
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-900 rounded-xl border border-slate-800 max-w-md w-full p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold text-slate-100">{title}</h3>
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-slate-800 rounded transition-colors text-slate-400 hover:text-slate-100"
-            aria-label="Close"
-          >
-            <X size={20} />
-          </button>
-        </div>
-        <div className="text-slate-300">
-          {children}
-        </div>
-      </div>
     </div>
   );
 }
