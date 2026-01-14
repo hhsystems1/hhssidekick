@@ -48,7 +48,11 @@ export function ChatPage() {
   };
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Use setTimeout to ensure DOM has updated before scrolling
+    const timer = setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }, 100);
+    return () => clearTimeout(timer);
   }, [dbMessages]);
 
   const activeMessages = dbMessages.map((msg) => ({
@@ -71,8 +75,8 @@ export function ChatPage() {
   };
 
   return (
-    <div className="h-full grid grid-cols-[280px,1fr]">
-      <aside className="flex flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60">
+    <div className="h-full grid grid-cols-1 md:grid-cols-[280px,1fr] overflow-hidden">
+      <aside className="hidden md:flex flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 overflow-hidden">
         <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2 dark:border-slate-800">
           <h2 className="text-sm font-semibold">Chats</h2>
           <button onClick={handleNewChat} className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800" aria-label="New chat">
@@ -112,7 +116,7 @@ export function ChatPage() {
               )}
             </div>
 
-            <div className="flex-1 space-y-2 overflow-y-auto bg-slate-50 p-3 dark:bg-slate-900">
+            <div className="flex-1 space-y-2 overflow-y-auto bg-slate-50 p-3 dark:bg-slate-900" style={{ WebkitOverflowScrolling: 'touch' }}>
               {activeMessages.map((msg) => (
                 <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                   {(() => {
@@ -140,7 +144,8 @@ export function ChatPage() {
                 const text = message;
                 setMessage('');
 
-                await addMessage(text, 'user');
+                // Save the user message and get the returned message data
+                const userMessage = await addMessage(text, 'user');
 
                 setIsSending(true);
                 try {
@@ -150,6 +155,7 @@ export function ChatPage() {
                     recentTopics: [],
                   };
 
+                  // Build message history including the current user message
                   const messageHistory = dbMessages.map((msg) => ({
                     id: msg.id,
                     conversationId: activeChat,
@@ -157,6 +163,17 @@ export function ChatPage() {
                     content: msg.content,
                     timestamp: new Date(msg.created_at),
                   }));
+
+                  // Add the current user message to the history
+                  if (userMessage) {
+                    messageHistory.push({
+                      id: userMessage.id,
+                      conversationId: activeChat,
+                      sender: 'user' as const,
+                      content: text,
+                      timestamp: new Date(userMessage.created_at),
+                    });
+                  }
 
                   const agentResponse = await processWithAgents({
                     messageContent: text,

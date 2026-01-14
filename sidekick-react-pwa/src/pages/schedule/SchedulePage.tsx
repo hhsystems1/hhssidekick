@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useCalendarEvents } from '../../hooks/useDatabase';
 import { CalendarEventDialog } from '../../components/CalendarEventDialog';
-import { ChevronLeft, ChevronRight, Plus, ArrowLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 
 export const SchedulePage: React.FC = () => {
-  const navigate = useNavigate();
   const { events, loading: eventsLoading, reload } = useCalendarEvents();
   const [showEventDialog, setShowEventDialog] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
@@ -47,15 +45,6 @@ export const SchedulePage: React.FC = () => {
 
   return (
     <div className="p-4 lg:p-8 max-w-4xl mx-auto">
-      {/* Mobile Back Button */}
-      <button
-        onClick={() => navigate(-1)}
-        className="lg:hidden mb-4 flex items-center gap-2 text-slate-400 hover:text-slate-100 transition-colors"
-      >
-        <ArrowLeft size={20} />
-        <span className="text-sm">Back</span>
-      </button>
-
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
