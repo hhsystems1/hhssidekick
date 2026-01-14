@@ -154,6 +154,24 @@ export const Layout: React.FC = () => {
         <div className="flex-1 overflow-hidden">
           <Outlet />
         </div>
+
+        {/* Footer */}
+        <footer className="border-t border-slate-800 bg-slate-950/60 px-4 py-3 text-xs text-slate-400 shrink-0">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+            <div className="flex items-center gap-4">
+              <span>© 2024 {BRANDING.appName}</span>
+              <span className="hidden sm:inline">•</span>
+              <span>Powered by AI</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <a href="#" className="hover:text-slate-200 transition-colors">Privacy</a>
+              <span>•</span>
+              <a href="#" className="hover:text-slate-200 transition-colors">Terms</a>
+              <span>•</span>
+              <a href="#" className="hover:text-slate-200 transition-colors">Support</a>
+            </div>
+          </div>
+        </footer>
       </div>
 
       {/* Auth Modal */}
