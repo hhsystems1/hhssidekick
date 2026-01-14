@@ -34,7 +34,7 @@ export const SidekickHome: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 bg-[radial-gradient(circle_at_top_left,rgba(80,200,120,0.15),transparent_55%),radial-gradient(circle_at_bottom_right,rgba(56,181,255,0.15),transparent_55%)]">
+    <div className="h-full bg-slate-950 bg-[radial-gradient(circle_at_top_left,rgba(80,200,120,0.15),transparent_55%),radial-gradient(circle_at_bottom_right,rgba(56,181,255,0.15),transparent_55%)] overflow-y-auto">
       {/* Command Center Dashboard */}
       <CommandCenter
         onNavigateToSchedule={() => navigate('/schedule')}
