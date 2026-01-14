@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Bell, Shield, Palette, HelpCircle, LogOut, ArrowLeft } from 'lucide-react';
+import { User, Bell, Shield, Palette, HelpCircle, LogOut } from 'lucide-react';
 import { useUserProfile, useUserSettings } from '../../hooks/useDatabase';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -145,15 +145,6 @@ export const SettingsPage: React.FC = () => {
 
   return (
     <div className="p-4 lg:p-8 max-w-4xl mx-auto">
-      {/* Mobile Back Button */}
-      <button
-        onClick={() => navigate(-1)}
-        className="lg:hidden mb-4 flex items-center gap-2 text-slate-400 hover:text-slate-100 transition-colors"
-      >
-        <ArrowLeft size={20} />
-        <span className="text-sm">Back</span>
-      </button>
-
       <div className="mb-8">
         <h1 className="text-xl font-semibold text-slate-100 mb-1">Settings</h1>
         <p className="text-sm text-slate-500">Manage your account preferences</p>
