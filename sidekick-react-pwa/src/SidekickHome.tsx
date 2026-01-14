@@ -34,7 +34,7 @@ export const SidekickHome: React.FC = () => {
   };
 
   return (
-    <div className="h-full bg-slate-950 bg-[radial-gradient(circle_at_top_left,rgba(80,200,120,0.15),transparent_55%),radial-gradient(circle_at_bottom_right,rgba(56,181,255,0.15),transparent_55%)] overflow-y-auto">
+    <div className="bg-slate-950 bg-[radial-gradient(circle_at_top_left,rgba(80,200,120,0.15),transparent_55%),radial-gradient(circle_at_bottom_right,rgba(56,181,255,0.15),transparent_55%)]">
       {/* Command Center Dashboard */}
       <CommandCenter
         onNavigateToSchedule={() => navigate('/schedule')}
@@ -43,7 +43,7 @@ export const SidekickHome: React.FC = () => {
       />
 
       {/* Agents Section */}
-      <div className="p-4 lg:p-8 max-w-7xl mx-auto mt-8">
+      <div className="p-4 lg:p-8 max-w-7xl mx-auto mt-8 pb-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Command Center Columns 1-3 already rendered above, now add Agents as 4th section */}
 
