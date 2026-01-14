@@ -163,7 +163,20 @@ export function useAgents() {
     return false;
   }, [agents]);
 
-  return { agents, loading, error, toggleAgent, addAgent, reload: loadAgents };
+  const deleteAgent = useCallback(async (agentId: string) => {
+    try {
+      const success = await db.deleteAgent(agentId);
+      if (success) {
+        setAgents(agents.filter(a => a.id !== agentId));
+      }
+      return success;
+    } catch (err) {
+      console.error('Failed to delete agent:', err);
+      return false;
+    }
+  }, [agents]);
+
+  return { agents, loading, error, toggleAgent, addAgent, deleteAgent, reload: loadAgents };
 }
 
 /**
@@ -259,4 +272,158 @@ export function useConversations() {
   }, [conversations]);
 
   return { conversations, loading, error, createConversation, reload: loadConversations };
+}
+
+/**
+ * Hook to load user profile from database
+ */
+export function useUserProfile() {
+  const [profile, setProfile] = useState<{
+    id: string;
+    email: string | null;
+    full_name: string | null;
+    avatar_url: string | null;
+    timezone: string | null;
+  } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadProfile = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await db.getProfile(MOCK_USER_ID);
+      if (data) {
+        setProfile({
+          id: data.id,
+          email: data.email,
+          full_name: data.full_name,
+          avatar_url: data.avatar_url,
+          timezone: data.timezone,
+        });
+      }
+    } catch (err: any) {
+      console.error('Failed to load profile:', err);
+      setError(err.message);
+      // Fallback mock data
+      setProfile({
+        id: MOCK_USER_ID,
+        email: 'demo@example.com',
+        full_name: 'Demo User',
+        avatar_url: null,
+        timezone: 'America/New_York',
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
+
+  const updateProfile = useCallback(async (updates: {
+    full_name?: string | null;
+    avatar_url?: string | null;
+    timezone?: string | null;
+  }) => {
+    try {
+      const { data, error } = await db.updateProfile(MOCK_USER_ID, updates);
+      if (data && !error) {
+        setProfile({
+          id: data.id,
+          email: data.email,
+          full_name: data.full_name,
+          avatar_url: data.avatar_url,
+          timezone: data.timezone,
+        });
+        return true;
+      }
+    } catch (err) {
+      console.error('Failed to update profile:', err);
+    }
+    return false;
+  }, []);
+
+  return { profile, loading, error, updateProfile, reload: loadProfile };
+}
+
+/**
+ * Hook to load user settings from database
+ */
+export function useUserSettings() {
+  const [settings, setSettings] = useState<{
+    push_notifications: boolean;
+    email_notifications: boolean;
+    task_reminders: boolean;
+    two_factor_enabled: boolean;
+    theme: 'dark' | 'light' | 'system';
+    language: string;
+    font_size: 'small' | 'medium' | 'large';
+  }>({
+    push_notifications: true,
+    email_notifications: true,
+    task_reminders: true,
+    two_factor_enabled: false,
+    theme: 'dark',
+    language: 'en',
+    font_size: 'medium',
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadSettings = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await db.getUserSettings(MOCK_USER_ID);
+      setSettings({
+        push_notifications: data.push_notifications,
+        email_notifications: data.email_notifications,
+        task_reminders: data.task_reminders,
+        two_factor_enabled: data.two_factor_enabled,
+        theme: data.theme,
+        language: data.language,
+        font_size: data.font_size,
+      });
+    } catch (err: any) {
+      console.error('Failed to load settings:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
+
+  const updateSettings = useCallback(async (updates: Partial<{
+    push_notifications: boolean;
+    email_notifications: boolean;
+    task_reminders: boolean;
+    two_factor_enabled: boolean;
+    theme: 'dark' | 'light' | 'system';
+    language: string;
+    font_size: 'small' | 'medium' | 'large';
+  }>) => {
+    // Optimistic update
+    setSettings(prev => ({ ...prev, ...updates }));
+
+    try {
+      const { error } = await db.updateUserSettings(MOCK_USER_ID, updates);
+      if (error) {
+        // Revert on error
+        loadSettings();
+        return false;
+      }
+      return true;
+    } catch (err) {
+      console.error('Failed to update settings:', err);
+      loadSettings();
+      return false;
+    }
+  }, [loadSettings]);
+
+  return { settings, loading, error, updateSettings, reload: loadSettings };
 }

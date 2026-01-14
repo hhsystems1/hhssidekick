@@ -5,99 +5,73 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { processWithAgents } from './agents';
+import { supabase } from './lib/supabaseClient';
+import { useConversations, useMessages } from './hooks/useChat';
 
-type Message = {
-  id: string;
-  text: string;
-  sender: 'user' | 'bot';
-  timestamp: Date;
-};
-
-type Chat = {
-  id: string;
-  name: string;
-  lastMessage: string;
-  unread: number;
-  avatar: string;
-  isOnline: boolean;
-  messages: Message[];
-};
+const MOCK_USER_ID = '00000000-0000-0000-0000-000000000000';
 
 export function ChatPage() {
+  const [userId, setUserId] = useState<string>(MOCK_USER_ID);
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [message, setMessage] = useState('');
-  const [chats, setChats] = useState<Chat[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const activeMessages = chats.find((c) => c.id === activeChat)?.messages || [];
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleNewChat = () => {
-    const id = Date.now().toString();
-    const newChat: Chat = {
-      id,
-      name: `New Chat ${chats.length + 1}`,
-      lastMessage: 'Start the conversation... ',
-      unread: 0,
-      avatar: '💬',
-      isOnline: true,
-      messages: [],
+  const { conversations, createConversation } = useConversations(userId);
+  const { messages: dbMessages, addMessage } = useMessages(activeChat, userId);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
     };
-    setChats((prev) => [newChat, ...prev]);
-    setActiveChat(id);
+    getUser();
+  }, []);
+
+  const handleNewChat = async () => {
+    const newConv = await createConversation(`New Chat ${conversations.length + 1}`);
+    if (newConv) {
+      setActiveChat(newConv.id);
+    }
   };
 
   const getTextColorForBg = (bg: string) => {
-    // Parse hex color like #RRGGBB
     const hex = bg.replace('#', '');
     const r = parseInt(hex.substring(0, 2), 16);
     const g = parseInt(hex.substring(2, 4), 16);
     const b = parseInt(hex.substring(4, 6), 16);
-    // Relative luminance and contrast heuristic
     const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
     return luminance > 140 ? '#000000' : '#FFFFFF';
   };
 
   useEffect(() => {
-    const initialChats: Chat[] = [
-      {
-        id: '1',
-        name: 'Support Team',
-        lastMessage: 'How can I help you today?',
-        unread: 2,
-        avatar: '👨‍💻',
-        isOnline: true,
-        messages: [
-          { id: '1', text: 'Hello! How can I help you today?', sender: 'bot', timestamp: new Date() },
-          { id: '2', text: 'I need help with my account', sender: 'user', timestamp: new Date() },
-        ],
-      },
-      {
-        id: '2',
-        name: 'General Chat',
-        lastMessage: 'Welcome to the general chat!',
-        unread: 0,
-        avatar: '💬',
-        isOnline: true,
-        messages: [
-          { id: '1', text: 'Welcome to the general chat!', sender: 'bot', timestamp: new Date() },
-        ],
-      },
-    ];
-
-    setChats(initialChats);
-    if (initialChats.length > 0 && !activeChat) {
-      setActiveChat(initialChats[0].id);
-    }
-  }, []);
-
-  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [activeMessages]);
+  }, [dbMessages]);
+
+  const activeMessages = dbMessages.map((msg) => ({
+    id: msg.id,
+    text: msg.content,
+    sender: msg.sender === 'user' ? 'user' : 'bot' as 'user' | 'bot',
+    timestamp: new Date(msg.created_at),
+  }));
+
+  const getConversationTitle = (convId: string) => {
+    const conv = conversations.find((c) => c.id === convId);
+    return conv?.title || 'New Chat';
+  };
+
+  const getConversationLastMessage = (convId: string) => {
+    const convMessages = dbMessages.filter((m) => m.conversation_id === convId);
+    if (convMessages.length === 0) return 'Start the conversation...';
+    const lastMsg = convMessages[convMessages.length - 1];
+    return lastMsg.content.length > 40 ? lastMsg.content.substring(0, 40) + '...' : lastMsg.content;
+  };
 
   return (
     <div className="h-full grid grid-cols-[280px,1fr]">
-      {/* Sidebar */}
       <aside className="flex flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60">
         <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2 dark:border-slate-800">
           <h2 className="text-sm font-semibold">Chats</h2>
@@ -106,40 +80,31 @@ export function ChatPage() {
           </button>
         </div>
         <div className="flex-1 overflow-y-auto">
-          {chats.map((chat) => (
+          {conversations.map((conv) => (
             <button
-              key={chat.id}
-              onClick={() => {
-                setActiveChat(chat.id);
-                setChats((prev) => prev.map((c) => (c.id === chat.id ? { ...c, unread: 0 } : c)));
-              }}
-              className={`flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800 ${activeChat === chat.id ? 'bg-slate-100 dark:bg-slate-800/70' : ''}`}
+              key={conv.id}
+              onClick={() => setActiveChat(conv.id)}
+              className={`flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800 ${activeChat === conv.id ? 'bg-slate-100 dark:bg-slate-800/70' : ''}`}
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-200 text-base dark:bg-slate-700">{chat.avatar}</div>
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-200 text-base dark:bg-slate-700">💬</div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <div className="truncate text-sm font-medium">{chat.name}</div>
-                  {chat.isOnline && <span className="h-2 w-2 rounded-full bg-emerald-400" />}
+                  <div className="truncate text-sm font-medium">{conv.title}</div>
+                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
                 </div>
-                <div className="truncate text-xs text-slate-500 dark:text-slate-400">{chat.lastMessage}</div>
+                <div className="truncate text-xs text-slate-500 dark:text-slate-400">{getConversationLastMessage(conv.id)}</div>
               </div>
-              {chat.unread > 0 && (
-                <span className="ml-auto inline-flex min-w-[20px] items-center justify-center rounded-full bg-emerald-500 px-1.5 text-[10px] font-semibold text-emerald-50">
-                  {chat.unread}
-                </span>
-              )}
             </button>
           ))}
         </div>
       </aside>
 
-      {/* Chat Area */}
       <main className="flex h-full flex-col">
         {activeChat ? (
           <>
             <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2 dark:border-slate-800 dark:bg-slate-900/60">
               <div className="flex items-center gap-2 text-sm font-medium">
-                {chats.find((c) => c.id === activeChat)?.name}
+                {getConversationTitle(activeChat)}
                 <span className="h-2 w-2 rounded-full bg-emerald-400" />
               </div>
               {error && (
@@ -174,57 +139,35 @@ export function ChatPage() {
                 setError(null);
                 const text = message;
                 setMessage('');
-                const newMessage: Message = {
-                  id: Date.now().toString(),
-                  text,
-                  sender: 'user',
-                  timestamp: new Date(),
-                };
-                setChats((prev) =>
-                  prev.map((c) => (c.id === activeChat ? { ...c, messages: [...c.messages, newMessage], lastMessage: text } : c))
-                );
 
-                // Process with agent system
+                await addMessage(text, 'user');
+
                 setIsSending(true);
                 try {
-                  // Build user context (using default for now)
                   const userContext = {
-                    userId: 'demo-user',
+                    userId,
                     currentProject: 'Helping Hands Systems',
                     recentTopics: [],
                   };
 
-                  // Convert message history to the format expected by agents
-                  const activeChat_ = chats.find((c) => c.id === activeChat);
-                  const messageHistory = activeChat_?.messages.map((msg) => ({
+                  const messageHistory = dbMessages.map((msg) => ({
                     id: msg.id,
-                    conversationId: activeChat!,
+                    conversationId: activeChat,
                     sender: msg.sender as 'user' | 'assistant' | 'system',
-                    content: msg.text,
-                    timestamp: msg.timestamp,
-                  })) || [];
+                    content: msg.content,
+                    timestamp: new Date(msg.created_at),
+                  }));
 
-                  // Call the agent system
                   const agentResponse = await processWithAgents({
                     messageContent: text,
                     userContext,
-                    conversationId: activeChat!,
+                    conversationId: activeChat,
                     messageHistory,
                   });
 
-                  // Create bot message with agent metadata
-                  const botMsg: Message = {
-                    id: (Date.now() + 1).toString(),
-                    text: agentResponse.content,
-                    sender: 'bot',
-                    timestamp: new Date(),
-                  };
+                  await addMessage(agentResponse.content, 'assistant', agentResponse.agentType, agentResponse.behavioralMode);
 
-                  setChats((prev) =>
-                    prev.map((c) => (c.id === activeChat ? { ...c, messages: [...c.messages, botMsg], lastMessage: agentResponse.content } : c))
-                  );
-
-                  console.log('🤖 Agent Response:', {
+                  console.log('Agent Response:', {
                     agentType: agentResponse.agentType,
                     behavioralMode: agentResponse.behavioralMode,
                     tokensUsed: agentResponse.metadata.tokensUsed,
@@ -243,7 +186,7 @@ export function ChatPage() {
                 type="text"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder={isSending ? 'Sending…' : 'Type a message…'}
+                placeholder={isSending ? 'Sending...' : 'Type a message...'}
                 disabled={isSending}
                 className="flex-1 rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-slate-400 focus:border-emerald-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
               />

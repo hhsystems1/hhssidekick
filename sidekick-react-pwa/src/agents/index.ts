@@ -102,7 +102,7 @@ export async function processWithAgents(request: AgentRequest): Promise<AgentRes
  */
 async function updateMemoryAsync(request: AgentRequest, response: AgentResponse): Promise<void> {
   try {
-    const memoryManager = getMemoryManager(request.conversationId);
+    const memoryManager = getMemoryManager(request.userContext.userId, request.conversationId);
 
     // Add user message
     await memoryManager.addUserMessage(request.messageContent);

@@ -3,9 +3,11 @@
  * Knowledge base and training management page
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BookOpen, Upload, FileText, Search, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { supabase } from '../lib/supabaseClient';
+import { addDocument, deleteDocument, getUserDocuments, searchKnowledgeBase, type SearchResult } from '../services/rag/rag-service';
 
 interface Document {
   id: string;
@@ -16,55 +18,101 @@ interface Document {
   status: 'processing' | 'ready' | 'error';
 }
 
+const MOCK_USER_ID = '00000000-0000-0000-0000-000000000000';
+
 export const TrainingPage: React.FC = () => {
+  const [userId, setUserId] = useState<string>(MOCK_USER_ID);
   const [searchQuery, setSearchQuery] = useState('');
   const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [uploadTitle, setUploadTitle] = useState('');
+  const [uploadContent, setUploadContent] = useState('');
 
-  // Mock data - replace with actual database calls
-  const [documents, setDocuments] = useState<Document[]>([
-    {
-      id: '1',
-      title: 'Sales Playbook 2024',
-      type: 'pdf',
-      size: '2.4 MB',
-      uploadedAt: '2024-01-10',
-      status: 'ready',
-    },
-    {
-      id: '2',
-      title: 'Product Documentation',
-      type: 'url',
-      uploadedAt: '2024-01-08',
-      status: 'ready',
-    },
-    {
-      id: '3',
-      title: 'Customer Success Guide',
-      type: 'text',
-      size: '156 KB',
-      uploadedAt: '2024-01-05',
-      status: 'processing',
-    },
-  ]);
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    getUser();
+  }, []);
+
+  useEffect(() => {
+    if (userId) {
+      loadDocuments();
+    }
+  }, [userId]);
+
+  const loadDocuments = async () => {
+    setIsLoading(true);
+    try {
+      const docs = await getUserDocuments(userId);
+      setDocuments(docs.map((doc: Record<string, unknown>) => ({
+        id: doc.id as string,
+        title: doc.title as string,
+        type: (doc.file_type as Document['type']) || 'text',
+        uploadedAt: doc.created_at as string,
+        status: doc.status as Document['status'],
+      })));
+    } catch (error) {
+      console.error('Error loading documents:', error);
+      toast.error('Failed to load documents');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const filteredDocuments = documents.filter(doc =>
     doc.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleDelete = (docId: string) => {
+  const handleDelete = async (docId: string) => {
     if (!confirm('Are you sure you want to delete this document?')) return;
 
     const loadingToast = toast.loading('Deleting document...');
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await deleteDocument(docId);
       setDocuments(documents.filter(d => d.id !== docId));
       toast.success('Document deleted successfully!', { id: loadingToast });
-    }, 500);
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      toast.error('Failed to delete document', { id: loadingToast });
+    }
   };
 
-  const handleUpload = () => {
-    toast.success('Document uploaded successfully! Processing...');
-    setShowUploadDialog(false);
+  const handleUpload = async (title: string, content: string, fileType: string) => {
+    const loadingToast = toast.loading('Uploading and processing document...');
+    try {
+      await addDocument(userId, title, content, fileType);
+      toast.success('Document uploaded successfully! Processing...', { id: loadingToast });
+      setShowUploadDialog(false);
+      await loadDocuments();
+    } catch (error) {
+      console.error('Error uploading document:', error);
+      toast.error('Failed to upload document', { id: loadingToast });
+    }
+  };
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const results = await searchKnowledgeBase(userId, searchQuery);
+      setSearchResults(results);
+    } catch (error) {
+      console.error('Search error:', error);
+      toast.error('Search failed');
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const getTypeIcon = (type: string) => {
@@ -106,23 +154,39 @@ export const TrainingPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-slate-900/60 rounded-lg p-6 border border-slate-800">
             <p className="text-sm text-slate-400 mb-1">Total Documents</p>
-            <p className="text-3xl font-semibold">{documents.length}</p>
+            {isLoading ? (
+              <div className="h-8 w-16 bg-slate-800 animate-pulse rounded" />
+            ) : (
+              <p className="text-3xl font-semibold">{documents.length}</p>
+            )}
           </div>
           <div className="bg-slate-900/60 rounded-lg p-6 border border-slate-800">
             <p className="text-sm text-slate-400 mb-1">Ready</p>
-            <p className="text-3xl font-semibold text-emerald-400">
-              {documents.filter(d => d.status === 'ready').length}
-            </p>
+            {isLoading ? (
+              <div className="h-8 w-8 bg-slate-800 animate-pulse rounded" />
+            ) : (
+              <p className="text-3xl font-semibold text-emerald-400">
+                {documents.filter(d => d.status === 'ready').length}
+              </p>
+            )}
           </div>
           <div className="bg-slate-900/60 rounded-lg p-6 border border-slate-800">
             <p className="text-sm text-slate-400 mb-1">Processing</p>
-            <p className="text-3xl font-semibold text-yellow-400">
-              {documents.filter(d => d.status === 'processing').length}
-            </p>
+            {isLoading ? (
+              <div className="h-8 w-8 bg-slate-800 animate-pulse rounded" />
+            ) : (
+              <p className="text-3xl font-semibold text-yellow-400">
+                {documents.filter(d => d.status === 'processing').length}
+              </p>
+            )}
           </div>
           <div className="bg-slate-900/60 rounded-lg p-6 border border-slate-800">
-            <p className="text-sm text-slate-400 mb-1">Total Size</p>
-            <p className="text-3xl font-semibold">2.5 MB</p>
+            <p className="text-sm text-slate-400 mb-1">Status</p>
+            {isLoading ? (
+              <div className="h-8 w-16 bg-slate-800 animate-pulse rounded" />
+            ) : (
+              <p className="text-3xl font-semibold">{documents.filter(d => d.status === 'error').length} errors</p>
+            )}
           </div>
         </div>
 
@@ -135,17 +199,43 @@ export const TrainingPage: React.FC = () => {
               placeholder="Search documents..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-800 rounded-lg text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              className="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-800 rounded-lg text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
           <button
+            onClick={handleSearch}
+            disabled={isSearching || !searchQuery.trim()}
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition-colors disabled:opacity-50"
+          >
+            {isSearching ? 'Searching...' : 'Search'}
+          </button>
+          <button
             onClick={() => setShowUploadDialog(true)}
-            className="flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition-colors whitespace-nowrap"
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors"
           >
             <Upload size={20} />
-            Upload Document
+            Upload
           </button>
         </div>
+
+        {/* Search Results */}
+        {searchResults.length > 0 && (
+          <div className="mb-6 p-4 bg-slate-900/60 border border-slate-800 rounded-lg">
+            <h3 className="text-sm font-semibold mb-3">Search Results</h3>
+            <div className="space-y-2">
+              {searchResults.map((result) => (
+                <div key={result.id} className="p-3 bg-slate-800/50 rounded-lg">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium">{result.documentTitle}</span>
+                    <span className="text-xs text-slate-400">{(result.similarity * 100).toFixed(1)}% match</span>
+                  </div>
+                  <p className="text-sm text-slate-300 line-clamp-2">{result.content}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Documents List */}
         {filteredDocuments.length === 0 ? (
@@ -220,10 +310,25 @@ export const TrainingPage: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              <div className="border-2 border-dashed border-slate-700 rounded-lg p-8 text-center hover:border-slate-600 transition-colors cursor-pointer">
-                <Upload className="mx-auto mb-3 text-slate-400" size={32} />
-                <p className="text-slate-300 mb-1">Drop files here or click to browse</p>
-                <p className="text-sm text-slate-500">PDF, TXT, DOCX up to 10MB</p>
+              <div>
+                <label className="block text-sm text-slate-400 mb-1">Title</label>
+                <input
+                  type="text"
+                  value={uploadTitle}
+                  onChange={(e) => setUploadTitle(e.target.value)}
+                  placeholder="Document title"
+                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-400 mb-1">Content</label>
+                <textarea
+                  value={uploadContent}
+                  onChange={(e) => setUploadContent(e.target.value)}
+                  placeholder="Paste document content here..."
+                  rows={6}
+                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                />
               </div>
 
               <div className="flex gap-3">
@@ -234,8 +339,9 @@ export const TrainingPage: React.FC = () => {
                   Cancel
                 </button>
                 <button
-                  onClick={handleUpload}
-                  className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition-colors"
+                  onClick={() => handleUpload(uploadTitle, uploadContent, 'text')}
+                  disabled={!uploadTitle.trim() || !uploadContent.trim()}
+                  className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Upload
                 </button>

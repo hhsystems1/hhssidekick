@@ -4,13 +4,13 @@
  */
 
 import React, { useState } from 'react';
-import { Play, Pause, Plus, Settings } from 'lucide-react';
+import { Play, Pause, Plus, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAgents } from '../hooks/useDatabase';
 import { DeployAgentDialog } from '../components/DeployAgentDialog';
 
 export const AgentsPage: React.FC = () => {
-  const { agents, loading, toggleAgent, addAgent, reload } = useAgents();
+  const { agents, loading, toggleAgent, addAgent, deleteAgent, reload } = useAgents();
   const [showDeployDialog, setShowDeployDialog] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'idle'>('all');
 
@@ -29,6 +29,22 @@ export const AgentsPage: React.FC = () => {
     } catch (error: any) {
       toast.error('Failed to update agent');
       console.error('Error toggling agent:', error);
+    }
+  };
+
+  const handleDeleteAgent = async (agentId: string, agentName: string) => {
+    if (!confirm(`Are you sure you want to delete "${agentName}"?`)) return;
+
+    try {
+      const success = await deleteAgent(agentId);
+      if (success) {
+        toast.success('Agent deleted successfully');
+      } else {
+        toast.error('Failed to delete agent');
+      }
+    } catch (error: any) {
+      toast.error('Failed to delete agent');
+      console.error('Error deleting agent:', error);
     }
   };
 
@@ -143,11 +159,11 @@ export const AgentsPage: React.FC = () => {
                       {agent.status === 'active' ? <Pause size={18} /> : <Play size={18} />}
                     </button>
                     <button
-                      onClick={() => toast('Agent settings coming soon!')}
-                      className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-slate-100"
-                      aria-label="Agent settings"
+                      onClick={() => handleDeleteAgent(agent.id, agent.name)}
+                      className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-red-400"
+                      aria-label="Delete agent"
                     >
-                      <Settings size={18} />
+                      <Trash2 size={18} />
                     </button>
                   </div>
                 </div>

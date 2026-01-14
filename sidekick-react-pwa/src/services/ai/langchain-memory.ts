@@ -29,11 +29,13 @@ interface DBMessage {
  */
 export class SupabaseChatMessageHistory extends ChatMessageHistory {
   private conversationId: string;
+  private userId: string;
   private loaded: boolean = false;
 
-  constructor(conversationId: string) {
+  constructor(conversationId: string, userId: string) {
     super();
     this.conversationId = conversationId;
+    this.userId = userId;
   }
 
   /**
@@ -45,6 +47,7 @@ export class SupabaseChatMessageHistory extends ChatMessageHistory {
     const { data: messages, error } = await supabase
       .from('messages')
       .select('*')
+      .eq('user_id', this.userId)
       .eq('conversation_id', this.conversationId)
       .order('created_at', { ascending: true })
       .limit(50); // Last 50 messages for context window
@@ -95,6 +98,7 @@ export class SupabaseChatMessageHistory extends ChatMessageHistory {
         : 'system';
 
     await supabase.from('messages').insert({
+      user_id: this.userId,
       conversation_id: this.conversationId,
       sender,
       content: message.content as string
@@ -116,7 +120,7 @@ export class SupabaseChatMessageHistory extends ChatMessageHistory {
     await super.clear();
 
     // Clear from database
-    await supabase.from('messages').delete().eq('conversation_id', this.conversationId);
+    await supabase.from('messages').delete().eq('user_id', this.userId).eq('conversation_id', this.conversationId);
 
     this.loaded = false;
   }
@@ -125,15 +129,17 @@ export class SupabaseChatMessageHistory extends ChatMessageHistory {
 /**
  * Create a BufferMemory instance backed by Supabase
  *
+ * @param userId - User ID for data isolation
  * @param conversationId - ID of the conversation
  * @param maxTokenLimit - Optional token limit for memory (default: 2000)
  * @returns Configured BufferMemory instance
  */
 export async function createSupabaseMemory(
+  userId: string,
   conversationId: string,
   _maxTokenLimit: number = 2000
 ): Promise<BufferMemory> {
-  const chatHistory = new SupabaseChatMessageHistory(conversationId);
+  const chatHistory = new SupabaseChatMessageHistory(conversationId, userId);
 
   const memory = new BufferMemory({
     chatHistory,
@@ -150,17 +156,20 @@ export async function createSupabaseMemory(
  * Get conversation context as formatted string
  * Useful for including in prompts when not using LangChain chains
  *
+ * @param userId - User ID for data isolation
  * @param conversationId - ID of the conversation
  * @param maxMessages - Maximum number of recent messages to include
  * @returns Formatted conversation history
  */
 export async function getConversationContext(
+  userId: string,
   conversationId: string,
   maxMessages: number = 10
 ): Promise<string> {
   const { data: messages, error } = await supabase
     .from('messages')
     .select('*')
+    .eq('user_id', userId)
     .eq('conversation_id', conversationId)
     .order('created_at', { ascending: false })
     .limit(maxMessages);
@@ -185,15 +194,17 @@ export async function getConversationContext(
  * Summarize conversation for long-term memory
  * Uses LLM to create concise summary of conversation
  *
+ * @param userId - User ID for data isolation
  * @param conversationId - ID of the conversation to summarize
  * @param llmCallback - Callback function to call LLM for summarization
  * @returns Summary text
  */
 export async function summarizeConversation(
+  userId: string,
   conversationId: string,
   llmCallback: (prompt: string) => Promise<string>
 ): Promise<string> {
-  const context = await getConversationContext(conversationId, 50);
+  const context = await getConversationContext(userId, conversationId, 50);
 
   if (!context) {
     return '';
@@ -246,10 +257,12 @@ export async function saveConversationSummary(
  */
 export class MemoryManager {
   private conversationId: string;
+  private userId: string;
   private memory: BufferMemory | null = null;
 
-  constructor(conversationId: string) {
+  constructor(conversationId: string, userId: string) {
     this.conversationId = conversationId;
+    this.userId = userId;
   }
 
   /**
@@ -257,7 +270,7 @@ export class MemoryManager {
    */
   async getMemory(): Promise<BufferMemory> {
     if (!this.memory) {
-      this.memory = await createSupabaseMemory(this.conversationId);
+      this.memory = await createSupabaseMemory(this.userId, this.conversationId);
     }
     return this.memory;
   }
@@ -282,19 +295,19 @@ export class MemoryManager {
    * Get recent context for prompts
    */
   async getRecentContext(maxMessages: number = 10): Promise<string> {
-    return await getConversationContext(this.conversationId, maxMessages);
+    return await getConversationContext(this.userId, this.conversationId, maxMessages);
   }
 
   /**
    * Create summary and save to long-term memory
    */
   async createSummary(
-    userId: string,
+    _userId: string,
     llmCallback: (prompt: string) => Promise<string>
   ): Promise<void> {
-    const summary = await summarizeConversation(this.conversationId, llmCallback);
+    const summary = await summarizeConversation(this.userId, this.conversationId, llmCallback);
     if (summary) {
-      await saveConversationSummary(userId, this.conversationId, summary);
+      await saveConversationSummary(this.userId, this.conversationId, summary);
     }
   }
 
@@ -314,9 +327,10 @@ export class MemoryManager {
  */
 const memoryManagers = new Map<string, MemoryManager>();
 
-export function getMemoryManager(conversationId: string): MemoryManager {
-  if (!memoryManagers.has(conversationId)) {
-    memoryManagers.set(conversationId, new MemoryManager(conversationId));
+export function getMemoryManager(userId: string, conversationId: string): MemoryManager {
+  const key = `${userId}:${conversationId}`;
+  if (!memoryManagers.has(key)) {
+    memoryManagers.set(key, new MemoryManager(conversationId, userId));
   }
-  return memoryManagers.get(conversationId)!;
+  return memoryManagers.get(key)!;
 }

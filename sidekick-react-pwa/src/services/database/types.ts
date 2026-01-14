@@ -37,6 +37,7 @@ export interface Database {
       messages: {
         Row: {
           id: string;
+          user_id: string;
           conversation_id: string;
           sender: 'user' | 'assistant' | 'system';
           content: string;
@@ -47,6 +48,7 @@ export interface Database {
         };
         Insert: {
           id?: string;
+          user_id: string;
           conversation_id: string;
           sender: 'user' | 'assistant' | 'system';
           content: string;
@@ -57,6 +59,7 @@ export interface Database {
         };
         Update: {
           id?: string;
+          user_id?: string;
           conversation_id?: string;
           sender?: 'user' | 'assistant' | 'system';
           content?: string;
@@ -171,6 +174,95 @@ export interface Database {
           created_at?: string;
         };
       };
+      profiles: {
+        Row: {
+          id: string;
+          email: string | null;
+          full_name: string | null;
+          avatar_url: string | null;
+          timezone: string | null;
+          preferences: UserPreferences | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          email?: string | null;
+          full_name?: string | null;
+          avatar_url?: string | null;
+          timezone?: string | null;
+          preferences?: UserPreferences | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          email?: string | null;
+          full_name?: string | null;
+          avatar_url?: string | null;
+          timezone?: string | null;
+          preferences?: UserPreferences | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      user_settings: {
+        Row: {
+          id: string;
+          user_id: string;
+          push_notifications: boolean;
+          email_notifications: boolean;
+          task_reminders: boolean;
+          two_factor_enabled: boolean;
+          theme: 'dark' | 'light' | 'system';
+          language: string;
+          font_size: 'small' | 'medium' | 'large';
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          push_notifications?: boolean;
+          email_notifications?: boolean;
+          task_reminders?: boolean;
+          two_factor_enabled?: boolean;
+          theme?: 'dark' | 'light' | 'system';
+          language?: string;
+          font_size?: 'small' | 'medium' | 'large';
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          push_notifications?: boolean;
+          email_notifications?: boolean;
+          task_reminders?: boolean;
+          two_factor_enabled?: boolean;
+          theme?: 'dark' | 'light' | 'system';
+          language?: string;
+          font_size?: 'small' | 'medium' | 'large';
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
+  };
+}
+
+export interface UserPreferences {
+  notifications: {
+    push: boolean;
+    email: boolean;
+    taskReminders: boolean;
+  };
+  appearance: {
+    theme: 'dark' | 'light' | 'system';
+    fontSize: 'small' | 'medium' | 'large';
+  };
+  privacy: {
+    twoFactorEnabled: boolean;
+    shareAnalytics: boolean;
   };
 }

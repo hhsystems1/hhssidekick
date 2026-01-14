@@ -123,6 +123,7 @@ export async function deleteConversation(conversationId: string): Promise<boolea
  * Add a message to a conversation
  */
 export async function addMessage(
+  userId: string,
   conversationId: string,
   sender: 'user' | 'assistant' | 'system',
   content: string,
@@ -135,6 +136,7 @@ export async function addMessage(
   }
 ): Promise<Message | null> {
   const newMessage: NewMessage = {
+    user_id: userId,
     conversation_id: conversationId,
     sender,
     content,

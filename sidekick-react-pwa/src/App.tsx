@@ -9,10 +9,13 @@ import { MarketplacePage } from './pages/MarketplacePage';
 import { ProfilePage } from './pages/ProfilePage';
 import { ChatPage } from './ChatPage';
 import { Layout } from './Layout';
+import SchedulePage from './pages/schedule/SchedulePage';
+import SettingsPage from './pages/settings/SettingsPage';
+import { AuthProvider } from './context/AuthContext';
 
 function App() {
   return (
-    <>
+    <AuthProvider>
       <Toaster
         position="top-right"
         toastOptions={{
@@ -46,11 +49,13 @@ function App() {
             <Route path="marketplace" element={<MarketplacePage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="test" element={<TestPage />} />
+            <Route path="schedule" element={<SchedulePage />} />
+            <Route path="settings" element={<SettingsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
-    </>
+    </AuthProvider>
   );
 }
 

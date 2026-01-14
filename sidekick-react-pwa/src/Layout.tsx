@@ -4,13 +4,18 @@
  */
 
 import React, { useState } from 'react';
-import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { Menu } from 'lucide-react';
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, ArrowLeft, Settings, User } from 'lucide-react';
 import { BRANDING, getLogo } from './config/branding';
+import { AuthModal } from './components/AuthModal';
+import { useAuth } from './context/AuthContext';
 
 export const Layout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
   const navItems = [
     { path: '/', icon: '🏠', label: 'Dashboard', exact: true },
@@ -21,6 +26,19 @@ export const Layout: React.FC = () => {
     { path: '/profile', icon: '👤', label: 'Profile' },
     { path: '/test', icon: '🧪', label: 'Tests' },
   ];
+
+  const getPageTitle = () => {
+    // Special pages that need custom titles
+    if (location.pathname === '/schedule') return 'Schedule';
+    if (location.pathname === '/settings') return 'Settings';
+    
+    return navItems.find(item =>
+      item.exact ? location.pathname === item.path : location.pathname.startsWith(item.path)
+    )?.label || 'Dashboard';
+  };
+
+  const isHomePage = location.pathname === '/';
+  const canGoBack = !isHomePage;
 
   return (
     <div className="h-screen w-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
@@ -33,8 +51,32 @@ export const Layout: React.FC = () => {
             <h1 className="text-2xl font-bold text-slate-100">{BRANDING.appName}</h1>
           </div>
 
+          {/* User info or sign in */}
+          <div className="px-4 py-4 border-b border-slate-800">
+            {user ? (
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-800 flex items-center justify-center">
+                  <User size={20} className="text-emerald-200" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-slate-200 truncate">
+                    {user.email?.split('@')[0] || 'User'}
+                  </p>
+                  <p className="text-xs text-slate-500 truncate">{user.email}</p>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setAuthModalOpen(true)}
+                className="w-full py-2 px-4 bg-emerald-700 text-emerald-50 rounded-lg font-medium hover:bg-emerald-600 transition-colors text-sm"
+              >
+                Sign In
+              </button>
+            )}
+          </div>
+
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-2">
+          <nav className="flex-1 px-4 py-4 space-y-1">
             {navItems.map((item) => (
               <NavLink
                 key={item.path}
@@ -42,29 +84,31 @@ export const Layout: React.FC = () => {
                 end={item.exact}
                 onClick={() => setSidebarOpen(false)}
                 className={({ isActive }) =>
-                  `w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                  `w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-slate-950/60 border border-slate-800'
-                      : 'hover:bg-slate-800'
+                      ? 'bg-slate-950/60 border border-slate-800 text-slate-100'
+                      : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
                   }`
                 }
               >
-                {({ isActive }) => (
-                  <>
-                    <span className="text-xl">{item.icon}</span>
-                    <span className={`font-medium ${isActive ? 'text-slate-100' : 'text-slate-400'}`}>
-                      {item.label}
-                    </span>
-                  </>
-                )}
+                <span className="text-lg">{item.icon}</span>
+                <span className="font-medium">{item.label}</span>
               </NavLink>
             ))}
           </nav>
 
           {/* Bottom action */}
-          <div className="p-4 border-t border-slate-800">
+          <div className="p-4 border-t border-slate-800 space-y-2">
+            <button
+              onClick={() => navigate('/settings')}
+              className="w-full flex items-center space-x-3 px-4 py-2.5 hover:bg-slate-800 rounded-lg transition-colors"
+            >
+              <Settings size={18} className="text-slate-400" />
+              <span className="font-medium text-slate-400">Settings</span>
+            </button>
             <NavLink
               to="/chat"
+              onClick={() => setSidebarOpen(false)}
               className="block w-full py-3 px-4 bg-emerald-700 text-emerald-50 rounded-lg font-medium hover:bg-emerald-600 transition-colors text-center"
             >
               New Brain Dump
@@ -83,25 +127,38 @@ export const Layout: React.FC = () => {
 
       {/* Main Content */}
       <div className="lg:pl-64 h-full overflow-auto">
-        {/* Top bar - only show on mobile */}
-        <div className="lg:hidden h-16 border-b border-slate-800 flex items-center justify-between px-4 bg-slate-950/60 sticky top-0 z-30">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 text-slate-100"
-          >
-            <Menu size={24} />
-          </button>
-          <h2 className="text-xl font-semibold text-slate-100">
-            {navItems.find(item =>
-              item.exact ? location.pathname === item.path : location.pathname.startsWith(item.path)
-            )?.label || 'Dashboard'}
+        {/* Mobile Header */}
+        <div className="lg:hidden h-16 border-b border-slate-800 flex items-center px-4 bg-slate-950/60 sticky top-0 z-30">
+          {canGoBack ? (
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 -ml-2 text-slate-100 hover:text-slate-300 transition-colors"
+            >
+              <ArrowLeft size={24} />
+            </button>
+          ) : (
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 -ml-2 text-slate-100"
+            >
+              <Menu size={24} />
+            </button>
+          )}
+          <h2 className="flex-1 text-center text-lg font-semibold text-slate-100">
+            {getPageTitle()}
           </h2>
-          <div className="w-10" /> {/* Spacer for centering */}
+          <div className="w-10" />
         </div>
 
         {/* Page Content */}
         <Outlet />
       </div>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+      />
     </div>
   );
 };
