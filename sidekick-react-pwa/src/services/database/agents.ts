@@ -72,7 +72,9 @@ export async function createAgent(
 
   if (error) {
     console.error('Error creating agent:', error);
-    return null;
+    console.error('Agent data attempted:', newAgent);
+    console.error('Error details:', JSON.stringify(error, null, 2));
+    throw error; // Throw instead of returning null so we can catch it
   }
 
   return data;

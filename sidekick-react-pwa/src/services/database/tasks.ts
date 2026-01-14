@@ -96,7 +96,9 @@ export async function createTask(
 
   if (error) {
     console.error('Error creating task:', error);
-    return null;
+    console.error('Task data attempted:', newTask);
+    console.error('Error details:', JSON.stringify(error, null, 2));
+    throw error; // Throw instead of returning null so we can catch it
   }
 
   return data;

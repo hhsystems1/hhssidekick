@@ -69,17 +69,26 @@ export function useTasks() {
   }, [tasks]);
 
   const addTask = useCallback(async (title: string, priority: 'high' | 'medium' | 'low' = 'medium') => {
-    if (!userId) return false;
+    if (!userId) {
+      console.error('Cannot add task: No user ID available');
+      return false;
+    }
+    console.log('Adding task with userId:', userId, 'title:', title, 'priority:', priority);
     try {
       const newTask = await db.createTask(userId, title, { priority });
       if (newTask) {
+        console.log('Task created successfully:', newTask);
         setTasks([...tasks, newTask]);
         return true;
       }
-    } catch (err) {
+      console.error('Task creation returned null');
+      return false;
+    } catch (err: any) {
       console.error('Failed to add task:', err);
+      console.error('Error message:', err.message);
+      console.error('Error code:', err.code);
+      return false;
     }
-    return false;
   }, [tasks, userId]);
 
   return { tasks, loading, error, toggleTask, addTask, reload: loadTasks };
@@ -154,10 +163,15 @@ export function useAgents() {
   }, [agents]);
 
   const addAgent = useCallback(async (name: string, agentType: string) => {
-    if (!userId) return false;
+    if (!userId) {
+      console.error('Cannot add agent: No user ID available');
+      return false;
+    }
+    console.log('Adding agent with userId:', userId, 'name:', name, 'type:', agentType);
     try {
       const newAgent = await db.createAgent(userId, name, agentType);
       if (newAgent) {
+        console.log('Agent created successfully:', newAgent);
         setAgents([...agents, {
           id: newAgent.id,
           name: newAgent.name,
@@ -166,10 +180,14 @@ export function useAgents() {
         }]);
         return true;
       }
-    } catch (err) {
+      console.error('Agent creation returned null');
+      return false;
+    } catch (err: any) {
       console.error('Failed to add agent:', err);
+      console.error('Error message:', err.message);
+      console.error('Error code:', err.code);
+      return false;
     }
-    return false;
   }, [agents, userId]);
 
   const deleteAgent = useCallback(async (agentId: string) => {

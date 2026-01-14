@@ -99,10 +99,17 @@ export const SidekickHome: React.FC = () => {
           onClose={() => setShowNewAgentDialog(false)}
           onSubmit={async (name, agentType) => {
             try {
+              console.log('SidekickHome: Attempting to deploy agent:', name, agentType);
               const success = await addAgent(name, agentType);
+              console.log('SidekickHome: Deploy agent result:', success);
+              if (!success) {
+                console.error('SidekickHome: Agent deployment failed - check console for details');
+                alert('Failed to deploy agent - check console for details');
+              }
               return success;
             } catch (error: any) {
-              console.error('Error deploying agent:', error);
+              console.error('SidekickHome: Error deploying agent:', error);
+              alert(`Failed to deploy agent: ${error.message || 'Unknown error'}`);
               return false;
             }
           }}
