@@ -126,9 +126,9 @@ export const Layout: React.FC = () => {
       )}
 
       {/* Main Content */}
-      <div className="lg:pl-64 h-full overflow-auto">
+      <div className="lg:pl-64 h-full flex flex-col">
         {/* Mobile Header */}
-        <div className="lg:hidden h-16 border-b border-slate-800 flex items-center px-4 bg-slate-950/60 sticky top-0 z-30">
+        <div className="lg:hidden h-16 border-b border-slate-800 flex items-center px-4 bg-slate-950/60 z-30 shrink-0">
           {canGoBack ? (
             <button
               onClick={() => navigate(-1)}
@@ -151,7 +151,9 @@ export const Layout: React.FC = () => {
         </div>
 
         {/* Page Content */}
-        <Outlet />
+        <div className="flex-1 overflow-hidden">
+          <Outlet />
+        </div>
       </div>
 
       {/* Auth Modal */}
