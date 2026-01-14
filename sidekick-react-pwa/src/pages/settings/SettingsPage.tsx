@@ -286,7 +286,7 @@ export const SettingsPage: React.FC = () => {
             <div className="p-6">
               <h2 className="text-lg font-semibold text-slate-100 mb-4">Choose Theme</h2>
               <div className="space-y-2">
-                {['light', 'dark', 'system'].map((theme) => (
+                {(['light', 'dark', 'system'] as const).map((theme) => (
                   <button
                     key={theme}
                     onClick={async () => {
@@ -366,11 +366,11 @@ export const SettingsPage: React.FC = () => {
             <div className="p-6">
               <h2 className="text-lg font-semibold text-slate-100 mb-4">Choose Font Size</h2>
               <div className="space-y-2">
-                {[
-                  { size: 'small', label: 'Small', description: 'Compact text' },
-                  { size: 'medium', label: 'Medium', description: 'Default size' },
-                  { size: 'large', label: 'Large', description: 'Easier to read' },
-                ].map((font) => (
+                {([
+                  { size: 'small' as const, label: 'Small', description: 'Compact text' },
+                  { size: 'medium' as const, label: 'Medium', description: 'Default size' },
+                  { size: 'large' as const, label: 'Large', description: 'Easier to read' },
+                ] as const).map((font) => (
                   <button
                     key={font.size}
                     onClick={async () => {

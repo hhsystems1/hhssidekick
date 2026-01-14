@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useCalendarEvents } from '../../hooks/useDatabase';
 import { CalendarEventDialog } from '../../components/CalendarEventDialog';
-import { ChevronLeft, ChevronRight, Plus, ArrowLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 
 export const SchedulePage: React.FC = () => {
-  const navigate = useNavigate();
   const { events, loading: eventsLoading, reload } = useCalendarEvents();
   const [showEventDialog, setShowEventDialog] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
