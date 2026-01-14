@@ -48,11 +48,8 @@ export function ChatPage() {
   };
 
   useEffect(() => {
-    // Use setTimeout to ensure DOM has updated before scrolling
-    const timer = setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    }, 100);
-    return () => clearTimeout(timer);
+    // Scroll immediately without delay for better performance
+    messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
   }, [dbMessages]);
 
   const activeMessages = dbMessages.map((msg) => ({
