@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import * as db from '../services/database';
+import { useAuth } from '../context/AuthContext';
 
 // Mock user ID for development (replace with actual auth in production)
 const MOCK_USER_ID = '00000000-0000-0000-0000-000000000000';
@@ -13,6 +14,8 @@ const MOCK_USER_ID = '00000000-0000-0000-0000-000000000000';
  * Hook to load tasks from database
  */
 export function useTasks() {
+  const { user } = useAuth();
+  const userId = user?.id || MOCK_USER_ID;
   const [tasks, setTasks] = useState<Array<{
     id: string;
     title: string;
@@ -23,10 +26,11 @@ export function useTasks() {
   const [error, setError] = useState<string | null>(null);
 
   const loadTasks = useCallback(async () => {
+    if (!userId) return; // Don't load if no user
     setLoading(true);
     setError(null);
     try {
-      const data = await db.getTodayTasks(MOCK_USER_ID);
+      const data = await db.getTodayTasks(userId);
       setTasks(data);
     } catch (err: any) {
       console.error('Failed to load tasks:', err);
@@ -40,7 +44,7 @@ export function useTasks() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     loadTasks();
@@ -65,8 +69,9 @@ export function useTasks() {
   }, [tasks]);
 
   const addTask = useCallback(async (title: string, priority: 'high' | 'medium' | 'low' = 'medium') => {
+    if (!userId) return false;
     try {
-      const newTask = await db.createTask(MOCK_USER_ID, title, { priority });
+      const newTask = await db.createTask(userId, title, { priority });
       if (newTask) {
         setTasks([...tasks, newTask]);
         return true;
@@ -75,7 +80,7 @@ export function useTasks() {
       console.error('Failed to add task:', err);
     }
     return false;
-  }, [tasks]);
+  }, [tasks, userId]);
 
   return { tasks, loading, error, toggleTask, addTask, reload: loadTasks };
 }
@@ -84,6 +89,8 @@ export function useTasks() {
  * Hook to load agents from database
  */
 export function useAgents() {
+  const { user } = useAuth();
+  const userId = user?.id || MOCK_USER_ID;
   const [agents, setAgents] = useState<Array<{
     id: string;
     name: string;
@@ -94,10 +101,11 @@ export function useAgents() {
   const [error, setError] = useState<string | null>(null);
 
   const loadAgents = useCallback(async () => {
+    if (!userId) return;
     setLoading(true);
     setError(null);
     try {
-      const data = await db.getUserAgents(MOCK_USER_ID);
+      const data = await db.getUserAgents(userId);
       // Map database agents to UI format
       setAgents(data.map(agent => ({
         id: agent.id,
@@ -119,7 +127,7 @@ export function useAgents() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     loadAgents();
@@ -146,8 +154,9 @@ export function useAgents() {
   }, [agents]);
 
   const addAgent = useCallback(async (name: string, agentType: string) => {
+    if (!userId) return false;
     try {
-      const newAgent = await db.createAgent(MOCK_USER_ID, name, agentType);
+      const newAgent = await db.createAgent(userId, name, agentType);
       if (newAgent) {
         setAgents([...agents, {
           id: newAgent.id,
@@ -161,7 +170,7 @@ export function useAgents() {
       console.error('Failed to add agent:', err);
     }
     return false;
-  }, [agents]);
+  }, [agents, userId]);
 
   const deleteAgent = useCallback(async (agentId: string) => {
     try {
@@ -183,6 +192,8 @@ export function useAgents() {
  * Hook to load calendar events from database
  */
 export function useCalendarEvents() {
+  const { user } = useAuth();
+  const userId = user?.id || MOCK_USER_ID;
   const [events, setEvents] = useState<Array<{
     id: string;
     time: string;
@@ -194,11 +205,12 @@ export function useCalendarEvents() {
   const [error, setError] = useState<string | null>(null);
 
   const loadEvents = useCallback(async () => {
+    if (!userId) return;
     setLoading(true);
     setError(null);
     try {
-      const data = await db.getTodayEvents(MOCK_USER_ID);
-      const next = await db.getNextEvent(MOCK_USER_ID);
+      const data = await db.getTodayEvents(userId);
+      const next = await db.getNextEvent(userId);
 
       setEvents(data.map(event => ({
         id: event.id,
@@ -222,7 +234,7 @@ export function useCalendarEvents() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     loadEvents();
@@ -235,15 +247,18 @@ export function useCalendarEvents() {
  * Hook to load conversations from database
  */
 export function useConversations() {
+  const { user } = useAuth();
+  const userId = user?.id || MOCK_USER_ID;
   const [conversations, setConversations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadConversations = useCallback(async () => {
+    if (!userId) return;
     setLoading(true);
     setError(null);
     try {
-      const data = await db.getUserConversations(MOCK_USER_ID);
+      const data = await db.getUserConversations(userId);
       setConversations(data);
     } catch (err: any) {
       console.error('Failed to load conversations:', err);
@@ -252,15 +267,16 @@ export function useConversations() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     loadConversations();
   }, [loadConversations]);
 
   const createConversation = useCallback(async (title?: string) => {
+    if (!userId) return null;
     try {
-      const conv = await db.createConversation(MOCK_USER_ID, title);
+      const conv = await db.createConversation(userId, title);
       if (conv) {
         setConversations([conv, ...conversations]);
         return conv;
@@ -269,7 +285,7 @@ export function useConversations() {
       console.error('Failed to create conversation:', err);
     }
     return null;
-  }, [conversations]);
+  }, [conversations, userId]);
 
   return { conversations, loading, error, createConversation, reload: loadConversations };
 }
@@ -278,6 +294,8 @@ export function useConversations() {
  * Hook to load user profile from database
  */
 export function useUserProfile() {
+  const { user } = useAuth();
+  const userId = user?.id || MOCK_USER_ID;
   const [profile, setProfile] = useState<{
     id: string;
     email: string | null;
@@ -289,10 +307,11 @@ export function useUserProfile() {
   const [error, setError] = useState<string | null>(null);
 
   const loadProfile = useCallback(async () => {
+    if (!userId) return;
     setLoading(true);
     setError(null);
     try {
-      const data = await db.getProfile(MOCK_USER_ID);
+      const data = await db.getProfile(userId);
       if (data) {
         setProfile({
           id: data.id,
@@ -307,7 +326,7 @@ export function useUserProfile() {
       setError(err.message);
       // Fallback mock data
       setProfile({
-        id: MOCK_USER_ID,
+        id: userId,
         email: 'demo@example.com',
         full_name: 'Demo User',
         avatar_url: null,
@@ -316,7 +335,7 @@ export function useUserProfile() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     loadProfile();
@@ -327,8 +346,9 @@ export function useUserProfile() {
     avatar_url?: string | null;
     timezone?: string | null;
   }) => {
+    if (!userId) return false;
     try {
-      const { data, error } = await db.updateProfile(MOCK_USER_ID, updates);
+      const { data, error } = await db.updateProfile(userId, updates);
       if (data && !error) {
         setProfile({
           id: data.id,
@@ -343,7 +363,7 @@ export function useUserProfile() {
       console.error('Failed to update profile:', err);
     }
     return false;
-  }, []);
+  }, [userId]);
 
   return { profile, loading, error, updateProfile, reload: loadProfile };
 }
@@ -352,6 +372,8 @@ export function useUserProfile() {
  * Hook to load user settings from database
  */
 export function useUserSettings() {
+  const { user } = useAuth();
+  const userId = user?.id || MOCK_USER_ID;
   const [settings, setSettings] = useState<{
     push_notifications: boolean;
     email_notifications: boolean;
@@ -373,10 +395,11 @@ export function useUserSettings() {
   const [error, setError] = useState<string | null>(null);
 
   const loadSettings = useCallback(async () => {
+    if (!userId) return;
     setLoading(true);
     setError(null);
     try {
-      const data = await db.getUserSettings(MOCK_USER_ID);
+      const data = await db.getUserSettings(userId);
       setSettings({
         push_notifications: data.push_notifications,
         email_notifications: data.email_notifications,
@@ -392,7 +415,7 @@ export function useUserSettings() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     loadSettings();
@@ -407,11 +430,12 @@ export function useUserSettings() {
     language: string;
     font_size: 'small' | 'medium' | 'large';
   }>) => {
+    if (!userId) return false;
     // Optimistic update
     setSettings(prev => ({ ...prev, ...updates }));
 
     try {
-      const { error } = await db.updateUserSettings(MOCK_USER_ID, updates);
+      const { error } = await db.updateUserSettings(userId, updates);
       if (error) {
         // Revert on error
         loadSettings();
@@ -423,7 +447,7 @@ export function useUserSettings() {
       loadSettings();
       return false;
     }
-  }, [loadSettings]);
+  }, [loadSettings, userId]);
 
   return { settings, loading, error, updateSettings, reload: loadSettings };
 }
