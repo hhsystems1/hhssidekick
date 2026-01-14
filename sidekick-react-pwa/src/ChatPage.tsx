@@ -140,7 +140,8 @@ export function ChatPage() {
                 const text = message;
                 setMessage('');
 
-                await addMessage(text, 'user');
+                // Save the user message and get the returned message data
+                const userMessage = await addMessage(text, 'user');
 
                 setIsSending(true);
                 try {
@@ -150,6 +151,7 @@ export function ChatPage() {
                     recentTopics: [],
                   };
 
+                  // Build message history including the current user message
                   const messageHistory = dbMessages.map((msg) => ({
                     id: msg.id,
                     conversationId: activeChat,
@@ -157,6 +159,17 @@ export function ChatPage() {
                     content: msg.content,
                     timestamp: new Date(msg.created_at),
                   }));
+
+                  // Add the current user message to the history
+                  if (userMessage) {
+                    messageHistory.push({
+                      id: userMessage.id,
+                      conversationId: activeChat,
+                      sender: 'user' as const,
+                      content: text,
+                      timestamp: new Date(userMessage.created_at),
+                    });
+                  }
 
                   const agentResponse = await processWithAgents({
                     messageContent: text,
