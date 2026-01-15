@@ -34,7 +34,7 @@ export const SidekickHome: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 bg-[radial-gradient(circle_at_top_left,rgba(80,200,120,0.15),transparent_55%),radial-gradient(circle_at_bottom_right,rgba(56,181,255,0.15),transparent_55%)]">
+    <div className="bg-slate-950 bg-[radial-gradient(circle_at_top_left,rgba(80,200,120,0.15),transparent_55%),radial-gradient(circle_at_bottom_right,rgba(56,181,255,0.15),transparent_55%)]">
       {/* Command Center Dashboard */}
       <CommandCenter
         onNavigateToSchedule={() => navigate('/schedule')}
@@ -43,7 +43,7 @@ export const SidekickHome: React.FC = () => {
       />
 
       {/* Agents Section */}
-      <div className="p-4 lg:p-8 max-w-7xl mx-auto mt-8">
+      <div className="p-4 lg:p-8 max-w-7xl mx-auto mt-8 pb-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Command Center Columns 1-3 already rendered above, now add Agents as 4th section */}
 
@@ -99,10 +99,17 @@ export const SidekickHome: React.FC = () => {
           onClose={() => setShowNewAgentDialog(false)}
           onSubmit={async (name, agentType) => {
             try {
+              console.log('SidekickHome: Attempting to deploy agent:', name, agentType);
               const success = await addAgent(name, agentType);
+              console.log('SidekickHome: Deploy agent result:', success);
+              if (!success) {
+                console.error('SidekickHome: Agent deployment failed - check console for details');
+                alert('Failed to deploy agent - check console for details');
+              }
               return success;
             } catch (error: any) {
-              console.error('Error deploying agent:', error);
+              console.error('SidekickHome: Error deploying agent:', error);
+              alert(`Failed to deploy agent: ${error.message || 'Unknown error'}`);
               return false;
             }
           }}

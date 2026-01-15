@@ -104,6 +104,40 @@ CREATE INDEX IF NOT EXISTS calendar_events_user_id_idx ON calendar_events(user_i
 CREATE INDEX IF NOT EXISTS calendar_events_start_time_idx ON calendar_events(start_time);
 
 -- ============================================================================
+-- PROFILES TABLE
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email TEXT,
+  full_name TEXT,
+  avatar_url TEXT,
+  timezone TEXT DEFAULT 'America/New_York',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Indexes for profiles
+CREATE INDEX IF NOT EXISTS profiles_email_idx ON profiles(email);
+
+-- ============================================================================
+-- USER SETTINGS TABLE
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS user_settings (
+  user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  push_notifications BOOLEAN DEFAULT TRUE,
+  email_notifications BOOLEAN DEFAULT TRUE,
+  task_reminders BOOLEAN DEFAULT TRUE,
+  two_factor_enabled BOOLEAN DEFAULT FALSE,
+  theme TEXT DEFAULT 'dark' CHECK (theme IN ('dark', 'light', 'system')),
+  language TEXT DEFAULT 'en',
+  font_size TEXT DEFAULT 'medium' CHECK (font_size IN ('small', 'medium', 'large')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
 -- ============================================================================
 
@@ -113,6 +147,8 @@ ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE agents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE calendar_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_settings ENABLE ROW LEVEL SECURITY;
 
 -- Conversations policies
 CREATE POLICY "Users can view their own conversations"
@@ -213,6 +249,28 @@ CREATE POLICY "Users can delete their own calendar events"
   ON calendar_events FOR DELETE
   USING (auth.uid() = user_id);
 
+-- Profiles policies
+CREATE POLICY "Users can view their own profile"
+  ON profiles FOR SELECT
+  USING (auth.uid() = id);
+
+CREATE POLICY "Users can update their own profile"
+  ON profiles FOR UPDATE
+  USING (auth.uid() = id);
+
+-- User settings policies
+CREATE POLICY "Users can view their own settings"
+  ON user_settings FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own settings"
+  ON user_settings FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own settings"
+  ON user_settings FOR UPDATE
+  USING (auth.uid() = user_id);
+
 -- ============================================================================
 -- FUNCTIONS
 -- ============================================================================
@@ -241,3 +299,39 @@ CREATE TRIGGER update_agents_updated_at
   BEFORE UPDATE ON agents
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_profiles_updated_at
+  BEFORE UPDATE ON profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_user_settings_updated_at
+  BEFORE UPDATE ON user_settings
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================================================
+-- TRIGGERS FOR AUTOMATIC PROFILE/SETTINGS CREATION
+-- ============================================================================
+
+-- Function to create profile and settings when a new user signs up
+CREATE OR REPLACE FUNCTION handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Create profile
+  INSERT INTO public.profiles (id, email)
+  VALUES (NEW.id, NEW.email);
+
+  -- Create default settings
+  INSERT INTO public.user_settings (user_id)
+  VALUES (NEW.id);
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger to automatically create profile and settings on user signup
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION handle_new_user();

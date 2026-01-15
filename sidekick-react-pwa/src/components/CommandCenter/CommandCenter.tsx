@@ -316,10 +316,16 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
           onClose={() => setShowNewTaskDialog(false)}
           onSubmit={async (title, priority, _dueDate) => {
             try {
+              console.log('CommandCenter: Attempting to add task:', title, priority);
               const success = await addTask(title, priority);
+              console.log('CommandCenter: Add task result:', success);
+              if (!success) {
+                console.error('CommandCenter: Task creation failed - check console for details');
+              }
               return success;
             } catch (error: any) {
-              console.error('Error creating task:', error);
+              console.error('CommandCenter: Error creating task:', error);
+              alert(`Failed to create task: ${error.message || 'Unknown error'}`);
               return false;
             }
           }}

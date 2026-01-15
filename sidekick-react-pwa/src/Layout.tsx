@@ -9,6 +9,7 @@ import { Menu, ArrowLeft, Settings, User } from 'lucide-react';
 import { BRANDING, getLogo } from './config/branding';
 import { AuthModal } from './components/AuthModal';
 import { useAuth } from './context/AuthContext';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 export const Layout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -151,8 +152,10 @@ export const Layout: React.FC = () => {
         </div>
 
         {/* Page Content */}
-        <div className="flex-1 overflow-hidden">
-          <Outlet />
+        <div className="flex-1 overflow-y-auto">
+          <ProtectedRoute>
+            <Outlet />
+          </ProtectedRoute>
         </div>
 
         {/* Footer */}
