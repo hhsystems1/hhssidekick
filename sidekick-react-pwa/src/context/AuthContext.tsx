@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
+import { getProfile, createProfile } from '../services/database/profiles';
 
 interface AuthContextType {
   user: User | null;
@@ -26,18 +27,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Helper to ensure profile exists
+    const ensureUserProfile = async (currentUser: User) => {
+      if (!currentUser.email) return;
+
+      try {
+        const profile = await getProfile(currentUser.id);
+        if (!profile) {
+          console.log('Profile missing, creating new profile for user...');
+          await createProfile(
+            currentUser.id,
+            currentUser.email,
+            currentUser.user_metadata?.full_name
+          );
+        }
+      } catch (err) {
+        console.error('Error ensuring profile:', err);
+      }
+    };
+
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      if (session?.user) {
+        await ensureUserProfile(session.user);
+      }
       setLoading(false);
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        if (session?.user) {
+          await ensureUserProfile(session.user);
+        }
         setLoading(false);
       }
     );

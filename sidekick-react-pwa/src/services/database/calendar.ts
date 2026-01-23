@@ -68,7 +68,7 @@ export async function getNextEvent(userId: string): Promise<CalendarEvent | null
     .gte('start_time', now)
     .order('start_time', { ascending: true })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('Error fetching next event:', error);

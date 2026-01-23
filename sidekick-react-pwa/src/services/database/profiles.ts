@@ -7,19 +7,9 @@ type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
 const MOCK_USER_ID = '00000000-0000-0000-0000-000000000000';
 
 export const getProfile = async (userId?: string): Promise<Profile | null> => {
-  const id = userId || MOCK_USER_ID;
-
-  // Try to fetch from Supabase
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', id)
-    .single();
-
-  if (error || !data) {
-    // Return mock data for demo
+  if (!userId) {
     return {
-      id: id,
+      id: MOCK_USER_ID,
       email: 'demo@example.com',
       full_name: 'Demo User',
       avatar_url: null,
@@ -28,6 +18,18 @@ export const getProfile = async (userId?: string): Promise<Profile | null> => {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
+  }
+
+  // Try to fetch from Supabase
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error fetching profile:', error);
+    return null;
   }
 
   return data;
