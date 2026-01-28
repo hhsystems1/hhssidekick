@@ -4,23 +4,13 @@ import type { Database } from './types';
 type Profile = Database['public']['Tables']['profiles']['Row'];
 type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
 
-const MOCK_USER_ID = '00000000-0000-0000-0000-000000000000';
-
 export const getProfile = async (userId?: string): Promise<Profile | null> => {
   if (!userId) {
-    return {
-      id: MOCK_USER_ID,
-      email: 'demo@example.com',
-      full_name: 'Demo User',
-      avatar_url: null,
-      timezone: 'America/New_York',
-      preferences: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
+    console.warn('getProfile called without userId');
+    return null;
   }
 
-  // Try to fetch from Supabase
+  // Fetch from Supabase
   const { data, error } = await supabase
     .from('profiles')
     .select('*')

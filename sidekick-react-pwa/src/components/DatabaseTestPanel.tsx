@@ -5,10 +5,12 @@
 
 import React, { useState } from 'react';
 import * as db from '../services/database';
+import { useAuth } from '../context/AuthContext';
 
 export const DatabaseTestPanel: React.FC = () => {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
 
   const addResult = (test: string, success: boolean, data?: any, error?: string) => {
     setResults(prev => [...prev, {
@@ -32,10 +34,15 @@ export const DatabaseTestPanel: React.FC = () => {
   };
 
   const runAllTests = async () => {
+    if (!user?.id) {
+      addResult('Authentication Check', false, null, 'User not authenticated. Please log in.');
+      return;
+    }
+
     setLoading(true);
     setResults([]);
 
-    const testUserId = '00000000-0000-0000-0000-000000000000';
+    const testUserId = user.id;
 
     try {
       // Test 1: Create a task
@@ -90,15 +97,20 @@ export const DatabaseTestPanel: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <div className="bg-slate-900 rounded-xl border border-slate-800 p-6">
-        <h2 className="text-2xl font-bold text-slate-100 mb-4">🗄️ Database Test</h2>
+        <h2 className="text-2xl font-bold text-slate-100 mb-2">🗄️ Database Test</h2>
+        {user?.email && (
+          <p className="text-sm text-slate-400 mb-4">
+            Testing as: <span className="text-emerald-400">{user.email}</span>
+          </p>
+        )}
 
         <div className="space-y-3 mb-6">
           <button
             onClick={runAllTests}
-            disabled={loading}
+            disabled={loading || !user}
             className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
           >
-            {loading ? 'Running Tests...' : 'Run All Database Tests'}
+            {loading ? 'Running Tests...' : !user ? 'Please Log In to Run Tests' : 'Run All Database Tests'}
           </button>
 
           {results.length > 0 && (
@@ -118,11 +130,10 @@ export const DatabaseTestPanel: React.FC = () => {
             {results.map((result, idx) => (
               <div
                 key={idx}
-                className={`p-3 rounded-lg border ${
-                  result.success
-                    ? 'bg-emerald-950/30 border-emerald-500/30'
-                    : 'bg-red-950/30 border-red-500/30'
-                }`}
+                className={`p-3 rounded-lg border ${result.success
+                  ? 'bg-emerald-950/30 border-emerald-500/30'
+                  : 'bg-red-950/30 border-red-500/30'
+                  }`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
