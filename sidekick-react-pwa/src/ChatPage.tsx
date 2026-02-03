@@ -19,7 +19,7 @@ export function ChatPage() {
   const [error, setError] = useState<string | null>(null);
 
   const { conversations, createConversation } = useConversations(userId);
-  const { messages: dbMessages, addMessage } = useMessages(activeChat, userId);
+  const { messages: dbMessages, addMessage } = useMessages(activeChat);
 
   useEffect(() => {
     const getUser = async () => {
