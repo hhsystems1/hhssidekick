@@ -57,11 +57,6 @@ export const createProfile = async (
       id: userId,
       email,
       full_name: fullName || null,
-      preferences: {
-        notifications: { push: true, email: true, taskReminders: true },
-        appearance: { theme: 'dark', fontSize: 'medium' },
-        privacy: { twoFactorEnabled: false, shareAnalytics: true },
-      },
     })
     .select()
     .single();

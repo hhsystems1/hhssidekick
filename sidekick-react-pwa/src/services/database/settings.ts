@@ -8,7 +8,6 @@ const MOCK_USER_ID = '00000000-0000-0000-0000-000000000000';
 
 // Default settings
 const defaultSettings: UserSettings = {
-  id: MOCK_USER_ID,
   user_id: MOCK_USER_ID,
   push_notifications: true,
   email_notifications: true,

@@ -7,15 +7,12 @@ import { useState, useEffect, useCallback } from 'react';
 import * as db from '../services/database';
 import { useAuth } from '../context/AuthContext';
 
-// Mock user ID for development (replace with actual auth in production)
-const MOCK_USER_ID = '00000000-0000-0000-0000-000000000000';
-
 /**
  * Hook to load tasks from database
  */
 export function useTasks() {
   const { user } = useAuth();
-  const userId = user?.id || MOCK_USER_ID;
+  const userId = user?.id;
   const [tasks, setTasks] = useState<Array<{
     id: string;
     title: string;
@@ -26,7 +23,11 @@ export function useTasks() {
   const [error, setError] = useState<string | null>(null);
 
   const loadTasks = useCallback(async () => {
-    if (!userId) return; // Don't load if no user
+    if (!userId) {
+      setLoading(false);
+      setTasks([]);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -35,12 +36,7 @@ export function useTasks() {
     } catch (err: any) {
       console.error('Failed to load tasks:', err);
       setError(err.message);
-      // Fallback to mock data on error
-      setTasks([
-        { id: '1', title: 'Launch Victoria Commercial Outreach', completed: false, priority: 'high' },
-        { id: '2', title: 'Review AZ Quiz Funnel Performance', completed: true, priority: 'medium' },
-        { id: '3', title: 'Update Solar PPA Lead Script', completed: false, priority: 'low' },
-      ]);
+      setTasks([]);
     } finally {
       setLoading(false);
     }
@@ -99,7 +95,7 @@ export function useTasks() {
  */
 export function useAgents() {
   const { user } = useAuth();
-  const userId = user?.id || MOCK_USER_ID;
+  const userId = user?.id;
   const [agents, setAgents] = useState<Array<{
     id: string;
     name: string;
@@ -110,7 +106,11 @@ export function useAgents() {
   const [error, setError] = useState<string | null>(null);
 
   const loadAgents = useCallback(async () => {
-    if (!userId) return;
+    if (!userId) {
+      setLoading(false);
+      setAgents([]);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -127,12 +127,7 @@ export function useAgents() {
     } catch (err: any) {
       console.error('Failed to load agents:', err);
       setError(err.message);
-      // Fallback to mock data
-      setAgents([
-        { id: '1', name: 'Lead Gen Bot', status: 'active', metric: '12 leads today' },
-        { id: '2', name: 'Follow-up Automator', status: 'idle', metric: 'Last run: 2h ago' },
-        { id: '3', name: 'Email Qualifier', status: 'active', metric: '8 emails processed' },
-      ]);
+      setAgents([]);
     } finally {
       setLoading(false);
     }
@@ -211,7 +206,7 @@ export function useAgents() {
  */
 export function useCalendarEvents() {
   const { user } = useAuth();
-  const userId = user?.id || MOCK_USER_ID;
+  const userId = user?.id;
   const [events, setEvents] = useState<Array<{
     id: string;
     time: string;
@@ -243,12 +238,8 @@ export function useCalendarEvents() {
     } catch (err: any) {
       console.error('Failed to load events:', err);
       setError(err.message);
-      // Fallback to mock data
-      setEvents([
-        { id: '1', time: '9:00 AM', title: 'Team Standup', attendees: ['Jo', 'Brendon'] },
-        { id: '2', time: '2:00 PM', title: 'Jeromy - AZ Market Review', attendees: ['Jeromy'] },
-      ]);
-      setNextEvent({ title: 'Team Standup' });
+      setEvents([]);
+      setNextEvent(null);
     } finally {
       setLoading(false);
     }
@@ -266,7 +257,7 @@ export function useCalendarEvents() {
  */
 export function useConversations() {
   const { user } = useAuth();
-  const userId = user?.id || MOCK_USER_ID;
+  const userId = user?.id;
   const [conversations, setConversations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -313,7 +304,7 @@ export function useConversations() {
  */
 export function useUserProfile() {
   const { user } = useAuth();
-  const userId = user?.id || MOCK_USER_ID;
+  const userId = user?.id;
   const [profile, setProfile] = useState<{
     id: string;
     email: string | null;
@@ -325,7 +316,11 @@ export function useUserProfile() {
   const [error, setError] = useState<string | null>(null);
 
   const loadProfile = useCallback(async () => {
-    if (!userId) return;
+    if (!userId) {
+      setLoading(false);
+      setProfile(null);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -342,14 +337,7 @@ export function useUserProfile() {
     } catch (err: any) {
       console.error('Failed to load profile:', err);
       setError(err.message);
-      // Fallback mock data
-      setProfile({
-        id: userId,
-        email: 'demo@example.com',
-        full_name: 'Demo User',
-        avatar_url: null,
-        timezone: 'America/New_York',
-      });
+      setProfile(null);
     } finally {
       setLoading(false);
     }
@@ -391,7 +379,7 @@ export function useUserProfile() {
  */
 export function useUserSettings() {
   const { user } = useAuth();
-  const userId = user?.id || MOCK_USER_ID;
+  const userId = user?.id;
   const [settings, setSettings] = useState<{
     push_notifications: boolean;
     email_notifications: boolean;

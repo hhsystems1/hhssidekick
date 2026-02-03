@@ -4,6 +4,9 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- Enable pgvector extension for vector similarity search
+CREATE EXTENSION IF NOT EXISTS vector;
+
 -- ============================================================================
 -- CONVERSATIONS TABLE
 -- ============================================================================
@@ -138,6 +141,43 @@ CREATE TABLE IF NOT EXISTS user_settings (
 );
 
 -- ============================================================================
+-- DOCUMENTS TABLE (RAG)
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS documents (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  file_type TEXT DEFAULT 'text',
+  status TEXT DEFAULT 'processing' CHECK (status IN ('processing', 'ready', 'error')),
+  error_message TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Indexes for documents
+CREATE INDEX IF NOT EXISTS documents_user_id_idx ON documents(user_id);
+CREATE INDEX IF NOT EXISTS documents_status_idx ON documents(status);
+
+-- ============================================================================
+-- DOCUMENT CHUNKS TABLE (RAG)
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS document_chunks (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  embedding VECTOR(1024),
+  metadata JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Indexes for document_chunks
+CREATE INDEX IF NOT EXISTS document_chunks_document_id_idx ON document_chunks(document_id);
+CREATE INDEX IF NOT EXISTS document_chunks_embedding_idx ON document_chunks USING ivfflat (embedding vector_cosine_ops);
+
+-- ============================================================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
 -- ============================================================================
 
@@ -149,6 +189,8 @@ ALTER TABLE agents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE calendar_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE document_chunks ENABLE ROW LEVEL SECURITY;
 
 -- Conversations policies
 CREATE POLICY "Users can view their own conversations"
@@ -254,6 +296,10 @@ CREATE POLICY "Users can view their own profile"
   ON profiles FOR SELECT
   USING (auth.uid() = id);
 
+CREATE POLICY "Users can insert their own profile"
+  ON profiles FOR INSERT
+  WITH CHECK (auth.uid() = id);
+
 CREATE POLICY "Users can update their own profile"
   ON profiles FOR UPDATE
   USING (auth.uid() = id);
@@ -270,6 +316,54 @@ CREATE POLICY "Users can insert their own settings"
 CREATE POLICY "Users can update their own settings"
   ON user_settings FOR UPDATE
   USING (auth.uid() = user_id);
+
+-- Documents policies
+CREATE POLICY "Users can view their own documents"
+  ON documents FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own documents"
+  ON documents FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own documents"
+  ON documents FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own documents"
+  ON documents FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Document chunks policies (access through document ownership)
+CREATE POLICY "Users can view chunks of their documents"
+  ON document_chunks FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM documents
+      WHERE documents.id = document_chunks.document_id
+      AND documents.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can insert chunks for their documents"
+  ON document_chunks FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM documents
+      WHERE documents.id = document_chunks.document_id
+      AND documents.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can delete chunks of their documents"
+  ON document_chunks FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM documents
+      WHERE documents.id = document_chunks.document_id
+      AND documents.user_id = auth.uid()
+    )
+  );
 
 -- ============================================================================
 -- FUNCTIONS
@@ -335,3 +429,49 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW
   EXECUTE FUNCTION handle_new_user();
+
+-- ============================================================================
+-- RAG VECTOR SEARCH FUNCTION
+-- ============================================================================
+
+-- Function to search document chunks by vector similarity
+CREATE OR REPLACE FUNCTION match_document_chunks(
+  query_embedding VECTOR(1024),
+  match_threshold FLOAT,
+  match_count INT,
+  user_uuid UUID
+)
+RETURNS TABLE (
+  id UUID,
+  document_id UUID,
+  content TEXT,
+  similarity FLOAT,
+  documents JSONB
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    dc.id,
+    dc.document_id,
+    dc.content,
+    1 - (dc.embedding <=> query_embedding) AS similarity,
+    to_jsonb(d.*) AS documents
+  FROM document_chunks dc
+  JOIN documents d ON d.id = dc.document_id
+  WHERE d.user_id = user_uuid
+    AND 1 - (dc.embedding <=> query_embedding) > match_threshold
+  ORDER BY dc.embedding <=> query_embedding
+  LIMIT match_count;
+END;
+$$;
+
+-- ============================================================================
+-- TRIGGERS FOR DOCUMENTS TABLE
+-- ============================================================================
+
+CREATE TRIGGER update_documents_updated_at
+  BEFORE UPDATE ON documents
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();

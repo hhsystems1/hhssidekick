@@ -10,15 +10,18 @@ import type { Database } from '../services/database/types';
 type Conversation = Database['public']['Tables']['conversations']['Row'];
 type Message = Database['public']['Tables']['messages']['Row'];
 
-const MOCK_USER_ID = '00000000-0000-0000-0000-000000000000';
-
 export function useConversations(userId?: string) {
-  const actualUserId = userId || MOCK_USER_ID;
+  const actualUserId = userId;
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadConversations = useCallback(async () => {
+    if (!actualUserId) {
+      setLoading(false);
+      setConversations([]);
+      return;
+    }
     setLoading(true);
     setError(null);
     
@@ -37,26 +40,7 @@ export function useConversations(userId?: string) {
     } catch (err) {
       console.error('Error loading conversations:', err);
       setError(err instanceof Error ? err.message : 'Failed to load conversations');
-      
-      // Fallback mock data
-      setConversations([
-        {
-          id: '1',
-          user_id: actualUserId,
-          title: 'Support Team',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          metadata: null,
-        },
-        {
-          id: '2',
-          user_id: actualUserId,
-          title: 'General Chat',
-          created_at: new Date(Date.now() - 86400000).toISOString(),
-          updated_at: new Date(Date.now() - 86400000).toISOString(),
-          metadata: null,
-        },
-      ]);
+      setConversations([]);
     } finally {
       setLoading(false);
     }
@@ -67,6 +51,7 @@ export function useConversations(userId?: string) {
   }, [loadConversations]);
 
   const createConversation = useCallback(async (title?: string) => {
+    if (!actualUserId) return null;
     try {
       const { data, error: createError } = await supabase
         .from('conversations')
@@ -88,17 +73,7 @@ export function useConversations(userId?: string) {
       return null;
     } catch (err) {
       console.error('Error creating conversation:', err);
-      // Create mock conversation for demo
-      const mockConv: Conversation = {
-        id: Date.now().toString(),
-        user_id: actualUserId,
-        title: title || 'New Chat',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        metadata: null,
-      };
-      setConversations([mockConv, ...conversations]);
-      return mockConv;
+      return null;
     }
   }, [actualUserId, conversations]);
 
@@ -151,8 +126,7 @@ export function useConversations(userId?: string) {
   };
 }
 
-export function useMessages(conversationId: string | null, userId?: string) {
-  const actualUserId = userId || MOCK_USER_ID;
+export function useMessages(conversationId: string | null) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -178,20 +152,7 @@ export function useMessages(conversationId: string | null, userId?: string) {
       setMessages(data || []);
     } catch (err) {
       console.error('Error loading messages:', err);
-      // Fallback mock messages
-      setMessages([
-        {
-          id: '1',
-          conversation_id: conversationId,
-          user_id: actualUserId,
-          sender: 'assistant',
-          content: 'Hello! How can I help you today?',
-          created_at: new Date(Date.now() - 3600000).toISOString(),
-          agent_type: null,
-          behavioral_mode: null,
-          metadata: null,
-        },
-      ]);
+      setMessages([]);
     } finally {
       setLoading(false);
     }
@@ -212,7 +173,12 @@ export function useMessages(conversationId: string | null, userId?: string) {
     try {
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
-      const msgUserId = user?.id || actualUserId;
+      const msgUserId = user?.id;
+      
+      if (!msgUserId) {
+        console.error('Cannot add message: No user ID available');
+        return null;
+      }
 
       const { data, error: insertError } = await supabase
         .from('messages')
@@ -244,23 +210,9 @@ export function useMessages(conversationId: string | null, userId?: string) {
       return data;
     } catch (err) {
       console.error('Error adding message:', err);
-      
-      // Add mock message for demo
-      const mockMessage: Message = {
-        id: Date.now().toString(),
-        conversation_id: conversationId,
-        user_id: actualUserId,
-        content,
-        sender,
-        created_at: new Date().toISOString(),
-        agent_type: agentType || null,
-        behavioral_mode: behavioralMode || null,
-        metadata: null,
-      };
-      setMessages([...messages, mockMessage]);
-      return mockMessage;
+      return null;
     }
-  }, [conversationId, actualUserId, messages]);
+  }, [conversationId, messages]);
 
   const deleteMessage = useCallback(async (messageId: string) => {
     try {

@@ -57,7 +57,7 @@ async function testConnection() {
 async function checkTables() {
   console.log('Step 3: Checking if database tables exist...\n');
 
-  const tables = ['conversations', 'messages', 'tasks', 'agents', 'calendar_events'];
+  const tables = ['conversations', 'messages', 'tasks', 'agents', 'calendar_events', 'profiles', 'user_settings', 'documents', 'document_chunks'];
   const tableStatus = {};
 
   for (const table of tables) {
@@ -85,6 +85,36 @@ async function checkTables() {
   return { allTablesExist, tableStatus };
 }
 
+async function checkPgvector() {
+  console.log('Step 4: Checking pgvector extension...\n');
+  
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/match_document_chunks`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        query_embedding: new Array(1024).fill(1).map((_, i) => Math.sin(i)),
+        match_threshold: 1,
+        match_count: 1,
+        user_uuid: '00000000-0000-0000-0000-000000000000'
+      })
+    });
+    
+    // If we get 400 Bad Request, the function exists but params are wrong (which is expected with mock UUID)
+    // If we get 404, the function doesn't exist
+    const exists = response.status !== 404;
+    console.log(`${exists ? '✅' : '❌'} pgvector/match_document_chunks: ${exists ? 'EXISTS' : 'NOT FOUND'}`);
+    return exists;
+  } catch (error) {
+    console.log(`❌ pgvector check ERROR: ${error.message}`);
+    return false;
+  }
+}
+
 async function main() {
   const connected = await testConnection();
 
@@ -94,8 +124,10 @@ async function main() {
   }
 
   const { allTablesExist, tableStatus } = await checkTables();
+  
+  const pgvectorExists = await checkPgvector();
 
-  if (allTablesExist) {
+  if (allTablesExist && pgvectorExists) {
     console.log('✅ All database tables are set up correctly!\n');
     console.log('🎉 Your Supabase database is ready to use.\n');
     console.log('Next steps:');
@@ -104,20 +136,26 @@ async function main() {
   } else {
     console.log('⚠️  Some tables are missing. You need to run the database schema.\n');
     console.log('📋 TO SET UP THE DATABASE:\n');
-    console.log('  1. Go to your Supabase dashboard:');
+    console.log('  1. Enable pgvector extension in Supabase Dashboard:');
+    console.log('     - Go to Database → Extensions');
+    console.log('     - Search for "vector" and enable it\n');
+    console.log('  2. Go to your Supabase dashboard:');
     console.log(`     ${SUPABASE_URL.replace('/rest/v1', '')}\n`);
-    console.log('  2. Click on "SQL Editor" in the left sidebar\n');
-    console.log('  3. Click "New Query"\n');
-    console.log('  4. Copy the contents of: database/schema.sql\n');
-    console.log('  5. Paste into the SQL editor and click "Run"\n');
-    console.log('  6. Run this script again to verify: node setup-supabase.mjs\n');
-
-    console.log('Missing tables:');
+    console.log('  3. Click on "SQL Editor" in the left sidebar\n');
+    console.log('  4. Click "New Query"\n');
+    console.log('  5. Copy the contents of: database/schema.sql\n');
+    console.log('  6. Paste into the SQL editor and click "Run"\n');
+    console.log('  7. Run this script again to verify: node setup-supabase.mjs\n');
+    console.log('Missing items:');
     Object.entries(tableStatus).forEach(([table, exists]) => {
       if (!exists) {
-        console.log(`  - ${table}`);
+        console.log(`  - Table: ${table}`);
       }
     });
+    if (!pgvectorExists) {
+      console.log('  - pgvector extension');
+      console.log('  - match_document_chunks function');
+    }
     console.log('');
   }
 

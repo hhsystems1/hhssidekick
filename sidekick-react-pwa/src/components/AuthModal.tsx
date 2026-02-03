@@ -7,12 +7,14 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialMode?: 'signin' | 'signup';
+  preventClose?: boolean;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
   onClose,
   initialMode = 'signin',
+  preventClose = false,
 }) => {
   const { signIn, signUp, resetPassword } = useAuth();
   const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
@@ -95,18 +97,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
+        onClick={preventClose ? undefined : onClose}
       />
 
       {/* Modal */}
       <div className="relative w-full max-w-md mx-4 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 hover:bg-slate-800 rounded-full transition-colors"
-        >
-          <X size={20} className="text-slate-400" />
-        </button>
+        {/* Close button - hidden when preventClose is true */}
+        {!preventClose && (
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 p-2 hover:bg-slate-800 rounded-full transition-colors"
+          >
+            <X size={20} className="text-slate-400" />
+          </button>
+        )}
 
         {/* Header */}
         <div className="p-8 pb-4">

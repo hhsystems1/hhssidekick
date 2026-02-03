@@ -181,7 +181,6 @@ export interface Database {
           full_name: string | null;
           avatar_url: string | null;
           timezone: string | null;
-          preferences: UserPreferences | null;
           created_at: string;
           updated_at: string;
         };
@@ -191,7 +190,6 @@ export interface Database {
           full_name?: string | null;
           avatar_url?: string | null;
           timezone?: string | null;
-          preferences?: UserPreferences | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -201,14 +199,12 @@ export interface Database {
           full_name?: string | null;
           avatar_url?: string | null;
           timezone?: string | null;
-          preferences?: UserPreferences | null;
           created_at?: string;
           updated_at?: string;
         };
       };
       user_settings: {
         Row: {
-          id: string;
           user_id: string;
           push_notifications: boolean;
           email_notifications: boolean;
@@ -221,7 +217,6 @@ export interface Database {
           updated_at: string;
         };
         Insert: {
-          id?: string;
           user_id: string;
           push_notifications?: boolean;
           email_notifications?: boolean;
@@ -234,7 +229,6 @@ export interface Database {
           updated_at?: string;
         };
         Update: {
-          id?: string;
           user_id?: string;
           push_notifications?: boolean;
           email_notifications?: boolean;
