@@ -5,9 +5,10 @@
 
 import React, { useState } from 'react';
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, ArrowLeft, Settings, User } from 'lucide-react';
+import { Settings, User } from 'lucide-react';
 import { BRANDING, getLogo } from './config/branding';
 import { AuthModal } from './components/AuthModal';
+import { Navbar } from './components/Navbar';
 import { useAuth } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
@@ -17,6 +18,30 @@ export const Layout: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  // Navigation handlers for Navbar
+  const handleNavigate = (page: string) => {
+    const routeMap: Record<string, string> = {
+      dashboard: '/',
+      'agent-chat': '/chat',
+      'skills-ai': '/agents',
+      files: '/training',
+      settings: '/settings',
+      terminal: '/test',
+    };
+    const route = routeMap[page];
+    if (route) navigate(route);
+  };
+
+  const handleAction = (action: string) => {
+    if (action === 'run') {
+      navigate('/agents');
+    } else if (action === 'preview') {
+      navigate('/chat');
+    } else if (action === 'exit-project') {
+      navigate('/');
+    }
+  };
 
   const navItems = [
     { path: '/', icon: '🏠', label: 'Dashboard', exact: true },
@@ -37,9 +62,6 @@ export const Layout: React.FC = () => {
       item.exact ? location.pathname === item.path : location.pathname.startsWith(item.path)
     )?.label || 'Dashboard';
   };
-
-  const isHomePage = location.pathname === '/';
-  const canGoBack = !isHomePage;
 
   return (
     <div className="h-screen w-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
@@ -127,28 +149,16 @@ export const Layout: React.FC = () => {
       )}
 
       {/* Main Content */}
-      <div className="lg:pl-64 h-full flex flex-col">
-        {/* Mobile Header */}
-        <div className="lg:hidden h-16 border-b border-slate-800 flex items-center px-4 bg-slate-950/60 z-30 shrink-0">
-          {canGoBack ? (
-            <button
-              onClick={() => navigate(-1)}
-              className="p-2 -ml-2 text-slate-100 hover:text-slate-300 transition-colors"
-            >
-              <ArrowLeft size={24} />
-            </button>
-          ) : (
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 -ml-2 text-slate-100"
-            >
-              <Menu size={24} />
-            </button>
-          )}
-          <h2 className="flex-1 text-center text-lg font-semibold text-slate-100">
+      <div className="lg:pl-64 h-full flex flex-col pb-16 lg:pb-0">
+        {/* Mobile Header - Simplified */}
+        <div className="lg:hidden h-14 border-b border-slate-800 flex items-center justify-between px-4 bg-slate-950/60 z-30 shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">{getLogo()}</span>
+            <h1 className="text-lg font-bold text-slate-100">{BRANDING.appName}</h1>
+          </div>
+          <h2 className="text-sm font-medium text-slate-400">
             {getPageTitle()}
           </h2>
-          <div className="w-10" />
         </div>
 
         {/* Page Content */}
@@ -158,8 +168,8 @@ export const Layout: React.FC = () => {
           </ProtectedRoute>
         </div>
 
-        {/* Footer */}
-        <footer className="border-t border-slate-800 bg-slate-950/60 px-4 py-3 text-xs text-slate-400 shrink-0">
+        {/* Footer - Desktop only */}
+        <footer className="hidden lg:block border-t border-slate-800 bg-slate-950/60 px-4 py-3 text-xs text-slate-400 shrink-0">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
             <div className="flex items-center gap-4">
               <span>© 2024 {BRANDING.appName}</span>
@@ -175,6 +185,11 @@ export const Layout: React.FC = () => {
             </div>
           </div>
         </footer>
+      </div>
+
+      {/* Mobile Navbar */}
+      <div className="lg:hidden">
+        <Navbar onNavigate={handleNavigate} onAction={handleAction} />
       </div>
 
       {/* Auth Modal */}
