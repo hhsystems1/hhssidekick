@@ -12,6 +12,8 @@ import { Layout } from './Layout';
 import SchedulePage from './pages/schedule/SchedulePage';
 import SettingsPage from './pages/settings/SettingsPage';
 import { AuthProvider } from './context/AuthContext';
+import { LandingPage } from './pages/LandingPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
 
 function App() {
   return (
@@ -41,7 +43,9 @@ function App() {
       />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Layout />}>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/app" element={<Layout />}>
             <Route index element={<SidekickHome />} />
             <Route path="chat" element={<ChatPage />} />
             <Route path="agents" element={<AgentsPage />} />

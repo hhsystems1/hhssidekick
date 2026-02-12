@@ -3,7 +3,7 @@
  * Main layout with sidebar navigation for all pages
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Settings, User } from 'lucide-react';
 import { BRANDING, getLogo } from './config/branding';
@@ -22,12 +22,12 @@ export const Layout: React.FC = () => {
   // Navigation handlers for Navbar
   const handleNavigate = (page: string) => {
     const routeMap: Record<string, string> = {
-      dashboard: '/',
-      'agent-chat': '/chat',
-      'skills-ai': '/agents',
-      files: '/training',
-      settings: '/settings',
-      terminal: '/test',
+      dashboard: '/app',
+      'agent-chat': '/app/chat',
+      'skills-ai': '/app/agents',
+      files: '/app/training',
+      settings: '/app/settings',
+      terminal: '/app/test',
     };
     const route = routeMap[page];
     if (route) navigate(route);
@@ -35,33 +35,39 @@ export const Layout: React.FC = () => {
 
   const handleAction = (action: string) => {
     if (action === 'run') {
-      navigate('/agents');
+      navigate('/app/agents');
     } else if (action === 'preview') {
-      navigate('/chat');
+      navigate('/app/chat');
     } else if (action === 'exit-project') {
       navigate('/');
     }
   };
 
   const navItems = [
-    { path: '/', icon: '🏠', label: 'Dashboard', exact: true },
-    { path: '/chat', icon: '💬', label: 'Chat' },
-    { path: '/agents', icon: '🤖', label: 'Agents' },
-    { path: '/training', icon: '📚', label: 'Training' },
-    { path: '/marketplace', icon: '🛒', label: 'Marketplace' },
-    { path: '/profile', icon: '👤', label: 'Profile' },
-    { path: '/test', icon: '🧪', label: 'Tests' },
+    { path: '/app', icon: '🏠', label: 'Dashboard', exact: true },
+    { path: '/app/chat', icon: '💬', label: 'Chat' },
+    { path: '/app/agents', icon: '🤖', label: 'Agents' },
+    { path: '/app/training', icon: '📚', label: 'Training' },
+    { path: '/app/marketplace', icon: '🛒', label: 'Marketplace' },
+    { path: '/app/profile', icon: '👤', label: 'Profile' },
+    { path: '/app/test', icon: '🧪', label: 'Tests' },
   ];
 
   const getPageTitle = () => {
     // Special pages that need custom titles
-    if (location.pathname === '/schedule') return 'Schedule';
-    if (location.pathname === '/settings') return 'Settings';
+    if (location.pathname === '/app/schedule') return 'Schedule';
+    if (location.pathname === '/app/settings') return 'Settings';
     
     return navItems.find(item =>
       item.exact ? location.pathname === item.path : location.pathname.startsWith(item.path)
     )?.label || 'Dashboard';
   };
+
+  useEffect(() => {
+    const handleOpen = () => setAuthModalOpen(true);
+    window.addEventListener('open-auth-modal', handleOpen);
+    return () => window.removeEventListener('open-auth-modal', handleOpen);
+  }, []);
 
   return (
     <div className="h-screen w-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
@@ -123,14 +129,14 @@ export const Layout: React.FC = () => {
           {/* Bottom action */}
           <div className="p-4 border-t border-slate-800 space-y-2">
             <button
-              onClick={() => navigate('/settings')}
+              onClick={() => navigate('/app/settings')}
               className="w-full flex items-center space-x-3 px-4 py-2.5 hover:bg-slate-800 rounded-lg transition-colors"
             >
               <Settings size={18} className="text-slate-400" />
               <span className="font-medium text-slate-400">Settings</span>
             </button>
             <NavLink
-              to="/chat"
+              to="/app/chat"
               onClick={() => setSidebarOpen(false)}
               className="block w-full py-3 px-4 bg-emerald-700 text-emerald-50 rounded-lg font-medium hover:bg-emerald-600 transition-colors text-center"
             >

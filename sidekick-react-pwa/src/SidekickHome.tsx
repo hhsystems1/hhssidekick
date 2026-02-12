@@ -37,9 +37,9 @@ export const SidekickHome: React.FC = () => {
     <div className="bg-slate-950 bg-[radial-gradient(circle_at_top_left,rgba(80,200,120,0.15),transparent_55%),radial-gradient(circle_at_bottom_right,rgba(56,181,255,0.15),transparent_55%)]">
       {/* Command Center Dashboard */}
       <CommandCenter
-        onNavigateToSchedule={() => navigate('/schedule')}
-        onNavigateToChat={() => navigate('/chat')}
-        onNavigateToSettings={() => navigate('/settings')}
+        onNavigateToSchedule={() => navigate('/app/schedule')}
+        onNavigateToChat={() => navigate('/app/chat')}
+        onNavigateToSettings={() => navigate('/app/settings')}
       />
 
       {/* Agents Section */}
@@ -52,7 +52,7 @@ export const SidekickHome: React.FC = () => {
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-semibold text-slate-100 uppercase tracking-wider">Agents</h3>
               <Link
-                to="/agents"
+                to="/app/agents"
                 className="text-xs text-slate-400 hover:text-slate-100 transition-colors"
               >
                 View all →
