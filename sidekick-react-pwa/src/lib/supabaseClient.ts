@@ -1,10 +1,21 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+const rawSupabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
+const extractSupabaseUrl = (value?: string) => {
+  if (!value) return '';
+  const match = value.match(/https?:\/\/[^/]+\.supabase\.co/);
+  return match ? match[0] : value;
+};
+
+const supabaseUrl = extractSupabaseUrl(rawSupabaseUrl);
 const isPlaceholderUrl = !supabaseUrl || supabaseUrl.includes('placeholder');
 const isPlaceholderKey = !supabaseAnonKey || supabaseAnonKey.includes('placeholder');
+
+if (rawSupabaseUrl && supabaseUrl && rawSupabaseUrl !== supabaseUrl) {
+  console.warn('Supabase URL looked malformed. Using normalized value:', supabaseUrl);
+}
 
 if (!supabaseUrl || !supabaseAnonKey || isPlaceholderUrl || isPlaceholderKey) {
   console.error('╔═══════════════════════════════════════════════════════════════╗');
