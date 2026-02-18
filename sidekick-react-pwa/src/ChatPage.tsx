@@ -102,11 +102,8 @@ export function ChatPage() {
       <aside className="hidden md:flex flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 overflow-hidden">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 px-3 py-2 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
           <h2 className="text-sm font-semibold">Chats</h2>
-          <button onClick={handleNewChat} className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800" aria-label="New chat">
-            <span className="material-icons text-[18px]">add</span>
-          </button>
         </div>
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto relative">
           {conversations.map((conv) => (
             <button
               key={conv.id}
@@ -123,6 +120,15 @@ export function ChatPage() {
               </div>
             </button>
           ))}
+          <div className="sticky bottom-0 z-10 bg-white/90 backdrop-blur dark:bg-slate-900/80 p-3 border-t border-slate-200 dark:border-slate-800">
+            <button
+              onClick={handleNewChat}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 text-emerald-50 py-2.5 text-sm font-medium hover:bg-emerald-500"
+            >
+              <span className="material-icons text-[18px]">add</span>
+              New chat
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -130,17 +136,8 @@ export function ChatPage() {
       <div className={`md:hidden ${showChatList ? 'flex' : 'hidden'} flex-col h-full bg-white dark:bg-slate-900/60`}>
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 px-3 py-2 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
           <h2 className="text-sm font-semibold">Chats</h2>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleNewChat}
-              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-              aria-label="New chat"
-            >
-              <span className="material-icons text-[18px]">add</span>
-            </button>
-          </div>
         </div>
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto relative">
           {conversations.length === 0 ? (
             <div className="p-6 text-center text-slate-500">
               <p className="text-sm font-medium">No chats yet</p>
@@ -170,6 +167,15 @@ export function ChatPage() {
               </button>
             ))
           )}
+          <div className="sticky bottom-0 z-10 bg-white/90 backdrop-blur dark:bg-slate-900/80 p-3 border-t border-slate-200 dark:border-slate-800">
+            <button
+              onClick={handleNewChat}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 text-emerald-50 py-2.5 text-sm font-medium hover:bg-emerald-500"
+            >
+              <span className="material-icons text-[18px]">add</span>
+              New chat
+            </button>
+          </div>
         </div>
       </div>
 
