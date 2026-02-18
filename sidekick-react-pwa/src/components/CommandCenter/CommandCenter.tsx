@@ -9,26 +9,27 @@ import { TodaysFocus } from './TodaysFocus';
 import { QuickActions } from './QuickActions';
 import { UpdatesDropdown } from './UpdatesDropdown';
 import type { FocusItem, QuickAction, UpdateItem } from './CommandCenter.types';
-import { useTasks, useCalendarEvents, useUserProfile } from '../../hooks/useDatabase';
+import { useTasks, useUserProfile } from '../../hooks/useDatabase';
 import { NewTaskDialog } from '../NewTaskDialog';
 import { TaskDetailDialog } from '../TaskDetailDialog';
 import { useAuth } from '../../context/AuthContext';
 
 interface CommandCenterProps {
-  onNavigateToSchedule?: () => void;
+  onNavigateToTasks?: () => void;
   onNavigateToChat?: () => void;
   onNavigateToSettings?: () => void;
+  onNavigateToFiles?: () => void;
 }
 
 export const CommandCenter: React.FC<CommandCenterProps> = ({
-  onNavigateToSchedule,
+  onNavigateToTasks,
   onNavigateToChat,
   onNavigateToSettings,
+  onNavigateToFiles,
 }) => {
   const { user } = useAuth();
   const { profile } = useUserProfile();
   const { tasks, loading: tasksLoading, toggleTask, addTask, reload: reloadTasks } = useTasks();
-  const { nextEvent, events } = useCalendarEvents();
 
   const [todayLabel, setTodayLabel] = useState('');
   const [focusItem, setFocusItem] = useState<FocusItem | null>(null);
@@ -100,6 +101,11 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
   }, [tasks]);
 
   const completedTasksCount = tasks.filter(t => t.completed).length;
+  const incompleteTasks = tasks.filter(t => !t.completed);
+  const upcomingTasks = [...incompleteTasks].sort((a, b) => {
+    const priorityOrder = { high: 0, medium: 1, low: 2 };
+    return priorityOrder[a.priority] - priorityOrder[b.priority];
+  }).slice(0, 3);
 
   const handlePrimaryAction = (item: FocusItem) => {
     const task = tasks.find(t => t.id === item.id);
@@ -118,8 +124,8 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
       case 'task':
         setShowNewTaskDialog(true);
         break;
-      case 'meeting':
-        onNavigateToSchedule?.();
+      case 'files':
+        onNavigateToFiles?.();
         break;
       case 'message':
         onNavigateToChat?.();
@@ -240,40 +246,32 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
           )}
         </div>
 
-        {/* Column 2: Schedule */}
+        {/* Column 2: Upcoming Tasks */}
         <div className="space-y-4">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-slate-100 uppercase tracking-wider">Schedule</h3>
-            <span className="text-xs text-slate-500">{todayLabel}</span>
+            <h3 className="text-sm font-semibold text-slate-100 uppercase tracking-wider">Upcoming</h3>
+            <span className="text-xs text-slate-500">{incompleteTasks.length} open</span>
           </div>
 
-          {events.length === 0 ? (
-            <p className="text-slate-400 text-sm">No events today</p>
+          {upcomingTasks.length === 0 ? (
+            <p className="text-slate-400 text-sm">No open tasks</p>
           ) : (
-            events.slice(0, 3).map(event => (
-              <CalendarEvent
-                key={event.id}
-                time={event.time}
-                title={event.title}
-                attendees={event.attendees}
-                onClick={() => {}}
-              />
+            upcomingTasks.map(task => (
+              <div
+                key={task.id}
+                className="bg-slate-950/60 border border-slate-800 rounded-lg p-3"
+              >
+                <p className="text-sm font-medium text-slate-100">{task.title}</p>
+                <p className="text-xs text-slate-500 mt-1">Priority: {task.priority}</p>
+              </div>
             ))
           )}
 
-          {nextEvent && (
-            <div className="bg-slate-900/60 rounded-xl p-4 mt-4 border border-slate-800">
-              <p className="text-xs text-slate-500 mb-1 uppercase tracking-wider">Next up</p>
-              <p className="font-medium text-slate-100">{nextEvent.title}</p>
-              <p className="text-xs text-slate-500 mt-1">{nextEvent.time}</p>
-            </div>
-          )}
-
           <button
-            onClick={onNavigateToSchedule}
+            onClick={onNavigateToTasks}
             className="w-full py-3 border border-slate-700 rounded-xl text-slate-400 hover:border-slate-600 hover:text-slate-100 transition-colors text-sm font-medium flex items-center justify-center gap-2"
           >
-            <span>View Schedule</span>
+            <span>View Tasks</span>
             <ChevronRight size={16} />
           </button>
         </div>
@@ -385,38 +383,6 @@ function TaskCard({ task, onToggle, onClick }: TaskCardProps) {
           {task.title}
         </span>
       </div>
-    </div>
-  );
-}
-
-// Calendar Event Component (reused from SidekickHome)
-interface CalendarEventProps {
-  time: string;
-  title: string;
-  attendees: string[];
-  onClick: () => void;
-}
-
-function CalendarEvent({ time, title, attendees, onClick }: CalendarEventProps) {
-  return (
-    <div
-      onClick={onClick}
-      className="bg-slate-950/60 border border-slate-800 rounded-lg p-3 hover:shadow-lg hover:shadow-slate-900/50 transition-shadow cursor-pointer"
-    >
-      <p className="text-xs text-slate-500 mb-1">{time}</p>
-      <p className="text-sm font-medium text-slate-100">{title}</p>
-      {attendees.length > 0 && (
-        <div className="flex items-center gap-1 mt-2">
-          {attendees.slice(0, 3).map((name, i) => (
-            <span key={i} className="text-xs bg-slate-800 px-2 py-0.5 rounded text-slate-400">
-              {name}
-            </span>
-          ))}
-          {attendees.length > 3 && (
-            <span className="text-xs text-slate-500">+{attendees.length - 3}</span>
-          )}
-        </div>
-      )}
     </div>
   );
 }

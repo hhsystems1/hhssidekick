@@ -1,32 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Play,
-  Eye,
-  FolderOpen,
   X,
   MessageSquare,
-  Terminal,
   Settings,
   ChevronLeft,
   Home,
-  Code,
-  Cpu,
-  Globe,
-  Database,
-  Upload,
-  Lock,
-  Zap,
-  GitBranch,
-  Bug,
   Package,
-  Cloud,
-  Shield,
-  Layout,
   Users,
-  Key,
-  Box,
-  Link as LinkIcon,
   Lightbulb,
+  Calendar,
+  Sliders,
+  FolderOpen,
+  Link as LinkIcon,
+  Layout,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -34,7 +20,7 @@ interface NavbarProps {
   onAction?: (action: string) => void;
 }
 
-type MenuView = 'main' | 'development' | 'ai' | 'project' | 'tools';
+type MenuView = 'main';
 
 interface MenuItemDef {
   id: string;
@@ -51,43 +37,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, onAction }) => {
 
   // Menu definitions
   const mainMenuItems: MenuItemDef[] = [
-    { id: 'development', icon: <Code className="w-5 h-5" />, label: 'Development', view: 'development' },
-    { id: 'ai', icon: <Cpu className="w-5 h-5" />, label: 'AI & Intelligence', view: 'ai', color: 'accent' },
-    { id: 'project', icon: <Layout className="w-5 h-5" />, label: 'Project', view: 'project' },
-    { id: 'tools', icon: <Zap className="w-5 h-5" />, label: 'Tools & More', view: 'tools' },
-  ];
-
-  const developmentItems: MenuItemDef[] = [
+    { id: 'dashboard', icon: <Home className="w-5 h-5" />, label: 'Dashboard' },
+    { id: 'chat', icon: <MessageSquare className="w-5 h-5" />, label: 'Chats', color: 'accent' },
+    { id: 'agents', icon: <Users className="w-5 h-5" />, label: 'Agents' },
+    { id: 'tasks', icon: <Calendar className="w-5 h-5" />, label: 'Tasks' },
+    { id: 'appBuilder', icon: <Layout className="w-5 h-5" />, label: 'App Builder' },
     { id: 'files', icon: <FolderOpen className="w-5 h-5" />, label: 'Files' },
-    { id: 'code', icon: <Code className="w-5 h-5" />, label: 'Editor' },
-    { id: 'terminal', icon: <Terminal className="w-5 h-5" />, label: 'Terminal' },
-    { id: 'git', icon: <GitBranch className="w-5 h-5" />, label: 'Git' },
-    { id: 'debug', icon: <Bug className="w-5 h-5" />, label: 'Debug' },
-    { id: 'packages', icon: <Package className="w-5 h-5" />, label: 'Packages' },
-  ];
-
-  const aiItems: MenuItemDef[] = [
-    { id: 'agent-chat', icon: <MessageSquare className="w-5 h-5" />, label: 'Agent Chat', color: 'accent' },
-    { id: 'skills-ai', icon: <Lightbulb className="w-5 h-5" />, label: 'Skills AI' },
-    { id: 'mcp-servers', icon: <Box className="w-5 h-5" />, label: 'MCP Servers' },
-  ];
-
-  const projectItems: MenuItemDef[] = [
-    { id: 'deploy', icon: <Upload className="w-5 h-5" />, label: 'Deploy' },
-    { id: 'database', icon: <Database className="w-5 h-5" />, label: 'Database' },
-    { id: 'auth', icon: <Lock className="w-5 h-5" />, label: 'Auth' },
-    { id: 'secrets', icon: <Key className="w-5 h-5" />, label: 'Secrets' },
-    { id: 'users', icon: <Users className="w-5 h-5" />, label: 'Team' },
-    { id: 'analytics', icon: <Layout className="w-5 h-5" />, label: 'Analytics' },
-  ];
-
-  const toolsItems: MenuItemDef[] = [
-    { id: 'api', icon: <Globe className="w-5 h-5" />, label: 'API' },
-    { id: 'cloud', icon: <Cloud className="w-5 h-5" />, label: 'Cloud' },
-    { id: 'security', icon: <Shield className="w-5 h-5" />, label: 'Security' },
+    { id: 'training', icon: <Lightbulb className="w-5 h-5" />, label: 'AI Training' },
+    { id: 'skills', icon: <Package className="w-5 h-5" />, label: 'Skills' },
     { id: 'integrations', icon: <LinkIcon className="w-5 h-5" />, label: 'Integrations' },
+    { id: 'llm', icon: <Sliders className="w-5 h-5" />, label: 'LLM Config' },
     { id: 'settings', icon: <Settings className="w-5 h-5" />, label: 'Settings' },
-    { id: 'exit-project', icon: <X className="w-5 h-5" />, label: 'Exit', color: 'danger' },
   ];
 
   // Close navbar when clicking outside
@@ -120,25 +80,23 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, onAction }) => {
     setCurrentView('main');
   };
 
-  const getCurrentItems = (): MenuItemDef[] => {
-    switch (currentView) {
-      case 'development': return developmentItems;
-      case 'ai': return aiItems;
-      case 'project': return projectItems;
-      case 'tools': return toolsItems;
-      default: return mainMenuItems;
-    }
-  };
+  const getCurrentItems = (): MenuItemDef[] => mainMenuItems;
 
-  const getViewTitle = (): string => {
-    switch (currentView) {
-      case 'development': return 'Development';
-      case 'ai': return 'AI & Intelligence';
-      case 'project': return 'Project Management';
-      case 'tools': return 'Tools & Integrations';
-      default: return 'Menu';
-    }
-  };
+  const getViewTitle = (): string => 'Menu';
+
+  const navigateIds = new Set([
+    'dashboard',
+    'chat',
+    'agents',
+    'tasks',
+    'appBuilder',
+    'files',
+    'training',
+    'skills',
+    'integrations',
+    'llm',
+    'settings',
+  ]);
 
   return (
     <nav
@@ -165,28 +123,28 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, onAction }) => {
 
         {/* Center: Action Buttons */}
         <div className="flex items-center gap-2">
-          {/* Run - Emerald gradient */}
+          {/* Chat */}
           <button
-            onClick={() => handleAction('run')}
+            onClick={() => handleNavigate('chat')}
             className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-700 flex items-center justify-center transition-all active:scale-95 hover:scale-105"
           >
-            <Play className="w-5 h-5 text-white fill-white" />
+            <MessageSquare className="w-5 h-5 text-white" />
           </button>
 
-          {/* Preview - Slate gradient */}
+          {/* Agents */}
           <button
-            onClick={() => handleAction('preview')}
+            onClick={() => handleNavigate('agents')}
             className="w-11 h-11 rounded-xl bg-gradient-to-br from-slate-700 to-slate-600 flex items-center justify-center transition-all active:scale-95 hover:scale-105"
           >
-            <Eye className="w-5 h-5 text-white" />
+            <Users className="w-5 h-5 text-white" />
           </button>
 
-          {/* Files - Slate gradient */}
+          {/* Tasks */}
           <button
-            onClick={() => handleNavigate('files')}
+            onClick={() => handleNavigate('tasks')}
             className="w-11 h-11 rounded-xl bg-gradient-to-br from-slate-700 to-slate-600 flex items-center justify-center transition-all active:scale-95 hover:scale-105"
           >
-            <FolderOpen className="w-5 h-5 text-white" />
+            <Calendar className="w-5 h-5 text-white" />
           </button>
         </div>
 
@@ -245,7 +203,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, onAction }) => {
                 onClick={() => {
                   if (item.view) {
                     setCurrentView(item.view);
-                  } else if (['files', 'terminal', 'settings'].includes(item.id)) {
+                  } else if (navigateIds.has(item.id)) {
                     handleNavigate(item.id);
                   } else {
                     handleAction(item.id);
@@ -259,7 +217,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, onAction }) => {
         {/* Footer */}
         <div className="h-14 px-4 border-t border-slate-800 flex items-center justify-center">
           <span className="text-xs text-slate-500">
-            {currentView === 'main' ? 'Select a category' : 'Select an option'}
+            Select a page
           </span>
         </div>
       </div>

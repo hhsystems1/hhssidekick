@@ -23,11 +23,16 @@ export const Layout: React.FC = () => {
   const handleNavigate = (page: string) => {
     const routeMap: Record<string, string> = {
       dashboard: '/',
-      'agent-chat': '/chat',
-      'skills-ai': '/agents',
-      files: '/training',
+      chat: '/chat',
+      agents: '/agents',
+      tasks: '/tasks',
+      files: '/files',
+      training: '/training',
+      skills: '/skills',
+      llm: '/llm-config',
+      integrations: '/integrations',
+      appBuilder: '/app-builder',
       settings: '/settings',
-      terminal: '/test',
     };
     const route = routeMap[page];
     if (route) navigate(route);
@@ -45,19 +50,21 @@ export const Layout: React.FC = () => {
 
   const navItems = [
     { path: '/', icon: '🏠', label: 'Dashboard', exact: true },
-    { path: '/chat', icon: '💬', label: 'Chat' },
+    { path: '/tasks', icon: '✅', label: 'Tasks' },
+    { path: '/chat', icon: '💬', label: 'Chats' },
     { path: '/agents', icon: '🤖', label: 'Agents' },
-    { path: '/training', icon: '📚', label: 'Training' },
-    { path: '/marketplace', icon: '🛒', label: 'Marketplace' },
-    { path: '/profile', icon: '👤', label: 'Profile' },
-    { path: '/test', icon: '🧪', label: 'Tests' },
+    { path: '/app-builder', icon: '🧩', label: 'App Builder' },
+    { path: '/files', icon: '📁', label: 'Files' },
+    { path: '/training', icon: '📚', label: 'AI Training' },
+    { path: '/skills', icon: '✨', label: 'Skills' },
+    { path: '/integrations', icon: '🔗', label: 'Integrations' },
+    { path: '/llm-config', icon: '🧠', label: 'LLM Config' },
+    { path: '/settings', icon: '⚙️', label: 'Settings' },
   ];
 
   const getPageTitle = () => {
-    // Special pages that need custom titles
-    if (location.pathname === '/schedule') return 'Schedule';
     if (location.pathname === '/settings') return 'Settings';
-    
+
     return navItems.find(item =>
       item.exact ? location.pathname === item.path : location.pathname.startsWith(item.path)
     )?.label || 'Dashboard';

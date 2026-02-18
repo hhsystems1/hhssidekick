@@ -7,7 +7,7 @@ import React from 'react';
 
 export interface QuickAction {
   id: string;
-  type: 'task' | 'meeting' | 'message';
+  type: 'task' | 'files' | 'message';
   label: string;
   icon: string;
 }
@@ -20,14 +20,14 @@ interface QuickActionsProps {
 export const QuickActions: React.FC<QuickActionsProps> = ({
   actions = [
     { id: 'task', type: 'task', label: '+ Task', icon: '+' },
-    { id: 'meeting', type: 'meeting', label: 'Meet', icon: '◎' },
+    { id: 'files', type: 'files', label: 'Files', icon: '▣' },
     { id: 'message', type: 'message', label: 'Msg', icon: '○' },
   ],
   onActionPress,
 }) => {
   const actionConfig = {
     task: { icon: '+', color: 'text-emerald-400', border: 'border-emerald-500/60' },
-    meeting: { icon: '◎', color: 'text-blue-400', border: 'border-blue-500/60' },
+    files: { icon: '▣', color: 'text-blue-400', border: 'border-blue-500/60' },
     message: { icon: '○', color: 'text-purple-400', border: 'border-purple-500/60' },
   };
 

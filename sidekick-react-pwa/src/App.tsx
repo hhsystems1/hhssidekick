@@ -2,16 +2,18 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './index.css';
 import { Toaster } from 'react-hot-toast';
 import { SidekickHome } from './SidekickHome';
-import { TestPage } from './TestPage';
 import { AgentsPage } from './pages/AgentsPage';
 import { TrainingPage } from './pages/TrainingPage';
-import { MarketplacePage } from './pages/MarketplacePage';
-import { ProfilePage } from './pages/ProfilePage';
 import { ChatPage } from './ChatPage';
 import { Layout } from './Layout';
-import SchedulePage from './pages/schedule/SchedulePage';
 import SettingsPage from './pages/settings/SettingsPage';
 import { AuthProvider } from './context/AuthContext';
+import { TasksPage } from './pages/TasksPage';
+import { FilesPage } from './pages/FilesPage';
+import { SkillsPage } from './pages/SkillsPage';
+import { LLMConfigPage } from './pages/LLMConfigPage';
+import { IntegrationsPage } from './pages/IntegrationsPage';
+import { AppBuilderPage } from './pages/AppBuilderPage';
 
 function App() {
   return (
@@ -46,10 +48,12 @@ function App() {
             <Route path="chat" element={<ChatPage />} />
             <Route path="agents" element={<AgentsPage />} />
             <Route path="training" element={<TrainingPage />} />
-            <Route path="marketplace" element={<MarketplacePage />} />
-            <Route path="profile" element={<ProfilePage />} />
-            <Route path="test" element={<TestPage />} />
-            <Route path="schedule" element={<SchedulePage />} />
+            <Route path="tasks" element={<TasksPage />} />
+            <Route path="files" element={<FilesPage />} />
+            <Route path="skills" element={<SkillsPage />} />
+            <Route path="llm-config" element={<LLMConfigPage />} />
+            <Route path="integrations" element={<IntegrationsPage />} />
+            <Route path="app-builder" element={<AppBuilderPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

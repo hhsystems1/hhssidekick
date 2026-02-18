@@ -4,19 +4,28 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { processWithAgents } from './agents';
 import { supabase } from './lib/supabaseClient';
 import { useConversations, useMessages } from './hooks/useChat';
+import { checkProviderHealth } from './services/ai/llm-client';
 
 const MOCK_USER_ID = '00000000-0000-0000-0000-000000000000';
 
 export function ChatPage() {
+  const navigate = useNavigate();
   const [userId, setUserId] = useState<string>(MOCK_USER_ID);
   const [activeChat, setActiveChat] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showChatList, setShowChatList] = useState(true);
+  const [providerStatus, setProviderStatus] = useState<{
+    provider: string;
+    available: boolean;
+    error?: string;
+  } | null>(null);
 
   const { conversations, createConversation } = useConversations(userId);
   const { messages: dbMessages, addMessage } = useMessages(activeChat);
@@ -30,6 +39,22 @@ export function ChatPage() {
     };
     getUser();
   }, []);
+
+  useEffect(() => {
+    const checkProvider = async () => {
+      const status = await checkProviderHealth();
+      setProviderStatus(status);
+    };
+    checkProvider();
+  }, []);
+
+  useEffect(() => {
+    if (activeChat) {
+      setShowChatList(false);
+    } else {
+      setShowChatList(true);
+    }
+  }, [activeChat]);
 
   const handleNewChat = async () => {
     const newConv = await createConversation(`New Chat ${conversations.length + 1}`);
@@ -73,6 +98,7 @@ export function ChatPage() {
 
   return (
     <div className="h-full grid grid-cols-1 md:grid-cols-[280px,1fr] overflow-hidden">
+      {/* Desktop sidebar */}
       <aside className="hidden md:flex flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 overflow-hidden">
         <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2 dark:border-slate-800">
           <h2 className="text-sm font-semibold">Chats</h2>
@@ -100,11 +126,65 @@ export function ChatPage() {
         </div>
       </aside>
 
-      <main className="flex h-full flex-col">
+      {/* Mobile chat list */}
+      <div className={`md:hidden ${showChatList ? 'flex' : 'hidden'} flex-col h-full bg-white dark:bg-slate-900/60`}>
+        <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2 dark:border-slate-800">
+          <h2 className="text-sm font-semibold">Chats</h2>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleNewChat}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              aria-label="New chat"
+            >
+              <span className="material-icons text-[18px]">add</span>
+            </button>
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          {conversations.length === 0 ? (
+            <div className="p-6 text-center text-slate-500">
+              <p className="text-sm font-medium">No chats yet</p>
+              <p className="text-xs mt-1">Create a new conversation to start.</p>
+              <button
+                onClick={handleNewChat}
+                className="mt-4 inline-flex items-center justify-center rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                New chat
+              </button>
+            </div>
+          ) : (
+            conversations.map((conv) => (
+              <button
+                key={conv.id}
+                onClick={() => setActiveChat(conv.id)}
+                className={`flex w-full items-center gap-2 px-3 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800 ${activeChat === conv.id ? 'bg-slate-100 dark:bg-slate-800/70' : ''}`}
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-200 text-base dark:bg-slate-700">💬</div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <div className="truncate text-sm font-medium">{conv.title}</div>
+                    <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                  </div>
+                  <div className="truncate text-xs text-slate-500 dark:text-slate-400">{getConversationLastMessage(conv.id)}</div>
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+      </div>
+
+      <main className={`flex h-full flex-col ${showChatList ? 'hidden md:flex' : 'flex'}`}>
         {activeChat ? (
           <>
             <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2 dark:border-slate-800 dark:bg-slate-900/60">
               <div className="flex items-center gap-2 text-sm font-medium">
+                <button
+                  onClick={() => setShowChatList(true)}
+                  className="md:hidden inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                  aria-label="Back to chats"
+                >
+                  <span className="material-icons text-[18px]">arrow_back</span>
+                </button>
                 {getConversationTitle(activeChat)}
                 <span className="h-2 w-2 rounded-full bg-emerald-400" />
               </div>
@@ -112,6 +192,18 @@ export function ChatPage() {
                 <div className="rounded-md border border-red-500/40 bg-red-500/10 px-2 py-0.5 text-[11px] text-red-200">{error}</div>
               )}
             </div>
+
+            {!providerStatus?.available && (
+              <div className="border-b border-amber-500/40 bg-amber-500/10 px-4 py-2 text-xs text-amber-100">
+                AI is not configured: {providerStatus?.error || 'Provider unavailable'}.{' '}
+                <button
+                  onClick={() => navigate('/llm-config')}
+                  className="underline text-amber-200 hover:text-amber-100"
+                >
+                  Configure LLMs
+                </button>
+              </div>
+            )}
 
             <div className="flex-1 space-y-2 overflow-y-auto bg-slate-50 p-3 dark:bg-slate-900" style={{ WebkitOverflowScrolling: 'touch' }}>
               {activeMessages.map((msg) => (
@@ -137,6 +229,10 @@ export function ChatPage() {
               onSubmit={async (e) => {
                 e.preventDefault();
                 if (!message.trim() || !activeChat || isSending) return;
+                if (providerStatus && !providerStatus.available) {
+                  setError(providerStatus.error || 'AI provider unavailable');
+                  return;
+                }
                 setError(null);
                 const text = message;
                 setMessage('');
