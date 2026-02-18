@@ -100,9 +100,9 @@ export function ChatPage() {
     <div className="h-full grid grid-cols-1 md:grid-cols-[280px,1fr] overflow-hidden">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 overflow-hidden">
-        <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2 dark:border-slate-800">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 px-3 py-2 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
           <h2 className="text-sm font-semibold">Chats</h2>
-          <button onClick={handleNewChat} className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800" aria-label="New chat">
+          <button onClick={handleNewChat} className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800" aria-label="New chat">
             <span className="material-icons text-[18px]">add</span>
           </button>
         </div>
@@ -128,12 +128,12 @@ export function ChatPage() {
 
       {/* Mobile chat list */}
       <div className={`md:hidden ${showChatList ? 'flex' : 'hidden'} flex-col h-full bg-white dark:bg-slate-900/60`}>
-        <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2 dark:border-slate-800">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 px-3 py-2 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
           <h2 className="text-sm font-semibold">Chats</h2>
           <div className="flex items-center gap-2">
             <button
               onClick={handleNewChat}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
               aria-label="New chat"
             >
               <span className="material-icons text-[18px]">add</span>
@@ -176,11 +176,11 @@ export function ChatPage() {
       <main className={`flex h-full flex-col ${showChatList ? 'hidden md:flex' : 'flex'}`}>
         {activeChat ? (
           <>
-            <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2 dark:border-slate-800 dark:bg-slate-900/60">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/90 px-3 py-2 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
               <div className="flex items-center gap-2 text-sm font-medium">
                 <button
                   onClick={() => setShowChatList(true)}
-                  className="md:hidden inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                  className="md:hidden inline-flex h-6 w-6 items-center justify-center rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                   aria-label="Back to chats"
                 >
                   <span className="material-icons text-[18px]">arrow_back</span>
@@ -290,7 +290,7 @@ export function ChatPage() {
                   setIsSending(false);
                 }
               }}
-              className="flex items-center gap-2 border-t border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60"
+              className="flex items-center gap-2 border-t border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-900/60"
             >
               <input
                 type="text"
@@ -304,7 +304,7 @@ export function ChatPage() {
                 type="submit"
                 aria-label="Send"
                 disabled={!message.trim() || isSending}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600 text-emerald-50 hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-emerald-900/50"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-emerald-50 hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-emerald-900/50"
               >
                 <span className="material-icons text-[18px]">send</span>
               </button>

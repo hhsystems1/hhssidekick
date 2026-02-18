@@ -401,7 +401,11 @@ export function useUserSettings() {
   const [error, setError] = useState<string | null>(null);
 
   const loadSettings = useCallback(async () => {
-    if (!userId) return;
+    if (!userId) {
+      setLoading(false);
+      setError(null);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
