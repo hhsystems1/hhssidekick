@@ -461,3 +461,97 @@ export function useUserSettings() {
 
   return { settings, loading, error, updateSettings, reload: loadSettings };
 }
+
+/**
+ * Hook to load and update user memory
+ */
+export function useUserMemory() {
+  const { user } = useAuth();
+  const userId = user?.id;
+  const [content, setContent] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadMemory = useCallback(async () => {
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await db.getUserMemory(userId);
+      setContent(data?.content || '');
+    } catch (err: any) {
+      console.error('Failed to load user memory:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    loadMemory();
+  }, [loadMemory]);
+
+  const updateMemory = useCallback(async (nextContent: string) => {
+    if (!userId) return false;
+    setContent(nextContent);
+    const { error } = await db.upsertUserMemory(userId, nextContent);
+    if (error) {
+      setError(error.message);
+      return false;
+    }
+    await db.logMemoryAudit(userId, 'user', 'update', { length: nextContent.length });
+    return true;
+  }, [userId]);
+
+  return { content, loading, error, updateMemory, reload: loadMemory };
+}
+
+/**
+ * Hook to load and update agent memory
+ */
+export function useAgentMemory(agentType: string) {
+  const { user } = useAuth();
+  const userId = user?.id;
+  const [content, setContent] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadMemory = useCallback(async () => {
+    if (!userId || !agentType) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await db.getAgentMemory(userId, agentType);
+      setContent(data?.content || '');
+    } catch (err: any) {
+      console.error('Failed to load agent memory:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [userId, agentType]);
+
+  useEffect(() => {
+    loadMemory();
+  }, [loadMemory]);
+
+  const updateMemory = useCallback(async (nextContent: string) => {
+    if (!userId || !agentType) return false;
+    setContent(nextContent);
+    const { error } = await db.upsertAgentMemory(userId, agentType, nextContent);
+    if (error) {
+      setError(error.message);
+      return false;
+    }
+    await db.logMemoryAudit(userId, 'agent', 'update', { agentType, length: nextContent.length });
+    return true;
+  }, [userId, agentType]);
+
+  return { content, loading, error, updateMemory, reload: loadMemory };
+}

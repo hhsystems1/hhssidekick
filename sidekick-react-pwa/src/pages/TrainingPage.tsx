@@ -8,6 +8,7 @@ import { BookOpen, Upload, FileText, Search, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabaseClient';
 import { addDocument, deleteDocument, getUserDocuments, searchKnowledgeBase, type SearchResult } from '../services/rag/rag-service';
+import { useAgentMemory, useUserMemory } from '../hooks/useDatabase';
 
 interface Document {
   id: string;
@@ -30,6 +31,12 @@ export const TrainingPage: React.FC = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [uploadTitle, setUploadTitle] = useState('');
   const [uploadContent, setUploadContent] = useState('');
+  const [selectedAgent, setSelectedAgent] = useState<'reflection' | 'strategy' | 'systems' | 'technical' | 'creative'>('reflection');
+
+  const { content: baseMemory, loading: baseMemoryLoading, updateMemory: updateBaseMemory } = useUserMemory();
+  const { content: agentMemory, loading: agentMemoryLoading, updateMemory: updateAgentMemory } = useAgentMemory(selectedAgent);
+  const [baseDraft, setBaseDraft] = useState('');
+  const [agentDraft, setAgentDraft] = useState('');
 
   useEffect(() => {
     const getUser = async () => {
@@ -46,6 +53,14 @@ export const TrainingPage: React.FC = () => {
       loadDocuments();
     }
   }, [userId]);
+
+  useEffect(() => {
+    setBaseDraft(baseMemory);
+  }, [baseMemory]);
+
+  useEffect(() => {
+    setAgentDraft(agentMemory);
+  }, [agentMemory, selectedAgent]);
 
   const loadDocuments = async () => {
     setIsLoading(true);
@@ -148,6 +163,83 @@ export const TrainingPage: React.FC = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Training & Knowledge Base</h1>
           <p className="text-slate-400">Upload and manage documents to train your AI agents</p>
+        </div>
+
+        {/* Memory */}
+        <div className="mb-10">
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold text-slate-100">Agent Memory</h2>
+            <p className="text-sm text-slate-400">Define company SOPs and per-agent overlays.</p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-slate-900/60 rounded-xl p-6 border border-slate-800">
+              <h3 className="text-sm font-semibold text-slate-200 uppercase tracking-wider mb-3">Base Memory (All Agents)</h3>
+              <textarea
+                value={baseDraft}
+                onChange={(e) => setBaseDraft(e.target.value)}
+                placeholder="Add SOPs, legal constraints, default stack (React + Tailwind), approvals, and safety rules."
+                className="w-full min-h-[180px] rounded-lg border border-slate-700 bg-slate-950 p-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+              <div className="mt-3 flex items-center justify-between">
+                {baseMemoryLoading ? (
+                  <p className="text-xs text-slate-500">Loading memory...</p>
+                ) : (
+                  <span className="text-xs text-slate-500">Last saved.</span>
+                )}
+                <button
+                  onClick={async () => {
+                    const ok = await updateBaseMemory(baseDraft);
+                    if (ok) toast.success('Base memory saved');
+                    else toast.error('Failed to save base memory');
+                  }}
+                  className="px-3 py-2 rounded-lg border border-slate-700 text-xs text-slate-200 hover:border-slate-500"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-slate-900/60 rounded-xl p-6 border border-slate-800">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-slate-200 uppercase tracking-wider">Agent Overlay</h3>
+                <select
+                  value={selectedAgent}
+                  onChange={(e) => setSelectedAgent(e.target.value as typeof selectedAgent)}
+                  className="bg-slate-950 border border-slate-700 text-sm text-slate-200 rounded-lg px-2 py-1"
+                >
+                  <option value="reflection">Reflection</option>
+                  <option value="strategy">Strategy</option>
+                  <option value="systems">Systems</option>
+                  <option value="technical">Technical</option>
+                  <option value="creative">Creative</option>
+                </select>
+              </div>
+              <textarea
+                value={agentDraft}
+                onChange={(e) => setAgentDraft(e.target.value)}
+                placeholder="Add role-specific guidance for this agent."
+                className="w-full min-h-[180px] rounded-lg border border-slate-700 bg-slate-950 p-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+              <div className="mt-3 flex items-center justify-between">
+                {agentMemoryLoading ? (
+                  <p className="text-xs text-slate-500">Loading agent memory...</p>
+                ) : (
+                  <span className="text-xs text-slate-500">Last saved.</span>
+                )}
+                <button
+                  onClick={async () => {
+                    const ok = await updateAgentMemory(agentDraft);
+                    if (ok) toast.success('Agent memory saved');
+                    else toast.error('Failed to save agent memory');
+                  }}
+                  className="px-3 py-2 rounded-lg border border-slate-700 text-xs text-slate-200 hover:border-slate-500"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Stats */}

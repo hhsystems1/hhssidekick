@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { processWithAgents } from './agents';
 import { supabase } from './lib/supabaseClient';
 import { useConversations, useMessages } from './hooks/useChat';
+import { useUserMemory } from './hooks/useDatabase';
 import { checkProviderHealth } from './services/ai/llm-client';
 
 const MOCK_USER_ID = '00000000-0000-0000-0000-000000000000';
@@ -21,11 +22,19 @@ export function ChatPage() {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showChatList, setShowChatList] = useState(true);
+  const [pendingMessages, setPendingMessages] = useState<Array<{
+    id: string;
+    text: string;
+    sender: 'user';
+    timestamp: Date;
+    status: 'pending' | 'failed';
+  }>>([]);
   const [providerStatus, setProviderStatus] = useState<{
     provider: string;
     available: boolean;
     error?: string;
   } | null>(null);
+  const { content: baseMemory } = useUserMemory();
 
   const { conversations, createConversation } = useConversations(userId);
   const { messages: dbMessages, addMessage } = useMessages(activeChat);
@@ -83,6 +92,7 @@ export function ChatPage() {
     sender: msg.sender === 'user' ? 'user' : 'bot' as 'user' | 'bot',
     timestamp: new Date(msg.created_at),
   }));
+  const combinedMessages = [...activeMessages, ...pendingMessages];
 
   const getConversationTitle = (convId: string) => {
     const conv = conversations.find((c) => c.id === convId);
@@ -212,15 +222,21 @@ export function ChatPage() {
             )}
 
             <div className="flex-1 space-y-2 overflow-y-auto bg-slate-50 p-3 dark:bg-slate-900" style={{ WebkitOverflowScrolling: 'touch' }}>
-              {activeMessages.map((msg) => (
+              {combinedMessages.map((msg) => (
                 <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                   {(() => {
                     const bg = msg.sender === 'user' ? '#1a73e8' : '#1f2937';
                     const color = getTextColorForBg(bg);
                     return (
-                      <div className="max-w-[75%] rounded-2xl px-3 py-2 shadow-sm" style={{ backgroundColor: bg, color }}>
+                      <div
+                        className={`max-w-[75%] rounded-2xl px-3 py-2 shadow-sm ${'status' in msg && msg.status === 'pending' ? 'opacity-70' : ''}`}
+                        style={{ backgroundColor: bg, color }}
+                      >
                         <div className="whitespace-pre-wrap text-sm">{msg.text}</div>
-                        <div className="mt-1 text-right text-[10px]" style={{ color: msg.sender === 'user' ? 'rgba(255,255,255,0.8)' : '#9ca3af' }}>
+                        <div className="mt-1 flex items-center justify-end gap-2 text-[10px]" style={{ color: msg.sender === 'user' ? 'rgba(255,255,255,0.8)' : '#9ca3af' }}>
+                          {'status' in msg && msg.status === 'failed' && (
+                            <span className="text-red-300">failed</span>
+                          )}
                           {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </div>
                       </div>
@@ -243,15 +259,29 @@ export function ChatPage() {
                 const text = message;
                 setMessage('');
 
+                const tempId = `temp-${Date.now()}`;
+                setPendingMessages((prev) => [
+                  ...prev,
+                  { id: tempId, text, sender: 'user', timestamp: new Date(), status: 'pending' },
+                ]);
+
                 // Save the user message and get the returned message data
                 const userMessage = await addMessage(text, 'user');
+                if (!userMessage) {
+                  setPendingMessages((prev) =>
+                    prev.map((m) => (m.id === tempId ? { ...m, status: 'failed' } : m))
+                  );
+                } else {
+                  setPendingMessages((prev) => prev.filter((m) => m.id !== tempId));
+                }
 
                 setIsSending(true);
                 try {
                   const userContext = {
                     userId,
-                    currentProject: 'Helping Hands Systems',
+                    currentProject: 'Rivryn Sidekick',
                     recentTopics: [],
+                    policyMemory: baseMemory,
                   };
 
                   // Build message history including the current user message
