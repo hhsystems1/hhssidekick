@@ -105,9 +105,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const signOut = async (): Promise<void> => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.warn('Sign out failed, clearing local session:', error);
+      try {
+        // Best-effort local sign out to clear client session
+        await supabase.auth.signOut({ scope: 'local' } as any);
+      } catch (localError) {
+        console.warn('Local sign out failed:', localError);
+      }
+    } finally {
+      setUser(null);
+      setSession(null);
+      setLoading(false);
+    }
   };
 
   const resetPassword = async (email: string): Promise<{ error: Error | null }> => {

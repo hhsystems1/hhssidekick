@@ -9,7 +9,7 @@ const extractSupabaseUrl = (value?: string) => {
   return match ? match[0] : value;
 };
 
-const supabaseUrl = extractSupabaseUrl(rawSupabaseUrl);
+export const supabaseUrl = extractSupabaseUrl(rawSupabaseUrl);
 const isPlaceholderUrl = !supabaseUrl || supabaseUrl.includes('placeholder');
 const isPlaceholderKey = !supabaseAnonKey || supabaseAnonKey.includes('placeholder');
 

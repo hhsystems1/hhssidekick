@@ -3,8 +3,10 @@
  * Connect external accounts (GitHub, Google)
  */
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Github, Mail, Calendar, Cloud, Shield, CheckCircle2 } from 'lucide-react';
+import { getGoogleStatus, startGoogleConnect, disconnectGoogle } from '../services/connectors/google';
+import toast from 'react-hot-toast';
 
 interface IntegrationCardProps {
   title: string;
@@ -54,6 +56,18 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
 };
 
 export const IntegrationsPage: React.FC = () => {
+  const [googleConnected, setGoogleConnected] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const loadStatus = async () => {
+    const status = await getGoogleStatus();
+    setGoogleConnected(!!status.connected);
+  };
+
+  useEffect(() => {
+    loadStatus();
+  }, []);
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <div className="max-w-6xl mx-auto p-4 lg:p-8">
@@ -71,14 +85,41 @@ export const IntegrationsPage: React.FC = () => {
             onClick={() => alert('GitHub OAuth setup coming next.')}
             icon={<Github size={22} />}
           />
-          <IntegrationCard
-            title="Google"
-            description="Gmail, Calendar, Drive, and Docs."
-            status="not_connected"
-            ctaLabel="Connect"
-            onClick={() => alert('Google OAuth setup coming next.')}
-            icon={<Mail size={22} />}
-          />
+          <div className="space-y-2">
+            <IntegrationCard
+              title="Google"
+              description="Gmail, Calendar, Drive, and Docs."
+              status={googleConnected ? 'connected' : 'not_connected'}
+              ctaLabel={googleConnected ? 'Disconnect' : googleLoading ? 'Connecting...' : 'Connect'}
+              onClick={async () => {
+                if (googleLoading) return;
+                if (googleConnected) {
+                  setGoogleLoading(true);
+                  const res = await disconnectGoogle();
+                  setGoogleLoading(false);
+                  if (res.success) {
+                    toast.success('Google disconnected');
+                    setGoogleConnected(false);
+                  } else {
+                    toast.error(res.error || 'Failed to disconnect');
+                  }
+                  return;
+                }
+                setGoogleLoading(true);
+                const res = await startGoogleConnect(`${window.location.origin}/integrations`);
+                setGoogleLoading(false);
+                if (res.url) {
+                  window.location.href = res.url;
+                } else {
+                  toast.error(res.error || 'Failed to start Google connect');
+                }
+              }}
+              icon={<Mail size={22} />}
+            />
+            <p className="text-xs text-slate-500">
+              No setup needed. Sidekick handles OAuth centrally.
+            </p>
+          </div>
         </div>
 
         <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
