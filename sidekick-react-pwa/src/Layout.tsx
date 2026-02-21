@@ -13,6 +13,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 
 export const Layout: React.FC = () => {
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [confirmSignOutOpen, setConfirmSignOutOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut, loading } = useAuth();
@@ -100,12 +101,7 @@ export const Layout: React.FC = () => {
           <div className="flex items-center gap-2">
             {user ? (
               <button
-                onClick={async () => {
-                  const confirmSignOut = window.confirm('Sign out of Rivryn Sidekick?');
-                  if (!confirmSignOut) return;
-                  await signOut();
-                  navigate('/');
-                }}
+                onClick={() => setConfirmSignOutOpen(true)}
                 className="px-3 py-1.5 border border-slate-700 rounded-lg text-xs text-slate-300 hover:border-slate-500 hover:text-slate-100 transition-colors"
               >
                 Sign Out
@@ -157,6 +153,34 @@ export const Layout: React.FC = () => {
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
       />
+
+      {/* Sign Out पुष्टि */}
+      {confirmSignOutOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-slate-100">Sign out?</h3>
+            <p className="mt-2 text-sm text-slate-400">Are you sure you want to sign out of Rivryn Sidekick?</p>
+            <div className="mt-6 flex items-center gap-3">
+              <button
+                onClick={() => setConfirmSignOutOpen(false)}
+                className="flex-1 rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  setConfirmSignOutOpen(false);
+                  await signOut();
+                  navigate('/');
+                }}
+                className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm text-emerald-50 hover:bg-emerald-500"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

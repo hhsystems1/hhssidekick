@@ -139,6 +139,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.warn('Local sign out failed:', localError);
       }
     } finally {
+      // Hard-clear any cached Supabase auth tokens
+      try {
+        Object.keys(localStorage).forEach((key) => {
+          if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+            localStorage.removeItem(key);
+          }
+        });
+      } catch (storageError) {
+        console.warn('Failed to clear auth tokens from storage:', storageError);
+      }
       setUser(null);
       setSession(null);
       setLoading(false);
