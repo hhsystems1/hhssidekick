@@ -104,7 +104,7 @@ export abstract class BaseSpecialist {
    * Helper to extract domain context from user
    */
   protected getDomainContext(userContext: UserContext): string {
-    const { currentProject, recentTopics } = userContext;
+    const { currentProject, recentTopics, baseMemory, agentMemoryByType } = userContext;
     const parts: string[] = [];
 
     if (currentProject) {
@@ -113,6 +113,15 @@ export abstract class BaseSpecialist {
 
     if (recentTopics && recentTopics.length > 0) {
       parts.push(`Recent topics: ${recentTopics.join(', ')}`);
+    }
+
+    if (baseMemory) {
+      parts.push(`Base memory:\n${baseMemory}`);
+    }
+
+    const agentOverlay = agentMemoryByType?.[this.agentType];
+    if (agentOverlay) {
+      parts.push(`Agent overlay (${this.agentType}):\n${agentOverlay}`);
     }
 
     return parts.length > 0 ? `\n\nContext:\n${parts.join('\n')}` : '';

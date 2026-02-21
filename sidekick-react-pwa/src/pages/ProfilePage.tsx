@@ -16,7 +16,7 @@ export const ProfilePage: React.FC = () => {
     name: 'Demo User',
     email: 'demo@example.com',
     phone: '+1 (555) 123-4567',
-    company: 'Helping Hands Systems',
+    company: 'Rivryn Sidekick',
     location: 'San Francisco, CA',
     timezone: 'America/Los_Angeles',
     bio: 'AI enthusiast and automation expert',

@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { processWithAgents } from './agents';
 import { supabase } from './lib/supabaseClient';
 import { useConversations, useMessages } from './hooks/useChat';
-import { useUserMemory } from './hooks/useDatabase';
+import { useAllAgentMemory, useUserMemory } from './hooks/useDatabase';
 import { checkProviderHealth } from './services/ai/llm-client';
 
 const MOCK_USER_ID = '00000000-0000-0000-0000-000000000000';
@@ -35,6 +35,7 @@ export function ChatPage() {
     error?: string;
   } | null>(null);
   const { content: baseMemory } = useUserMemory();
+  const { memoryByType: agentMemoryByType } = useAllAgentMemory();
 
   const { conversations, createConversation } = useConversations(userId);
   const { messages: dbMessages, addMessage } = useMessages(activeChat);
@@ -271,9 +272,10 @@ export function ChatPage() {
                   setPendingMessages((prev) =>
                     prev.map((m) => (m.id === tempId ? { ...m, status: 'failed' } : m))
                   );
-                } else {
-                  setPendingMessages((prev) => prev.filter((m) => m.id !== tempId));
+                  setError('Message failed to save. Please try again.');
+                  return;
                 }
+                setPendingMessages((prev) => prev.filter((m) => m.id !== tempId));
 
                 setIsSending(true);
                 try {
@@ -281,7 +283,8 @@ export function ChatPage() {
                     userId,
                     currentProject: 'Rivryn Sidekick',
                     recentTopics: [],
-                    policyMemory: baseMemory,
+                    baseMemory,
+                    agentMemoryByType,
                   };
 
                   // Build message history including the current user message

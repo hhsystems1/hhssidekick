@@ -3,7 +3,7 @@
  * Main layout with sidebar navigation for all pages
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { BRANDING, getLogo } from './config/branding';
 import { AuthModal } from './components/AuthModal';
@@ -15,7 +15,23 @@ export const Layout: React.FC = () => {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user, signOut, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading) {
+      const path = location.pathname + location.search;
+      localStorage.setItem('sidekick.lastRoute', path);
+    }
+  }, [location.pathname, location.search, loading]);
+
+  useEffect(() => {
+    if (!loading && user) {
+      const lastRoute = localStorage.getItem('sidekick.lastRoute');
+      if (lastRoute && lastRoute !== '/' && location.pathname === '/') {
+        navigate(lastRoute, { replace: true });
+      }
+    }
+  }, [loading, user, location.pathname, navigate]);
 
   // Navigation handlers for Navbar
   const handleNavigate = (page: string) => {

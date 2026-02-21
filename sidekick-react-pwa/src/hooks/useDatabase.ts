@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import * as db from '../services/database';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabaseClient';
 
 /**
  * Hook to load tasks from database
@@ -554,4 +555,48 @@ export function useAgentMemory(agentType: string) {
   }, [userId, agentType]);
 
   return { content, loading, error, updateMemory, reload: loadMemory };
+}
+
+/**
+ * Hook to load all agent memories for a user
+ */
+export function useAllAgentMemory() {
+  const { user } = useAuth();
+  const userId = user?.id;
+  const [memoryByType, setMemoryByType] = useState<Partial<Record<string, string>>>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadAll = useCallback(async () => {
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('agent_memory')
+        .select('agent_type, content')
+        .eq('user_id', userId);
+
+      if (fetchError) throw fetchError;
+      const map: Partial<Record<string, string>> = {};
+      (data || []).forEach((row) => {
+        map[row.agent_type] = row.content || '';
+      });
+      setMemoryByType(map);
+    } catch (err: any) {
+      console.error('Failed to load agent memories:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    loadAll();
+  }, [loadAll]);
+
+  return { memoryByType, loading, error, reload: loadAll };
 }

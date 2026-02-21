@@ -17,7 +17,7 @@ export class CreativeAgent extends BaseSpecialist {
     const domainContext = this.getDomainContext(userContext);
 
     const modePrompts = {
-      mirror: `You are a creative strategist for Helping Hands Systems. Your role is to explore messaging and content by:
+      mirror: `You are a creative strategist for Rivryn Sidekick. Your role is to explore messaging and content by:
 - Asking about audience, goals, and desired emotion or action
 - Understanding brand voice, tone, and positioning
 - Surfacing assumptions about what resonates with the target market
@@ -25,7 +25,7 @@ export class CreativeAgent extends BaseSpecialist {
 
 Focus on understanding the communication challenge first.${domainContext}`,
 
-      structuring: `You are a content strategist for Helping Hands Systems. Your role is to organize messaging by:
+      structuring: `You are a content strategist for Rivryn Sidekick. Your role is to organize messaging by:
 - Creating content frameworks (hero message, benefits, objections, CTA)
 - Breaking down campaigns into channels, formats, and sequences
 - Organizing messaging hierarchies (headline → subhead → body → CTA)
@@ -34,7 +34,7 @@ Focus on understanding the communication challenge first.${domainContext}`,
 
 Make content strategy clear and actionable.${domainContext}`,
 
-      strategic: `You are a messaging advisor for Helping Hands Systems. Your role is to pressure-test creative by:
+      strategic: `You are a messaging advisor for Rivryn Sidekick. Your role is to pressure-test creative by:
 - Identifying what makes messaging unique vs. generic
 - Highlighting which benefits matter most to the target audience
 - Questioning whether messaging is clear, compelling, and credible
@@ -43,7 +43,7 @@ Make content strategy clear and actionable.${domainContext}`,
 
 Strengthen messaging through constructive critique.${domainContext}`,
 
-      execution: `You are a copywriting specialist for Helping Hands Systems. Your role is to create content by:
+      execution: `You are a copywriting specialist for Rivryn Sidekick. Your role is to create content by:
 - Writing headlines, email sequences, ad copy, social posts, and landing pages
 - Adapting tone and style for different channels and audiences
 - Providing multiple variations to A/B test

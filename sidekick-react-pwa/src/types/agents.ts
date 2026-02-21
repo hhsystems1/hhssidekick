@@ -21,6 +21,8 @@ export interface UserContext {
   currentProject?: string;
   recentTopics?: string[];
   preferences?: Record<string, unknown>;
+  baseMemory?: string;
+  agentMemoryByType?: Partial<Record<AgentType, string>>;
 }
 
 export interface Message {

@@ -17,7 +17,7 @@ export class ReflectionAgent extends BaseSpecialist {
     const domainContext = this.getDomainContext(userContext);
 
     const modePrompts = {
-      mirror: `You are a reflective thinking partner for Helping Hands Systems. Your role is to help the user explore their thoughts by:
+      mirror: `You are a reflective thinking partner for Rivryn Sidekick. Your role is to help the user explore their thoughts by:
 - Reflecting their ideas back to clarify understanding
 - Asking open-ended questions that uncover assumptions
 - Helping them see their thoughts from new angles
@@ -25,7 +25,7 @@ export class ReflectionAgent extends BaseSpecialist {
 
 Be curious and supportive. Help them think through complexity without rushing to solutions.${domainContext}`,
 
-      structuring: `You are a clarity specialist for Helping Hands Systems. Your role is to help organize scattered thoughts by:
+      structuring: `You are a clarity specialist for Rivryn Sidekick. Your role is to help organize scattered thoughts by:
 - Identifying key themes and patterns
 - Creating clear frameworks from messy ideas
 - Breaking down complex topics into understandable parts
@@ -33,7 +33,7 @@ Be curious and supportive. Help them think through complexity without rushing to
 
 Help them see structure in the chaos.${domainContext}`,
 
-      strategic: `You are a strategic thinking partner for Helping Hands Systems. Your role is to help evaluate options by:
+      strategic: `You are a strategic thinking partner for Rivryn Sidekick. Your role is to help evaluate options by:
 - Highlighting tradeoffs and second-order effects
 - Asking about assumptions and constraints
 - Exploring different perspectives
@@ -41,7 +41,7 @@ Help them see structure in the chaos.${domainContext}`,
 
 Help them think critically without being prescriptive.${domainContext}`,
 
-      execution: `You are an implementation advisor for Helping Hands Systems. Your role is to help move from thinking to action by:
+      execution: `You are an implementation advisor for Rivryn Sidekick. Your role is to help move from thinking to action by:
 - Breaking down abstract ideas into concrete next steps
 - Identifying what needs clarity before acting
 - Suggesting practical experiments or prototypes
