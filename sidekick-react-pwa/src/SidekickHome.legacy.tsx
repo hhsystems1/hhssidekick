@@ -49,72 +49,48 @@ export const SidekickHome: React.FC = () => {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#04070f]">
-      {/* Premium Green Radiant Background */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            'radial-gradient(900px 650px at 12% 10%, rgba(0,255,160,0.22), transparent 60%),' +
-            'radial-gradient(850px 650px at 88% 22%, rgba(56,181,255,0.16), transparent 60%),' +
-            'radial-gradient(1100px 850px at 50% 95%, rgba(0,217,126,0.14), transparent 62%),' +
-            'linear-gradient(180deg, #04070f 0%, #070b18 40%, #060a14 100%)',
-        }}
+    <div className="bg-slate-950 bg-[radial-gradient(circle_at_top_left,rgba(80,200,120,0.15),transparent_55%),radial-gradient(circle_at_bottom_right,rgba(56,181,255,0.15),transparent_55%)]">
+      {/* Command Center Dashboard */}
+      <CommandCenter
+        onNavigateToTasks={() => navigate('/tasks')}
+        onNavigateToChat={() => navigate('/chat')}
+        onNavigateToSettings={() => navigate('/settings')}
+        onNavigateToFiles={() => navigate('/files')}
       />
 
-      {/* Depth vignette */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            'radial-gradient(1200px 900px at 50% 50%, transparent 42%, rgba(0,0,0,0.58) 100%)',
-        }}
+      {/* Customizable Dashboard */}
+      <DashboardSection
+        agents={agents}
+        agentsLoading={agentsLoading}
+        onToggleAgent={handleToggleAgent}
+        onDeployAgent={handleDeployAgent}
+        navigate={navigate}
+        isCustomizing={isCustomizing}
+        setIsCustomizing={setIsCustomizing}
       />
 
-      {/* App Content */}
-      <div className="relative z-10">
-        {/* Command Center Dashboard */}
-        <CommandCenter
-          onNavigateToTasks={() => navigate('/tasks')}
-          onNavigateToChat={() => navigate('/chat')}
-          onNavigateToSettings={() => navigate('/settings')}
-          onNavigateToFiles={() => navigate('/files')}
-        />
-
-        {/* Customizable Dashboard */}
-        <DashboardSection
-          agents={agents}
-          agentsLoading={agentsLoading}
-          onToggleAgent={handleToggleAgent}
-          onDeployAgent={handleDeployAgent}
-          navigate={navigate}
-          isCustomizing={isCustomizing}
-          setIsCustomizing={setIsCustomizing}
-        />
-
-        {/* Agent Dialog */}
-        {showNewAgentDialog && (
-          <DeployAgentDialog
-            onClose={() => setShowNewAgentDialog(false)}
-            onSubmit={async (name, agentType) => {
-              try {
-                console.log('SidekickHome: Attempting to deploy agent:', name, agentType);
-                const success = await addAgent(name, agentType);
-                console.log('SidekickHome: Deploy agent result:', success);
-                if (!success) {
-                  console.error('SidekickHome: Agent deployment failed - check console for details');
-                  alert('Failed to deploy agent - check console for details');
-                }
-                return success;
-              } catch (error: any) {
-                console.error('SidekickHome: Error deploying agent:', error);
-                alert(`Failed to deploy agent: ${error.message || 'Unknown error'}`);
-                return false;
+      {/* Agent Dialog */}
+      {showNewAgentDialog && (
+        <DeployAgentDialog
+          onClose={() => setShowNewAgentDialog(false)}
+          onSubmit={async (name, agentType) => {
+            try {
+              console.log('SidekickHome: Attempting to deploy agent:', name, agentType);
+              const success = await addAgent(name, agentType);
+              console.log('SidekickHome: Deploy agent result:', success);
+              if (!success) {
+                console.error('SidekickHome: Agent deployment failed - check console for details');
+                alert('Failed to deploy agent - check console for details');
               }
-            }}
-          />
-        )}
-      </div>
+              return success;
+            } catch (error: any) {
+              console.error('SidekickHome: Error deploying agent:', error);
+              alert(`Failed to deploy agent: ${error.message || 'Unknown error'}`);
+              return false;
+            }
+          }}
+        />
+      )}
     </div>
   );
 };
@@ -129,26 +105,15 @@ function AgentCard({ agent, onToggle }: AgentCardProps) {
   const isActive = agent.status === 'active';
 
   return (
-    <div
-      className="
-        rounded-xl p-4 transition-all
-        bg-black/30 backdrop-blur-xl border border-white/10
-        hover:bg-black/40 hover:border-white/15
-        shadow-[0_0_40px_rgba(0,255,160,0.05)]
-      "
-    >
+    <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-4 hover:shadow-lg hover:shadow-slate-900/50 transition-all">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div
-            className={`w-2 h-2 rounded-full ${
-              isActive ? 'bg-emerald-400' : 'bg-emerald-950'
-            }`}
-          />
+          <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-emerald-400' : 'bg-slate-500'}`} />
           <span className="font-medium text-slate-100">{agent.name}</span>
         </div>
         <button
           onClick={onToggle}
-          className="p-2 hover:bg-white/5 rounded-lg transition-colors text-slate-400 hover:text-slate-100"
+          className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-slate-100"
           aria-label={isActive ? 'Pause agent' : 'Start agent'}
         >
           {isActive ? <Pause size={16} /> : <Play size={16} />}
@@ -156,13 +121,7 @@ function AgentCard({ agent, onToggle }: AgentCardProps) {
       </div>
       <p className="text-sm text-slate-400">{agent.metric}</p>
       <div className="mt-2 flex items-center justify-between">
-        <span
-          className={`text-xs px-2 py-0.5 rounded-full ${
-            isActive
-              ? 'bg-emerald-950/50 text-emerald-400 border border-emerald-400/10'
-              : 'bg-white/5 text-slate-400 border border-white/10'
-          }`}
-        >
+        <span className={`text-xs px-2 py-0.5 rounded-full ${isActive ? 'bg-emerald-950/50 text-emerald-400' : 'bg-slate-800 text-slate-400'}`}>
           {isActive ? 'Active' : 'Idle'}
         </span>
       </div>
@@ -276,8 +235,11 @@ function DashboardSection({
   const toggleHidden = (id: DashboardWidgetId) => {
     setHidden(prev => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
       saveDashboardConfig(widgetOrder, Array.from(next));
       return next;
     });
@@ -292,24 +254,20 @@ function DashboardSection({
         </div>
         <button
           onClick={() => setIsCustomizing(!isCustomizing)}
-          className="
-            px-4 py-2 rounded-lg text-sm transition-colors
-            bg-white/5 backdrop-blur-xl border border-white/10
-            text-slate-200 hover:text-white hover:border-white/20
-          "
+          className="px-4 py-2 rounded-lg border border-slate-700 text-slate-300 hover:text-slate-100 hover:border-slate-500 transition-colors text-sm"
         >
           {isCustomizing ? 'Done' : 'Customize'}
         </button>
       </div>
 
       {isCustomizing && (
-        <div className="mb-6 rounded-xl p-4 bg-black/30 backdrop-blur-xl border border-white/10">
+        <div className="mb-6 bg-slate-900/60 border border-slate-800 rounded-xl p-4">
           <p className="text-sm text-slate-400 mb-3">Reorder and hide widgets.</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {widgets.map((widget, idx) => (
               <div
                 key={widget.id}
-                className="flex items-center justify-between rounded-lg px-3 py-2 bg-white/5 border border-white/10"
+                className="flex items-center justify-between bg-slate-950/60 border border-slate-800 rounded-lg px-3 py-2"
               >
                 <div className="flex items-center gap-3">
                   <GripVertical size={16} className="text-slate-500" />
@@ -319,20 +277,20 @@ function DashboardSection({
                   <button
                     onClick={() => moveWidget(widget.id, 'up')}
                     disabled={idx === 0}
-                    className="text-xs px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-200 disabled:opacity-40"
+                    className="text-xs px-2 py-1 rounded bg-slate-800 text-slate-300 disabled:opacity-40"
                   >
                     Up
                   </button>
                   <button
                     onClick={() => moveWidget(widget.id, 'down')}
                     disabled={idx === widgets.length - 1}
-                    className="text-xs px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-200 disabled:opacity-40"
+                    className="text-xs px-2 py-1 rounded bg-slate-800 text-slate-300 disabled:opacity-40"
                   >
                     Down
                   </button>
                   <button
                     onClick={() => toggleHidden(widget.id)}
-                    className="text-xs px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-200 hover:border-white/20"
+                    className="text-xs px-2 py-1 rounded border border-slate-700 text-slate-300"
                   >
                     {hidden.has(widget.id) ? 'Show' : 'Hide'}
                   </button>
@@ -344,30 +302,23 @@ function DashboardSection({
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {widgets
-          .filter(w => !hidden.has(w.id))
-          .map(widget => (
-            <button
-              key={widget.id}
-              onClick={() => navigate(widget.route)}
-              className="
-                text-left rounded-xl p-5 transition-all
-                bg-white/5 backdrop-blur-xl border border-white/10
-                hover:bg-white/7 hover:border-white/15
-                shadow-[0_0_40px_rgba(0,255,160,0.06)]
-              "
-            >
-              <div className="flex items-center gap-3 text-emerald-400">
-                {widget.icon}
-                <span className="text-slate-100 font-semibold">{widget.label}</span>
-              </div>
-              <p className="text-sm text-slate-400 mt-2">{widget.description}</p>
-            </button>
-          ))}
+        {widgets.filter(w => !hidden.has(w.id)).map(widget => (
+          <button
+            key={widget.id}
+            onClick={() => navigate(widget.route)}
+            className="text-left bg-slate-900/60 border border-slate-800 rounded-xl p-5 hover:border-slate-700 transition-colors"
+          >
+            <div className="flex items-center gap-3 text-emerald-400">
+              {widget.icon}
+              <span className="text-slate-100 font-semibold">{widget.label}</span>
+            </div>
+            <p className="text-sm text-slate-400 mt-2">{widget.description}</p>
+          </button>
+        ))}
       </div>
 
       {/* Agents Snapshot */}
-      <div className="mt-8 pt-8 border-t border-white/10">
+      <div className="mt-8 pt-8 border-t border-slate-800">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm font-semibold text-slate-100 uppercase tracking-wider">Agents</h3>
           <button
@@ -396,11 +347,7 @@ function DashboardSection({
 
         <button
           onClick={onDeployAgent}
-          className="
-            w-full mt-4 py-4 rounded-xl font-medium transition-colors
-            bg-white/5 backdrop-blur-xl border-2 border-dashed border-white/15
-            text-slate-300 hover:text-white hover:border-white/25
-          "
+          className="w-full mt-4 py-4 border-2 border-dashed border-slate-700 rounded-xl text-slate-400 hover:border-slate-600 hover:text-slate-100 transition-colors font-medium"
         >
           + Deploy New Agent
         </button>
