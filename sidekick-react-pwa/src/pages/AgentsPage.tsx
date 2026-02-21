@@ -4,10 +4,11 @@
  */
 
 import React, { useState } from 'react';
-import { Play, Pause, Plus, Trash2 } from 'lucide-react';
+import { Pause, Plus, Trash2, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAgents } from '../hooks/useDatabase';
 import { DeployAgentDialog } from '../components/DeployAgentDialog';
+import { enqueueAgentRun } from '../services/agents/runner';
 
 export const AgentsPage: React.FC = () => {
   const { agents, loading, toggleAgent, addAgent, deleteAgent, reload } = useAgents();
@@ -49,6 +50,7 @@ export const AgentsPage: React.FC = () => {
   };
 
   const activeAgentsCount = agents.filter(a => a.status === 'active').length;
+  const [runningAgentId, setRunningAgentId] = useState<string | null>(null);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -156,7 +158,15 @@ export const AgentsPage: React.FC = () => {
                       className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-slate-100"
                       aria-label={agent.status === 'active' ? 'Pause agent' : 'Start agent'}
                     >
-                      {agent.status === 'active' ? <Pause size={18} /> : <Play size={18} />}
+                      {agent.status === 'active' ? (
+                        <Pause size={18} />
+                      ) : (
+                        <img
+                          src="/Rlogo.png"
+                          alt="Rivryn"
+                          className="w-4 h-4"
+                        />
+                      )}
                     </button>
                     <button
                       onClick={() => handleDeleteAgent(agent.id, agent.name)}
@@ -181,12 +191,32 @@ export const AgentsPage: React.FC = () => {
                   </div>
                 </div>
 
-                <button
-                  onClick={() => toast('View details coming soon!')}
-                  className="w-full mt-4 py-2 border border-slate-700 rounded-lg text-slate-400 hover:border-slate-600 hover:text-slate-100 transition-colors text-sm"
-                >
-                  View Details
-                </button>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <button
+                    onClick={async () => {
+                      if (runningAgentId) return;
+                      setRunningAgentId(agent.id);
+                      const res = await enqueueAgentRun(agent.id, { reason: 'manual_run' });
+                      setRunningAgentId(null);
+                      if (res.success) {
+                        toast.success('Agent queued to run');
+                      } else {
+                        toast.error(res.error || 'Failed to run agent');
+                      }
+                    }}
+                    className="py-2 border border-emerald-600/60 rounded-lg text-emerald-300 hover:border-emerald-500 transition-colors text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                    disabled={runningAgentId === agent.id}
+                  >
+                    <Zap size={14} />
+                    Run Now
+                  </button>
+                  <button
+                    onClick={() => toast('View details coming soon!')}
+                    className="py-2 border border-slate-700 rounded-lg text-slate-400 hover:border-slate-600 hover:text-slate-100 transition-colors text-sm"
+                  >
+                    View Details
+                  </button>
+                </div>
               </div>
             ))}
           </div>

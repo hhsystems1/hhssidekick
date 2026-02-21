@@ -92,8 +92,11 @@ export const Layout: React.FC = () => {
         {/* Header */}
         <div className="h-14 border-b border-slate-800 flex items-center justify-between px-4 bg-slate-950/60 z-30 shrink-0">
           <div className="flex items-center gap-2">
-            <span className="text-xl">{getLogo()}</span>
-            <h1 className="text-lg font-bold text-slate-100">{BRANDING.appName}</h1>
+            <img
+              src="/Rivrynsk.png"
+              alt="Rivryn"
+              className="h-7 w-auto"
+            />
           </div>
           <h2 className="text-sm font-medium text-slate-400">
             {getPageTitle()}

@@ -10,6 +10,7 @@ import { supabase } from './lib/supabaseClient';
 import { useConversations, useMessages } from './hooks/useChat';
 import { useAllAgentMemory, useUserMemory } from './hooks/useDatabase';
 import { checkProviderHealth } from './services/ai/llm-client';
+import { Trash2 } from 'lucide-react';
 
 const MOCK_USER_ID = '00000000-0000-0000-0000-000000000000';
 
@@ -37,8 +38,9 @@ export function ChatPage() {
   const { content: baseMemory } = useUserMemory();
   const { memoryByType: agentMemoryByType } = useAllAgentMemory();
 
-  const { conversations, createConversation } = useConversations(userId);
+  const { conversations, createConversation, deleteConversation } = useConversations(userId);
   const { messages: dbMessages, addMessage } = useMessages(activeChat);
+  const [confirmDeleteChat, setConfirmDeleteChat] = useState<{ id: string; title: string } | null>(null);
 
   useEffect(() => {
     const getUser = async () => {
@@ -116,20 +118,31 @@ export function ChatPage() {
         </div>
         <div className="flex-1 overflow-y-auto relative">
           {conversations.map((conv) => (
-            <button
+            <div
               key={conv.id}
-              onClick={() => setActiveChat(conv.id)}
               className={`flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800 ${activeChat === conv.id ? 'bg-slate-100 dark:bg-slate-800/70' : ''}`}
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-200 text-base dark:bg-slate-700">💬</div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <div className="truncate text-sm font-medium">{conv.title}</div>
-                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              <button
+                onClick={() => setActiveChat(conv.id)}
+                className="flex w-full items-center gap-2 text-left"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-200 text-base dark:bg-slate-700">💬</div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <div className="truncate text-sm font-medium">{conv.title}</div>
+                    <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                  </div>
+                  <div className="truncate text-xs text-slate-500 dark:text-slate-400">{getConversationLastMessage(conv.id)}</div>
                 </div>
-                <div className="truncate text-xs text-slate-500 dark:text-slate-400">{getConversationLastMessage(conv.id)}</div>
-              </div>
-            </button>
+              </button>
+              <button
+                onClick={() => setConfirmDeleteChat({ id: conv.id, title: conv.title })}
+                className="p-2 text-slate-400 hover:text-red-400"
+                aria-label="Delete chat"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
           ))}
           <div className="sticky bottom-0 z-10 bg-white/90 backdrop-blur dark:bg-slate-900/80 p-3 border-t border-slate-200 dark:border-slate-800">
             <button
@@ -162,20 +175,31 @@ export function ChatPage() {
             </div>
           ) : (
             conversations.map((conv) => (
-              <button
+              <div
                 key={conv.id}
-                onClick={() => setActiveChat(conv.id)}
                 className={`flex w-full items-center gap-2 px-3 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800 ${activeChat === conv.id ? 'bg-slate-100 dark:bg-slate-800/70' : ''}`}
               >
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-200 text-base dark:bg-slate-700">💬</div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <div className="truncate text-sm font-medium">{conv.title}</div>
-                    <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                <button
+                  onClick={() => setActiveChat(conv.id)}
+                  className="flex w-full items-center gap-2 text-left"
+                >
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-200 text-base dark:bg-slate-700">💬</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <div className="truncate text-sm font-medium">{conv.title}</div>
+                      <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                    </div>
+                    <div className="truncate text-xs text-slate-500 dark:text-slate-400">{getConversationLastMessage(conv.id)}</div>
                   </div>
-                  <div className="truncate text-xs text-slate-500 dark:text-slate-400">{getConversationLastMessage(conv.id)}</div>
-                </div>
-              </button>
+                </button>
+                <button
+                  onClick={() => setConfirmDeleteChat({ id: conv.id, title: conv.title })}
+                  className="p-2 text-slate-400 hover:text-red-400"
+                  aria-label="Delete chat"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
             ))
           )}
           <div className="sticky bottom-0 z-10 bg-white/90 backdrop-blur dark:bg-slate-900/80 p-3 border-t border-slate-200 dark:border-slate-800">
@@ -360,5 +384,35 @@ export function ChatPage() {
         )}
       </main>
     </div>
+
+    {confirmDeleteChat && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+        <div className="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+          <h3 className="text-lg font-semibold text-slate-100">Delete chat?</h3>
+          <p className="mt-2 text-sm text-slate-400">
+            This will permanently remove “{confirmDeleteChat.title}”.
+          </p>
+          <div className="mt-6 flex items-center gap-3">
+            <button
+              onClick={() => setConfirmDeleteChat(null)}
+              className="flex-1 rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={async () => {
+                const id = confirmDeleteChat.id;
+                setConfirmDeleteChat(null);
+                await deleteConversation(id);
+                if (activeChat === id) setActiveChat(null);
+              }}
+              className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm text-red-50 hover:bg-red-500"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
   );
 }
