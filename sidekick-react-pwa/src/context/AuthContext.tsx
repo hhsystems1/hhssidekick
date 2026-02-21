@@ -27,6 +27,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+
     // Helper to ensure profile exists
     const ensureUserProfile = async (currentUser: User) => {
       if (!currentUser.email) return;
@@ -46,19 +48,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     };
 
-    // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await ensureUserProfile(session.user);
+    const authTimeout = setTimeout(() => {
+      if (!cancelled) {
+        console.warn('Auth initialization timed out, continuing without session.');
+        setLoading(false);
       }
-      setLoading(false);
-    });
+    }, 8000);
+
+    const init = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (cancelled) return;
+        setSession(data.session);
+        setUser(data.session?.user ?? null);
+        if (data.session?.user) {
+          await ensureUserProfile(data.session.user);
+        }
+      } catch (err) {
+        console.error('Auth session load failed:', err);
+      } finally {
+        if (!cancelled) setLoading(false);
+        clearTimeout(authTimeout);
+      }
+    };
+
+    init();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        if (cancelled) return;
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
@@ -68,7 +87,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      clearTimeout(authTimeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string): Promise<{ error: Error | null }> => {

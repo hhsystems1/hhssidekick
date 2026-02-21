@@ -101,6 +101,8 @@ export const Layout: React.FC = () => {
             {user ? (
               <button
                 onClick={async () => {
+                  const confirmSignOut = window.confirm('Sign out of Rivryn Sidekick?');
+                  if (!confirmSignOut) return;
                   await signOut();
                   navigate('/');
                 }}
