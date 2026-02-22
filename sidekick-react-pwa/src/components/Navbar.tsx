@@ -40,7 +40,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, onAction }) => {
     { id: 'chat', icon: <MessageSquare className="w-5 h-5" />, label: 'Chats', color: 'accent' },
     {
       id: 'agents',
-      icon: <img src="/Rlogo.png" alt="Rivryn" className="w-5 h-5" />,
+      icon: <img src="/Rlogo.png" alt="Rivryn" className="w-7 h-7" />,
       label: 'Agents',
     },
     { id: 'tasks', icon: <Calendar className="w-5 h-5" />, label: 'Tasks' },
@@ -139,7 +139,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, onAction }) => {
             onClick={() => handleNavigate('agents')}
             className="w-11 h-11 rounded-xl bg-gradient-to-br from-slate-700 to-slate-600 flex items-center justify-center transition-all active:scale-95 hover:scale-105"
           >
-            <img src="/Rlogo.png" alt="Rivryn" className="w-5 h-5" />
+            <img src="/Rlogo.png" alt="Rivryn" className="w-7 h-7" />
           </button>
 
           {/* Tasks */}
