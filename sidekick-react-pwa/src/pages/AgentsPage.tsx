@@ -147,8 +147,11 @@ export const AgentsPage: React.FC = () => {
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full ${agent.status === 'active' ? 'bg-emerald-400' : 'bg-slate-500'}`} />
-                    <h3 className="font-semibold text-lg">{agent.name}</h3>
+                    <div className="w-9 h-9 rounded-lg bg-slate-800 text-emerald-300 flex items-center justify-center text-lg font-semibold">R</div>
+                    <div>
+                      <h3 className="font-semibold text-lg">{agent.name}</h3>
+                      <div className={`w-3 h-3 rounded-full mt-1 ${agent.status === 'active' ? 'bg-emerald-400' : 'bg-slate-500'}`} />
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     <button

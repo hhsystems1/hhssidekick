@@ -131,9 +131,14 @@ function AgentCard({ agent, onToggle }: AgentCardProps) {
   return (
     <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-4 hover:shadow-lg hover:shadow-slate-900/50 transition-all">
       <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-emerald-400' : 'bg-slate-500'}`} />
-          <span className="font-medium text-slate-100">{agent.name}</span>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-slate-800 text-emerald-300 flex items-center justify-center text-base font-semibold">
+            R
+          </div>
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-emerald-400' : 'bg-slate-500'}`} />
+            <span className="font-medium text-slate-100">{agent.name}</span>
+          </div>
         </div>
         <button
           onClick={onToggle}
