@@ -110,7 +110,8 @@ export function ChatPage() {
   };
 
   return (
-    <div className="h-full grid grid-cols-1 md:grid-cols-[280px,1fr] overflow-hidden">
+    <>
+      <div className="h-full grid grid-cols-1 md:grid-cols-[280px,1fr] overflow-hidden">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 overflow-hidden">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 px-3 py-2 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
@@ -385,7 +386,7 @@ export function ChatPage() {
       </main>
     </div>
 
-    {confirmDeleteChat && (
+      {confirmDeleteChat && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
         <div className="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
           <h3 className="text-lg font-semibold text-slate-100">Delete chat?</h3>
@@ -413,6 +414,7 @@ export function ChatPage() {
           </div>
         </div>
       </div>
-    )}
+      )}
+    </>
   );
 }
