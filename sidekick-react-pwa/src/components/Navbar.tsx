@@ -6,7 +6,6 @@ import {
   ChevronLeft,
   Home,
   Package,
-  Users,
   Lightbulb,
   Calendar,
   Sliders,
