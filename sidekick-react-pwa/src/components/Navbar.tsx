@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Play,
   Eye,
   FolderOpen,
   X,
@@ -28,6 +27,7 @@ import {
   Link as LinkIcon,
   Lightbulb,
 } from 'lucide-react';
+import { getLogo } from '../config/branding';
 
 interface NavbarProps {
   onNavigate?: (page: string) => void;
@@ -169,8 +169,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, onAction }) => {
           <button
             onClick={() => handleAction('run')}
             className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-700 flex items-center justify-center transition-all active:scale-95 hover:scale-105"
+            aria-label="Open agents"
           >
-            <Play className="w-5 h-5 text-white fill-white" />
+            <span className="text-xl leading-none text-white">{getLogo()}</span>
           </button>
 
           {/* Preview - Slate gradient */}
