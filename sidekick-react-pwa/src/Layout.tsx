@@ -95,7 +95,7 @@ export const Layout: React.FC = () => {
             <img
               src="/Rivrynsk.png"
               alt="Rivryn"
-              className="h-7 w-auto"
+              className="h-9 w-auto"
             />
           </div>
           <h2 className="text-sm font-medium text-slate-400">

@@ -39,7 +39,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, onAction }) => {
   const mainMenuItems: MenuItemDef[] = [
     { id: 'dashboard', icon: <Home className="w-5 h-5" />, label: 'Dashboard' },
     { id: 'chat', icon: <MessageSquare className="w-5 h-5" />, label: 'Chats', color: 'accent' },
-    { id: 'agents', icon: <Users className="w-5 h-5" />, label: 'Agents' },
+    {
+      id: 'agents',
+      icon: <img src="/Rlogo.png" alt="Rivryn" className="w-5 h-5" />,
+      label: 'Agents',
+    },
     { id: 'tasks', icon: <Calendar className="w-5 h-5" />, label: 'Tasks' },
     { id: 'appBuilder', icon: <Layout className="w-5 h-5" />, label: 'App Builder' },
     { id: 'files', icon: <FolderOpen className="w-5 h-5" />, label: 'Files' },
@@ -136,7 +140,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, onAction }) => {
             onClick={() => handleNavigate('agents')}
             className="w-11 h-11 rounded-xl bg-gradient-to-br from-slate-700 to-slate-600 flex items-center justify-center transition-all active:scale-95 hover:scale-105"
           >
-            <Users className="w-5 h-5 text-white" />
+            <img src="/Rlogo.png" alt="Rivryn" className="w-5 h-5" />
           </button>
 
           {/* Tasks */}

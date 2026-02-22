@@ -164,7 +164,7 @@ export const AgentsPage: React.FC = () => {
                         <img
                           src="/Rlogo.png"
                           alt="Rivryn"
-                          className="w-4 h-4"
+                          className="w-6 h-6"
                         />
                       )}
                     </button>
