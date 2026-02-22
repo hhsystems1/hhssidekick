@@ -137,7 +137,7 @@ export function ChatPage() {
                 </div>
               </button>
               <button
-                onClick={() => setConfirmDeleteChat({ id: conv.id, title: conv.title })}
+                onClick={() => setConfirmDeleteChat({ id: conv.id, title: conv.title ?? 'Untitled' })}
                 className="p-2 text-slate-400 hover:text-red-400"
                 aria-label="Delete chat"
               >
@@ -194,7 +194,7 @@ export function ChatPage() {
                   </div>
                 </button>
                 <button
-                  onClick={() => setConfirmDeleteChat({ id: conv.id, title: conv.title })}
+                onClick={() => setConfirmDeleteChat({ id: conv.id, title: conv.title ?? 'Untitled' })}
                   className="p-2 text-slate-400 hover:text-red-400"
                   aria-label="Delete chat"
                 >

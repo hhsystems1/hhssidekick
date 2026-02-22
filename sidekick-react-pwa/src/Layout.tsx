@@ -5,7 +5,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { BRANDING, getLogo } from './config/branding';
+import { BRANDING } from './config/branding';
 import { AuthModal } from './components/AuthModal';
 import { Navbar } from './components/Navbar';
 import { useAuth } from './context/AuthContext';
