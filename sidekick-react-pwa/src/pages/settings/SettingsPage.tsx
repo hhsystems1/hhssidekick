@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Bell, Shield, Palette, HelpCircle, LogOut } from 'lucide-react';
+import { User, Bell, Shield, Palette, HelpCircle, LogOut, CheckCircle2, XCircle } from 'lucide-react';
 import { useUserProfile, useUserSettings } from '../../hooks/useDatabase';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -8,6 +8,7 @@ import { EditProfileDialog } from '../../components/EditProfileDialog';
 import { ChangePasswordDialog } from '../../components/ChangePasswordDialog';
 import { SessionManagementDialog } from '../../components/SessionManagementDialog';
 import { DataPrivacyDialog } from '../../components/DataPrivacyDialog';
+import { approveAction, listPendingActions, rejectAction, executeAction } from '../../services/actions';
 
 interface SettingsItem {
   label: string;
@@ -37,10 +38,22 @@ export const SettingsPage: React.FC = () => {
   const [showThemeDialog, setShowThemeDialog] = useState(false);
   const [showLanguageDialog, setShowLanguageDialog] = useState(false);
   const [showFontSizeDialog, setShowFontSizeDialog] = useState(false);
+  const [pendingActions, setPendingActions] = useState<any[]>([]);
+  const [pendingLoading, setPendingLoading] = useState(false);
 
   useEffect(() => {
     setLocalSettings(settings);
   }, [settings]);
+
+  useEffect(() => {
+    const loadPending = async () => {
+      setPendingLoading(true);
+      const { actions } = await listPendingActions();
+      setPendingActions(actions);
+      setPendingLoading(false);
+    };
+    loadPending();
+  }, []);
 
   const loading = profileLoading || settingsLoading;
 
@@ -156,6 +169,81 @@ export const SettingsPage: React.FC = () => {
         </div>
       ) : (
         <>
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <Shield size={18} className="text-slate-400" />
+              <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
+                Pending Actions
+              </h2>
+            </div>
+            <div className="bg-slate-950/60 border border-slate-800 rounded-xl overflow-hidden">
+              {pendingLoading ? (
+                <div className="p-4 text-sm text-slate-400">Loading pending actions...</div>
+              ) : pendingActions.length === 0 ? (
+                <div className="p-4 text-sm text-slate-500">No pending actions.</div>
+              ) : (
+                pendingActions.map((action) => (
+                  <div
+                    key={action.id}
+                    className="flex items-center justify-between p-4 border-b border-slate-800 last:border-b-0"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-slate-200">{action.action_type}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {action.created_at}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={async () => {
+                          const res = await approveAction(action.id);
+                          if (res.success) {
+                            setPendingActions((prev) => prev.filter((a) => a.id !== action.id));
+                            toast.success('Action approved');
+                          } else {
+                            toast.error(res.error || 'Failed to approve');
+                          }
+                        }}
+                        className="px-3 py-1.5 text-xs rounded-lg bg-emerald-600 text-emerald-50 hover:bg-emerald-500"
+                      >
+                        <CheckCircle2 size={14} className="inline-block mr-1" />
+                        Approve
+                      </button>
+                      <button
+                        onClick={async () => {
+                          const res = await executeAction(action.id);
+                          if (res.success) {
+                            setPendingActions((prev) => prev.filter((a) => a.id !== action.id));
+                            toast.success('Action executed');
+                          } else {
+                            toast.error(res.error || 'Execution failed');
+                          }
+                        }}
+                        className="px-3 py-1.5 text-xs rounded-lg bg-emerald-700 text-emerald-50 hover:bg-emerald-600"
+                      >
+                        Execute
+                      </button>
+                      <button
+                        onClick={async () => {
+                          const res = await rejectAction(action.id);
+                          if (res.success) {
+                            setPendingActions((prev) => prev.filter((a) => a.id !== action.id));
+                            toast.success('Action rejected');
+                          } else {
+                            toast.error(res.error || 'Failed to reject');
+                          }
+                        }}
+                        className="px-3 py-1.5 text-xs rounded-lg bg-red-600 text-red-50 hover:bg-red-500"
+                      >
+                        <XCircle size={14} className="inline-block mr-1" />
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
           <div className="space-y-8">
             {settingsSections.map((section, sectionIndex) => (
               <div key={sectionIndex}>
