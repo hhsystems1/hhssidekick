@@ -10,6 +10,7 @@ import { supabase } from './lib/supabaseClient';
 import { useConversations, useMessages } from './hooks/useChat';
 import { useAllAgentMemory, useUserMemory } from './hooks/useDatabase';
 import { checkProviderHealth } from './services/ai/llm-client';
+import { requestAction } from './services/actions';
 import { Trash2 } from 'lucide-react';
 
 const MOCK_USER_ID = '00000000-0000-0000-0000-000000000000';
@@ -41,6 +42,18 @@ export function ChatPage() {
   const { conversations, createConversation, deleteConversation } = useConversations(userId);
   const { messages: dbMessages, addMessage } = useMessages(activeChat);
   const [confirmDeleteChat, setConfirmDeleteChat] = useState<{ id: string; title: string } | null>(null);
+  const [actionComposerOpen, setActionComposerOpen] = useState(false);
+  const [actionType, setActionType] = useState<'gmail.send' | 'calendar.create'>('gmail.send');
+  const [actionForm, setActionForm] = useState({
+    to: '',
+    subject: '',
+    body: '',
+    title: '',
+    date: '',
+    startTime: '',
+    endTime: '',
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+  });
 
   useEffect(() => {
     const getUser = async () => {
@@ -233,6 +246,12 @@ export function ChatPage() {
               {error && (
                 <div className="rounded-md border border-red-500/40 bg-red-500/10 px-2 py-0.5 text-[11px] text-red-200">{error}</div>
               )}
+              <button
+                onClick={() => setActionComposerOpen(true)}
+                className="text-xs px-2.5 py-1.5 rounded-lg bg-emerald-600 text-emerald-50 hover:bg-emerald-500"
+              >
+                New Action
+              </button>
             </div>
 
             {!providerStatus?.available && (
@@ -387,33 +406,162 @@ export function ChatPage() {
     </div>
 
       {confirmDeleteChat && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-        <div className="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
-          <h3 className="text-lg font-semibold text-slate-100">Delete chat?</h3>
-          <p className="mt-2 text-sm text-slate-400">
-            This will permanently remove “{confirmDeleteChat.title}”.
-          </p>
-          <div className="mt-6 flex items-center gap-3">
-            <button
-              onClick={() => setConfirmDeleteChat(null)}
-              className="flex-1 rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={async () => {
-                const id = confirmDeleteChat.id;
-                setConfirmDeleteChat(null);
-                await deleteConversation(id);
-                if (activeChat === id) setActiveChat(null);
-              }}
-              className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm text-red-50 hover:bg-red-500"
-            >
-              Delete
-            </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-slate-100">Delete chat?</h3>
+            <p className="mt-2 text-sm text-slate-400">
+              This will permanently remove “{confirmDeleteChat.title}”.
+            </p>
+            <div className="mt-6 flex items-center gap-3">
+              <button
+                onClick={() => setConfirmDeleteChat(null)}
+                className="flex-1 rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  const id = confirmDeleteChat.id;
+                  setConfirmDeleteChat(null);
+                  await deleteConversation(id);
+                  if (activeChat === id) setActiveChat(null);
+                }}
+                className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm text-red-50 hover:bg-red-500"
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {actionComposerOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-slate-100">New Action</h3>
+              <button
+                onClick={() => setActionComposerOpen(false)}
+                className="text-slate-400 hover:text-slate-100"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => setActionType('gmail.send')}
+                className={`flex-1 px-3 py-2 rounded-lg text-sm ${
+                  actionType === 'gmail.send'
+                    ? 'bg-emerald-600 text-emerald-50'
+                    : 'bg-slate-800 text-slate-300'
+                }`}
+              >
+                Email
+              </button>
+              <button
+                onClick={() => setActionType('calendar.create')}
+                className={`flex-1 px-3 py-2 rounded-lg text-sm ${
+                  actionType === 'calendar.create'
+                    ? 'bg-emerald-600 text-emerald-50'
+                    : 'bg-slate-800 text-slate-300'
+                }`}
+              >
+                Calendar
+              </button>
+            </div>
+
+            {actionType === 'gmail.send' ? (
+              <div className="space-y-3">
+                <input
+                  value={actionForm.to}
+                  onChange={(e) => setActionForm({ ...actionForm, to: e.target.value })}
+                  placeholder="To"
+                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+                />
+                <input
+                  value={actionForm.subject}
+                  onChange={(e) => setActionForm({ ...actionForm, subject: e.target.value })}
+                  placeholder="Subject"
+                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+                />
+                <textarea
+                  value={actionForm.body}
+                  onChange={(e) => setActionForm({ ...actionForm, body: e.target.value })}
+                  placeholder="Email body"
+                  className="w-full min-h-[120px] rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+                />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <input
+                  value={actionForm.title}
+                  onChange={(e) => setActionForm({ ...actionForm, title: e.target.value })}
+                  placeholder="Event title"
+                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+                />
+                <input
+                  type="date"
+                  value={actionForm.date}
+                  onChange={(e) => setActionForm({ ...actionForm, date: e.target.value })}
+                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="time"
+                    value={actionForm.startTime}
+                    onChange={(e) => setActionForm({ ...actionForm, startTime: e.target.value })}
+                    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+                  />
+                  <input
+                    type="time"
+                    value={actionForm.endTime}
+                    onChange={(e) => setActionForm({ ...actionForm, endTime: e.target.value })}
+                    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+                  />
+                </div>
+                <input
+                  value={actionForm.timeZone}
+                  onChange={(e) => setActionForm({ ...actionForm, timeZone: e.target.value })}
+                  placeholder="Time zone (e.g., America/New_York)"
+                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+                />
+              </div>
+            )}
+
+            <div className="mt-6 flex items-center gap-3">
+              <button
+                onClick={() => setActionComposerOpen(false)}
+                className="flex-1 rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (actionType === 'gmail.send') {
+                    await requestAction('gmail.send', {
+                      to: actionForm.to,
+                      subject: actionForm.subject,
+                      body: actionForm.body,
+                    });
+                  } else {
+                    const start = `${actionForm.date}T${actionForm.startTime}:00`;
+                    const end = `${actionForm.date}T${actionForm.endTime}:00`;
+                    await requestAction('calendar.create', {
+                      summary: actionForm.title,
+                      start: { dateTime: start, timeZone: actionForm.timeZone },
+                      end: { dateTime: end, timeZone: actionForm.timeZone },
+                    });
+                  }
+                  setActionComposerOpen(false);
+                }}
+                className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm text-emerald-50 hover:bg-emerald-500"
+              >
+                Submit for Approval
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

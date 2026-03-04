@@ -40,6 +40,19 @@ export async function rejectAction(actionId: string) {
   return { success: true, action: data.action } as const;
 }
 
+export async function requestAction(actionType: string, params: Record<string, unknown>) {
+  const { data, error } = await supabase.functions.invoke('action-request', {
+    method: 'POST',
+    body: { action_type: actionType, params },
+  });
+
+  if (error) {
+    return { success: false, error: error.message } as const;
+  }
+
+  return { success: true, action: data.action } as const;
+}
+
 export async function executeAction(actionId: string) {
   const { data, error } = await supabase.functions.invoke('action-execute', {
     method: 'POST',
