@@ -16,7 +16,6 @@ import {
   Link as LinkIcon,
   Layout,
 } from 'lucide-react';
-import { CommandCenter } from './components/CommandCenter';
 import { useAgents } from './hooks/useDatabase';
 import { DeployAgentDialog } from './components/DeployAgentDialog';
 
@@ -73,14 +72,6 @@ export const SidekickHome: React.FC = () => {
 
       {/* App Content */}
       <div className="relative z-10">
-        {/* Command Center Dashboard */}
-        <CommandCenter
-          onNavigateToTasks={() => navigate('/tasks')}
-          onNavigateToChat={() => navigate('/chat')}
-          onNavigateToSettings={() => navigate('/settings')}
-          onNavigateToFiles={() => navigate('/files')}
-        />
-
         {/* Customizable Dashboard */}
         <DashboardSection
           agents={agents}
