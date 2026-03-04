@@ -50,14 +50,15 @@ export function useConversations(userId?: string) {
     loadConversations();
   }, [loadConversations]);
 
-  const createConversation = useCallback(async (title?: string) => {
+  const createConversation = useCallback(async (title?: string, metadata?: Record<string, any>) => {
     if (!actualUserId) return null;
     try {
       const { data, error: createError } = await supabase
         .from('conversations')
         .insert({
           user_id: actualUserId,
-          title: title || 'New Chat'
+          title: title || 'New Chat',
+          metadata: metadata || null,
         })
         .select()
         .single();

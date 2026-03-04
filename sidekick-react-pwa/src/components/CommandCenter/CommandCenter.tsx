@@ -3,42 +3,32 @@
  * Main dashboard component for the Sidekick app
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ChevronRight, Bell, Settings } from 'lucide-react';
 import { TodaysFocus } from './TodaysFocus';
 import { QuickActions } from './QuickActions';
 import { UpdatesDropdown } from './UpdatesDropdown';
-import type { FocusItem, QuickAction, UpdateItem } from './CommandCenter.types';
-import { useTasks, useUserProfile } from '../../hooks/useDatabase';
+import type { FocusItem, QuickAction, UpdateItem, CommandCenterProps } from './CommandCenter.types';
+import { useTasks, useCalendarEvents, useUserProfile } from '../../hooks/useDatabase';
+import type { TaskRecord, CalendarDisplayEvent } from '../../hooks/useDatabase';
 import { NewTaskDialog } from '../NewTaskDialog';
 import { TaskDetailDialog } from '../TaskDetailDialog';
 import { useAuth } from '../../context/AuthContext';
 
-interface CommandCenterProps {
-  onNavigateToTasks?: () => void;
-  onNavigateToChat?: () => void;
-  onNavigateToSettings?: () => void;
-  onNavigateToFiles?: () => void;
-}
+const formatEventDayLabel = (date: Date) =>
+  date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
 
-export const CommandCenter: React.FC<CommandCenterProps> = ({
-  onNavigateToTasks,
-  onNavigateToChat,
-  onNavigateToSettings,
-  onNavigateToFiles,
-}) => {
-  const { user } = useAuth();
-  const { profile } = useUserProfile();
-  const { tasks, loading: tasksLoading, toggleTask, addTask, reload: reloadTasks } = useTasks();
+const formatEventTimeLabel = (date: Date) =>
+  date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 
-  const [todayLabel, setTodayLabel] = useState('');
-  const [focusItem, setFocusItem] = useState<FocusItem | null>(null);
-  const [updates, setUpdates] = useState<UpdateItem[]>([
+const createDefaultUpdates = (): UpdateItem[] => {
+  const baseTime = Date.now();
+  return [
     {
       id: '1',
       title: 'Sarah commented on your report',
       category: 'mention',
-      timestamp: new Date(Date.now() - 7200000),
+      timestamp: new Date(baseTime - 7200000),
       isRead: false,
     },
     {
@@ -46,66 +36,71 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
       title: 'Q4 goals deadline',
       subtitle: 'Due tomorrow at 5pm',
       category: 'deadline',
-      timestamp: new Date(Date.now() - 3600000),
+      timestamp: new Date(baseTime - 3600000),
       isRead: false,
     },
     {
       id: '3',
       title: 'New resources available',
       category: 'resource',
-      timestamp: new Date(Date.now() - 86400000),
+      timestamp: new Date(baseTime - 86400000),
       isRead: true,
     },
-  ]);
+  ];
+};
 
-  const [showNewTaskDialog, setShowNewTaskDialog] = useState(false);
-  const [showTaskDetailDialog, setShowTaskDetailDialog] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<any>(null);
-  const [updatesDropdownOpen, setUpdatesDropdownOpen] = useState(false);
+const defaultUpdates = createDefaultUpdates();
 
-  // Set today's date
-  useEffect(() => {
-    const now = new Date();
-    const formatted = now.toLocaleDateString(undefined, {
+export const CommandCenter: React.FC<CommandCenterProps> = ({
+  onNavigateToSchedule,
+  onNavigateToChat,
+  onNavigateToFiles,
+  onNavigateToSettings,
+}) => {
+  const { user } = useAuth();
+  const { profile } = useUserProfile();
+  const { tasks, loading: tasksLoading, toggleTask, addTask, reload: reloadTasks } = useTasks();
+  const { nextEvent, events } = useCalendarEvents();
+
+  const todayLabel = useMemo(() => {
+    return new Date().toLocaleDateString(undefined, {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
     });
-    setTodayLabel(formatted);
   }, []);
 
-  // Calculate focus item from tasks
-  useEffect(() => {
-    if (tasks.length > 0) {
-      const incompleteTasks = tasks.filter(t => !t.completed);
-      if (incompleteTasks.length > 0) {
-        const priorityOrder = { high: 0, medium: 1, low: 2 };
-        const topTask = incompleteTasks.sort((a, b) =>
-          priorityOrder[a.priority] - priorityOrder[b.priority]
-        )[0];
-
-        setFocusItem({
-          id: topTask.id,
-          title: topTask.title,
-          subtitle: `You have ${incompleteTasks.length} task${incompleteTasks.length > 1 ? 's' : ''} remaining`,
-          priority: topTask.priority,
-          actionLabel: topTask.priority === 'high' ? 'Do First' : 'Start Task',
-          category: 'Tasks',
-        });
-      } else {
-        setFocusItem(null);
-      }
-    } else {
-      setFocusItem(null);
+  const focusItem = useMemo<FocusItem | null>(() => {
+    if (tasks.length === 0) {
+      return null;
     }
+    const incompleteTasks = tasks.filter(t => !t.completed);
+    if (incompleteTasks.length === 0) {
+      return null;
+    }
+    const priorityOrder = { high: 0, medium: 1, low: 2 };
+    const sortedTasks = [...incompleteTasks].sort(
+      (a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]
+    );
+    const topTask = sortedTasks[0];
+    return {
+      id: topTask.id,
+      title: topTask.title,
+      subtitle: `You have ${incompleteTasks.length} task${incompleteTasks.length > 1 ? 's' : ''} remaining`,
+      priority: topTask.priority,
+      actionLabel: topTask.priority === 'high' ? 'Do First' : 'Start Task',
+      category: 'Tasks',
+    };
   }, [tasks]);
 
+  const [updates, setUpdates] = useState<UpdateItem[]>(() => defaultUpdates);
+
+  const [showNewTaskDialog, setShowNewTaskDialog] = useState(false);
+  const [showTaskDetailDialog, setShowTaskDetailDialog] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<TaskRecord | null>(null);
+  const [updatesDropdownOpen, setUpdatesDropdownOpen] = useState(false);
+
   const completedTasksCount = tasks.filter(t => t.completed).length;
-  const incompleteTasks = tasks.filter(t => !t.completed);
-  const upcomingTasks = [...incompleteTasks].sort((a, b) => {
-    const priorityOrder = { high: 0, medium: 1, low: 2 };
-    return priorityOrder[a.priority] - priorityOrder[b.priority];
-  }).slice(0, 3);
 
   const handlePrimaryAction = (item: FocusItem) => {
     const task = tasks.find(t => t.id === item.id);
@@ -123,6 +118,9 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
     switch (action.type) {
       case 'task':
         setShowNewTaskDialog(true);
+        break;
+      case 'meeting':
+        onNavigateToSchedule?.();
         break;
       case 'files':
         onNavigateToFiles?.();
@@ -246,32 +244,38 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
           )}
         </div>
 
-        {/* Column 2: Upcoming Tasks */}
+        {/* Column 2: Schedule */}
         <div className="space-y-4">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-slate-100 uppercase tracking-wider">Upcoming</h3>
-            <span className="text-xs text-slate-500">{incompleteTasks.length} open</span>
+            <h3 className="text-sm font-semibold text-slate-100 uppercase tracking-wider">Schedule</h3>
+            <span className="text-xs text-slate-500">{todayLabel}</span>
           </div>
 
-          {upcomingTasks.length === 0 ? (
-            <p className="text-slate-400 text-sm">No open tasks</p>
+          {events.length === 0 ? (
+            <p className="text-slate-400 text-sm">No events today</p>
           ) : (
-            upcomingTasks.map(task => (
-              <div
-                key={task.id}
-                className="bg-slate-950/60 border border-slate-800 rounded-lg p-3"
-              >
-                <p className="text-sm font-medium text-slate-100">{task.title}</p>
-                <p className="text-xs text-slate-500 mt-1">Priority: {task.priority}</p>
-              </div>
+            events.slice(0, 3).map(event => (
+              <CalendarEvent
+                key={event.id}
+                event={event}
+                onClick={() => onNavigateToSchedule?.()}
+              />
             ))
           )}
 
+          {nextEvent && (
+            <div className="bg-slate-900/60 rounded-xl p-4 mt-4 border border-slate-800">
+              <p className="text-xs text-slate-500 mb-1 uppercase tracking-wider">Next up</p>
+              <p className="font-medium text-slate-100">{nextEvent.title}</p>
+              <p className="text-xs text-slate-500 mt-1">{formatEventTimeLabel(nextEvent.startTime)}</p>
+            </div>
+          )}
+
           <button
-            onClick={onNavigateToTasks}
+            onClick={onNavigateToSchedule}
             className="w-full py-3 border border-slate-700 rounded-xl text-slate-400 hover:border-slate-600 hover:text-slate-100 transition-colors text-sm font-medium flex items-center justify-center gap-2"
           >
-            <span>View Tasks</span>
+            <span>View Schedule</span>
             <ChevronRight size={16} />
           </button>
         </div>
@@ -313,6 +317,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
         <NewTaskDialog
           onClose={() => setShowNewTaskDialog(false)}
           onSubmit={async (title, priority, _dueDate) => {
+            void _dueDate;
             try {
               console.log('CommandCenter: Attempting to add task:', title, priority);
               const success = await addTask(title, priority);
@@ -321,9 +326,10 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
                 console.error('CommandCenter: Task creation failed - check console for details');
               }
               return success;
-            } catch (error: any) {
+            } catch (error: unknown) {
               console.error('CommandCenter: Error creating task:', error);
-              alert(`Failed to create task: ${error.message || 'Unknown error'}`);
+              const message = error instanceof Error ? error.message : 'Unknown error';
+              alert(`Failed to create task: ${message}`);
               return false;
             }
           }}
@@ -383,6 +389,44 @@ function TaskCard({ task, onToggle, onClick }: TaskCardProps) {
           {task.title}
         </span>
       </div>
+    </div>
+  );
+}
+
+// Calendar Event Component (reused from SidekickHome)
+interface CalendarEventProps {
+  event: CalendarDisplayEvent;
+  onClick: () => void;
+}
+
+function CalendarEvent({ event, onClick }: CalendarEventProps) {
+  const dayLabel = formatEventDayLabel(event.startTime);
+  const timeLabel = formatEventTimeLabel(event.startTime);
+  return (
+    <div
+      onClick={onClick}
+      className="bg-slate-950/60 border border-slate-800 rounded-lg p-3 hover:shadow-lg hover:shadow-slate-900/50 transition-shadow cursor-pointer"
+    >
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-xs text-slate-500 uppercase tracking-wider">{dayLabel}</span>
+        <span className="text-xs text-slate-500">{timeLabel}</span>
+      </div>
+      <p className="text-sm font-medium text-slate-100">{event.title}</p>
+      {event.location && (
+        <p className="text-xs text-slate-500 mt-1">{event.location}</p>
+      )}
+      {event.attendees.length > 0 && (
+        <div className="flex items-center gap-1 mt-2">
+          {event.attendees.slice(0, 3).map((name, i) => (
+            <span key={i} className="text-xs bg-slate-800 px-2 py-0.5 rounded text-slate-400">
+              {name}
+            </span>
+          ))}
+          {event.attendees.length > 3 && (
+            <span className="text-xs text-slate-500">+{event.attendees.length - 3}</span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

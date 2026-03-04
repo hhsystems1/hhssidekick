@@ -49,7 +49,7 @@ export const SettingsPage: React.FC = () => {
     const loadPending = async () => {
       setPendingLoading(true);
       const { actions } = await listPendingActions();
-      setPendingActions(actions);
+      setPendingActions(Array.isArray(actions) ? [...actions] : []);
       setPendingLoading(false);
     };
     loadPending();

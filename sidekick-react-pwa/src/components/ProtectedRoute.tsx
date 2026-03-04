@@ -11,9 +11,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
-    // Once loading is complete, check if user is authenticated
     if (!loading && !user) {
-      setShowAuthModal(true);
+      queueMicrotask(() => setShowAuthModal(true));
     }
   }, [user, loading]);
 
