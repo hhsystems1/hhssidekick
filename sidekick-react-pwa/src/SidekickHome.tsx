@@ -1,15 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, Pause, Play, Plus, CheckCircle, Circle } from 'lucide-react';
-import { useTasks, useAgents, useCalendarEvents } from './hooks/useDatabase';
+import {
+  Play,
+  Pause,
+  Shield,
+  MessageSquare,
+  Users,
+  Calendar,
+  FolderOpen,
+  Lightbulb,
+  Package,
+  Sliders,
+  Settings,
+  GripVertical,
+  Link as LinkIcon,
+  Layout,
+} from 'lucide-react';
+import { CommandCenter } from './components/CommandCenter';
+import { useAgents } from './hooks/useDatabase';
 import { DeployAgentDialog } from './components/DeployAgentDialog';
-
-interface Task {
-  id: string;
-  title: string;
-  completed: boolean;
-  priority: 'high' | 'medium' | 'low';
-}
 
 interface Agent {
   id: string;
@@ -20,235 +29,97 @@ interface Agent {
 
 export const SidekickHome: React.FC = () => {
   const navigate = useNavigate();
-  const [todayLabel, setTodayLabel] = useState('');
-  const [showNewAgentDialog, setShowNewAgentDialog] = useState(false);
-
-  const { tasks, loading: tasksLoading, toggleTask } = useTasks();
   const { agents, loading: agentsLoading, toggleAgent, addAgent } = useAgents();
-  const { events, nextEvent, loading: eventsLoading } = useCalendarEvents();
+  const [showNewAgentDialog, setShowNewAgentDialog] = useState(false);
+  const [isCustomizing, setIsCustomizing] = useState(false);
 
-  useEffect(() => {
-    const now = new Date();
-    const formatted = now.toLocaleDateString(undefined, {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-    setTodayLabel(formatted);
-  }, []);
+  const handleToggleAgent = async (agentId: string) => {
+    const agent = agents.find(a => a.id === agentId);
+    if (!agent) return;
 
-  const completedTasksCount = tasks.filter(t => t.completed).length;
+    try {
+      await toggleAgent(agentId);
+    } catch (error) {
+      console.error('Error toggling agent:', error);
+    }
+  };
+
+  const handleDeployAgent = () => {
+    setShowNewAgentDialog(true);
+  };
 
   return (
-    <div className="min-h-screen bg-slate-950 bg-[radial-gradient(circle_at_top_left,rgba(80,200,120,0.15),transparent_55%),radial-gradient(circle_at_bottom_right,rgba(56,181,255,0.15),transparent_55%)]">
-      <div className="p-4 lg:p-8 max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-semibold text-slate-100">Dashboard</h2>
-            <p className="text-sm text-slate-500">{todayLabel}</p>
-          </div>
-          <button
-            onClick={() => navigate('/tasks')}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-800 px-3 py-2 text-sm text-slate-200 hover:border-slate-700"
-          >
-            <Plus size={16} />
-            New Task
-          </button>
-        </div>
+    <div className="relative min-h-screen overflow-hidden bg-[#04070f]">
+      {/* Premium Green Radiant Background */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(900px 650px at 12% 10%, rgba(0,255,160,0.22), transparent 60%),' +
+            'radial-gradient(850px 650px at 88% 22%, rgba(56,181,255,0.16), transparent 60%),' +
+            'radial-gradient(1100px 850px at 50% 95%, rgba(0,217,126,0.14), transparent 62%),' +
+            'linear-gradient(180deg, #04070f 0%, #070b18 40%, #060a14 100%)',
+        }}
+      />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Column 1: Tasks */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-lg font-semibold text-slate-100">Today's Tasks</h3>
-              <button
-                onClick={() => navigate('/tasks')}
-                className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-100"
-                aria-label="Add task"
-              >
-                <Plus size={20} />
-              </button>
-            </div>
+      {/* Depth vignette */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(1200px 900px at 50% 50%, transparent 42%, rgba(0,0,0,0.58) 100%)',
+        }}
+      />
 
-            {tasksLoading ? (
-              <div className="text-slate-400 text-sm">Loading tasks...</div>
-            ) : tasks.length === 0 ? (
-              <div className="text-slate-400 text-sm">No tasks for today</div>
-            ) : (
-              tasks.map(task => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  onToggle={() => toggleTask(task.id)}
-                />
-              ))
-            )}
-
-            <div className="pt-2">
-              <p className="text-sm text-slate-500">{completedTasksCount} of {tasks.length} tasks complete</p>
-            </div>
-          </div>
-
-          {/* Column 2: Schedule */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-lg font-semibold text-slate-100">Schedule</h3>
-              <span className="text-sm text-slate-500">{todayLabel}</span>
-            </div>
-
-            {eventsLoading ? (
-              <div className="text-slate-400 text-sm">Loading events...</div>
-            ) : events.length === 0 ? (
-              <div className="text-slate-400 text-sm">No events today</div>
-            ) : (
-              events.map(event => (
-                <CalendarEvent
-                  key={event.id}
-                  time={event.time}
-                  title={event.title}
-                  attendees={event.attendees}
-                />
-              ))
-            )}
-
-            {nextEvent && (
-              <div className="bg-slate-900/60 rounded-xl p-6 mt-4 border border-slate-800">
-                <p className="text-sm text-slate-400 mb-2">Next up</p>
-                <p className="font-medium text-slate-100">{nextEvent.title}</p>
-                <p className="text-sm text-slate-500 mt-1">Coming soon</p>
-              </div>
-            )}
-          </div>
-
-          {/* Column 3: Agents */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-lg font-semibold text-slate-100">Agents</h3>
-              <button
-                onClick={() => navigate('/agents')}
-                className="text-sm text-slate-400 hover:text-slate-100 transition-colors"
-              >
-                View all
-              </button>
-            </div>
-
-            {agentsLoading ? (
-              <div className="text-slate-400 text-sm">Loading agents...</div>
-            ) : agents.length === 0 ? (
-              <div className="text-slate-400 text-sm">No agents deployed</div>
-            ) : (
-              agents.map(agent => (
-                <AgentCard
-                  key={agent.id}
-                  agent={agent}
-                  onToggle={() => toggleAgent(agent.id)}
-                />
-              ))
-            )}
-
-            <button
-              onClick={() => setShowNewAgentDialog(true)}
-              className="w-full py-4 border-2 border-dashed border-slate-700 rounded-xl text-slate-400 hover:border-slate-600 hover:text-slate-100 transition-colors font-medium"
-            >
-              + Deploy New Agent
-            </button>
-          </div>
-        </div>
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8 pt-8 border-t border-slate-800">
-          <StatCard label="Active Campaigns" value="3" onClick={() => navigate('/tasks')} />
-          <StatCard label="Leads This Week" value="47" onClick={() => navigate('/tasks')} />
-          <StatCard label="SOPs Created" value="12" onClick={() => navigate('/training')} />
-          <StatCard label="Training Complete" value="68%" onClick={() => navigate('/training')} />
-        </div>
-      </div>
-
-      {showNewAgentDialog && (
-        <DeployAgentDialog
-          onClose={() => setShowNewAgentDialog(false)}
-          onSubmit={async (name, agentType) => {
-            try {
-              const success = await addAgent(name, agentType);
-              if (!success) {
-                alert('Failed to deploy agent - check console for details');
-              }
-              return success;
-            } catch (error: any) {
-              alert(`Failed to deploy agent: ${error.message || 'Unknown error'}`);
-              return false;
-            }
-          }}
+      {/* App Content */}
+      <div className="relative z-10">
+        {/* Command Center Dashboard */}
+        <CommandCenter
+          onNavigateToTasks={() => navigate('/tasks')}
+          onNavigateToChat={() => navigate('/chat')}
+          onNavigateToSettings={() => navigate('/settings')}
+          onNavigateToFiles={() => navigate('/files')}
         />
-      )}
+
+        {/* Customizable Dashboard */}
+        <DashboardSection
+          agents={agents}
+          agentsLoading={agentsLoading}
+          onToggleAgent={handleToggleAgent}
+          onDeployAgent={handleDeployAgent}
+          navigate={navigate}
+          isCustomizing={isCustomizing}
+          setIsCustomizing={setIsCustomizing}
+        />
+
+        {/* Agent Dialog */}
+        {showNewAgentDialog && (
+          <DeployAgentDialog
+            onClose={() => setShowNewAgentDialog(false)}
+            onSubmit={async (name, agentType) => {
+              try {
+                console.log('SidekickHome: Attempting to deploy agent:', name, agentType);
+                const success = await addAgent(name, agentType);
+                console.log('SidekickHome: Deploy agent result:', success);
+                if (!success) {
+                  console.error('SidekickHome: Agent deployment failed - check console for details');
+                  alert('Failed to deploy agent - check console for details');
+                }
+                return success;
+              } catch (error: any) {
+                console.error('SidekickHome: Error deploying agent:', error);
+                alert(`Failed to deploy agent: ${error.message || 'Unknown error'}`);
+                return false;
+              }
+            }}
+          />
+        )}
+      </div>
     </div>
   );
 };
 
-interface TaskCardProps {
-  task: Task;
-  onToggle: () => void;
-}
-
-function TaskCard({ task, onToggle }: TaskCardProps) {
-  const priorityColors = {
-    high: 'border-red-500/60 bg-red-950/30',
-    medium: 'border-yellow-500/60 bg-yellow-950/30',
-    low: 'border-slate-700 bg-slate-950/60',
-  };
-
-  return (
-    <div
-      className={`border-l-4 ${priorityColors[task.priority]} rounded-lg p-4 hover:shadow-lg hover:shadow-slate-900/50 transition-shadow border border-slate-800`}
-    >
-      <div className="flex items-start space-x-3">
-        <button
-          onClick={onToggle}
-          className="flex-shrink-0 mt-0.5 hover:scale-110 transition-transform"
-          aria-label={task.completed ? 'Mark incomplete' : 'Mark complete'}
-        >
-          {task.completed ? (
-            <CheckCircle size={20} className="text-emerald-400" />
-          ) : (
-            <Circle size={20} className="text-slate-500" />
-          )}
-        </button>
-        <span className={`${task.completed ? 'line-through text-slate-500' : 'text-slate-100'}`}>
-          {task.title}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-interface CalendarEventProps {
-  time: string;
-  title: string;
-  attendees: string[];
-}
-
-function CalendarEvent({ time, title, attendees }: CalendarEventProps) {
-  return (
-    <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-4 hover:shadow-lg hover:shadow-slate-900/50 transition-shadow">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm text-slate-500 mb-1">{time}</p>
-          <p className="font-medium text-slate-100">{title}</p>
-          {attendees.length > 0 && (
-            <div className="flex items-center space-x-1 mt-2">
-              {attendees.map((name, i) => (
-                <span key={i} className="text-xs bg-slate-800 px-2 py-1 rounded text-slate-300">{name}</span>
-              ))}
-            </div>
-          )}
-        </div>
-        <ChevronRight size={16} className="text-slate-500 mt-1" />
-      </div>
-    </div>
-  );
-}
-
+// Agent Card Component
 interface AgentCardProps {
   agent: Agent;
   onToggle: () => void;
@@ -258,40 +129,283 @@ function AgentCard({ agent, onToggle }: AgentCardProps) {
   const isActive = agent.status === 'active';
 
   return (
-    <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-4 hover:shadow-lg hover:shadow-slate-900/50 transition-shadow">
+    <div
+      className="
+        rounded-xl p-4 transition-all
+        bg-black/30 backdrop-blur-xl border border-white/10
+        hover:bg-black/40 hover:border-white/15
+        shadow-[0_0_40px_rgba(0,255,160,0.05)]
+      "
+    >
       <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center space-x-2">
-          <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-emerald-400' : 'bg-slate-500'}`} />
+        <div className="flex items-center gap-2">
+          <div
+            className={`w-2 h-2 rounded-full ${
+              isActive ? 'bg-emerald-400' : 'bg-emerald-950'
+            }`}
+          />
           <span className="font-medium text-slate-100">{agent.name}</span>
         </div>
         <button
           onClick={onToggle}
-          className="p-1 hover:bg-slate-800 rounded transition-colors text-slate-400 hover:text-slate-100"
+          className="p-2 hover:bg-white/5 rounded-lg transition-colors text-slate-400 hover:text-slate-100"
           aria-label={isActive ? 'Pause agent' : 'Start agent'}
         >
           {isActive ? <Pause size={16} /> : <Play size={16} />}
         </button>
       </div>
       <p className="text-sm text-slate-400">{agent.metric}</p>
+      <div className="mt-2 flex items-center justify-between">
+        <span
+          className={`text-xs px-2 py-0.5 rounded-full ${
+            isActive
+              ? 'bg-emerald-950/50 text-emerald-400 border border-emerald-400/10'
+              : 'bg-white/5 text-slate-400 border border-white/10'
+          }`}
+        >
+          {isActive ? 'Active' : 'Idle'}
+        </span>
+      </div>
     </div>
   );
 }
 
-interface StatCardProps {
+type DashboardWidgetId =
+  | 'agents'
+  | 'chats'
+  | 'tasks'
+  | 'appBuilder'
+  | 'files'
+  | 'training'
+  | 'skills'
+  | 'llm'
+  | 'integrations'
+  | 'settings'
+  | 'security';
+
+interface DashboardWidgetDef {
+  id: DashboardWidgetId;
   label: string;
-  value: string;
-  onClick: () => void;
+  description: string;
+  icon: React.ReactNode;
+  route: string;
 }
 
-function StatCard({ label, value, onClick }: StatCardProps) {
+const DASHBOARD_WIDGETS: DashboardWidgetDef[] = [
+  { id: 'agents', label: 'Agents', description: 'Deploy and manage agents', icon: <Users size={20} />, route: '/agents' },
+  { id: 'chats', label: 'Chats', description: 'Conversations and history', icon: <MessageSquare size={20} />, route: '/chat' },
+  { id: 'tasks', label: 'Tasks', description: 'Plan and prioritize', icon: <Calendar size={20} />, route: '/tasks' },
+  { id: 'appBuilder', label: 'App Builder', description: 'Create new apps with onboarding', icon: <Layout size={20} />, route: '/app-builder' },
+  { id: 'files', label: 'Files', description: 'Upload and organize assets', icon: <FolderOpen size={20} />, route: '/files' },
+  { id: 'training', label: 'AI Training', description: 'Knowledge base and docs', icon: <Lightbulb size={20} />, route: '/training' },
+  { id: 'skills', label: 'Skills', description: 'Reusable workflows', icon: <Package size={20} />, route: '/skills' },
+  { id: 'integrations', label: 'Integrations', description: 'Connect GitHub + Google', icon: <LinkIcon size={20} />, route: '/integrations' },
+  { id: 'llm', label: 'LLM Config', description: 'Providers and defaults', icon: <Sliders size={20} />, route: '/llm-config' },
+  { id: 'settings', label: 'Settings', description: 'Account and app settings', icon: <Settings size={20} />, route: '/settings' },
+  { id: 'security', label: 'Security', description: 'Keys, access, and audits', icon: <Shield size={20} />, route: '/settings' },
+];
+
+const DASHBOARD_STORAGE_KEY = 'sidekick.dashboard.widgets.v1';
+
+function loadDashboardConfig(): { order: DashboardWidgetId[]; hidden: DashboardWidgetId[] } {
+  try {
+    const raw = localStorage.getItem(DASHBOARD_STORAGE_KEY);
+    if (!raw) {
+      const order = DASHBOARD_WIDGETS.map(w => w.id);
+      return { order, hidden: [] };
+    }
+    const parsed = JSON.parse(raw) as { order?: DashboardWidgetId[]; hidden?: DashboardWidgetId[] };
+    const order = (parsed.order || []).filter(id => DASHBOARD_WIDGETS.some(w => w.id === id));
+    const missing = DASHBOARD_WIDGETS.map(w => w.id).filter(id => !order.includes(id));
+    const hidden = (parsed.hidden || []).filter(id => DASHBOARD_WIDGETS.some(w => w.id === id));
+    const fullOrder = [...order, ...missing];
+    return { order: fullOrder, hidden };
+  } catch {
+    const order = DASHBOARD_WIDGETS.map(w => w.id);
+    return { order, hidden: [] };
+  }
+}
+
+function saveDashboardConfig(order: DashboardWidgetId[], hidden: DashboardWidgetId[]) {
+  localStorage.setItem(DASHBOARD_STORAGE_KEY, JSON.stringify({ order, hidden }));
+}
+
+function DashboardSection({
+  agents,
+  agentsLoading,
+  onToggleAgent,
+  onDeployAgent,
+  navigate,
+  isCustomizing,
+  setIsCustomizing,
+}: {
+  agents: Agent[];
+  agentsLoading: boolean;
+  onToggleAgent: (id: string) => void;
+  onDeployAgent: () => void;
+  navigate: (path: string) => void;
+  isCustomizing: boolean;
+  setIsCustomizing: (value: boolean) => void;
+}) {
+  const [widgetOrder, setWidgetOrder] = useState<DashboardWidgetId[]>(() => loadDashboardConfig().order);
+  const [hidden, setHidden] = useState<Set<DashboardWidgetId>>(
+    () => new Set(loadDashboardConfig().hidden)
+  );
+
+  const widgets = useMemo(() => {
+    const map = new Map(DASHBOARD_WIDGETS.map(w => [w.id, w]));
+    return widgetOrder.map(id => map.get(id)).filter(Boolean) as DashboardWidgetDef[];
+  }, [widgetOrder]);
+
+  const updateOrder = (next: DashboardWidgetId[]) => {
+    setWidgetOrder(next);
+    saveDashboardConfig(next, Array.from(hidden));
+  };
+
+  const moveWidget = (id: DashboardWidgetId, direction: 'up' | 'down') => {
+    const idx = widgetOrder.indexOf(id);
+    if (idx < 0) return;
+    const nextIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (nextIdx < 0 || nextIdx >= widgetOrder.length) return;
+    const next = [...widgetOrder];
+    const [item] = next.splice(idx, 1);
+    next.splice(nextIdx, 0, item);
+    updateOrder(next);
+  };
+
+  const toggleHidden = (id: DashboardWidgetId) => {
+    setHidden(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      saveDashboardConfig(widgetOrder, Array.from(next));
+      return next;
+    });
+  };
+
   return (
-    <button
-      onClick={onClick}
-      className="bg-slate-900/60 rounded-lg p-4 border border-slate-800 hover:border-slate-700 transition-colors text-left"
-    >
-      <p className="text-sm text-slate-400 mb-1">{label}</p>
-      <p className="text-2xl font-semibold text-slate-100">{value}</p>
-    </button>
+    <div className="p-4 lg:p-8 max-w-7xl mx-auto mt-8 pb-8">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="text-lg font-semibold text-slate-100">Dashboard</h3>
+          <p className="text-sm text-slate-400">Customize what you see first.</p>
+        </div>
+        <button
+          onClick={() => setIsCustomizing(!isCustomizing)}
+          className="
+            px-4 py-2 rounded-lg text-sm transition-colors
+            bg-white/5 backdrop-blur-xl border border-white/10
+            text-slate-200 hover:text-white hover:border-white/20
+          "
+        >
+          {isCustomizing ? 'Done' : 'Customize'}
+        </button>
+      </div>
+
+      {isCustomizing && (
+        <div className="mb-6 rounded-xl p-4 bg-black/30 backdrop-blur-xl border border-white/10">
+          <p className="text-sm text-slate-400 mb-3">Reorder and hide widgets.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {widgets.map((widget, idx) => (
+              <div
+                key={widget.id}
+                className="flex items-center justify-between rounded-lg px-3 py-2 bg-white/5 border border-white/10"
+              >
+                <div className="flex items-center gap-3">
+                  <GripVertical size={16} className="text-slate-500" />
+                  <span className="text-sm text-slate-200">{widget.label}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => moveWidget(widget.id, 'up')}
+                    disabled={idx === 0}
+                    className="text-xs px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-200 disabled:opacity-40"
+                  >
+                    Up
+                  </button>
+                  <button
+                    onClick={() => moveWidget(widget.id, 'down')}
+                    disabled={idx === widgets.length - 1}
+                    className="text-xs px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-200 disabled:opacity-40"
+                  >
+                    Down
+                  </button>
+                  <button
+                    onClick={() => toggleHidden(widget.id)}
+                    className="text-xs px-2 py-1 rounded bg-white/5 border border-white/10 text-slate-200 hover:border-white/20"
+                  >
+                    {hidden.has(widget.id) ? 'Show' : 'Hide'}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {widgets
+          .filter(w => !hidden.has(w.id))
+          .map(widget => (
+            <button
+              key={widget.id}
+              onClick={() => navigate(widget.route)}
+              className="
+                text-left rounded-xl p-5 transition-all
+                bg-white/5 backdrop-blur-xl border border-white/10
+                hover:bg-white/7 hover:border-white/15
+                shadow-[0_0_40px_rgba(0,255,160,0.06)]
+              "
+            >
+              <div className="flex items-center gap-3 text-emerald-400">
+                {widget.icon}
+                <span className="text-slate-100 font-semibold">{widget.label}</span>
+              </div>
+              <p className="text-sm text-slate-400 mt-2">{widget.description}</p>
+            </button>
+          ))}
+      </div>
+
+      {/* Agents Snapshot */}
+      <div className="mt-8 pt-8 border-t border-white/10">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-semibold text-slate-100 uppercase tracking-wider">Agents</h3>
+          <button
+            onClick={() => navigate('/agents')}
+            className="text-xs text-slate-400 hover:text-slate-100 transition-colors"
+          >
+            View all →
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {agentsLoading ? (
+            <p className="text-slate-400 text-sm col-span-4">Loading agents...</p>
+          ) : agents.length === 0 ? (
+            <p className="text-slate-400 text-sm col-span-4">No agents deployed</p>
+          ) : (
+            agents.slice(0, 4).map(agent => (
+              <AgentCard
+                key={agent.id}
+                agent={agent}
+                onToggle={() => onToggleAgent(agent.id)}
+              />
+            ))
+          )}
+        </div>
+
+        <button
+          onClick={onDeployAgent}
+          className="
+            w-full mt-4 py-4 rounded-xl font-medium transition-colors
+            bg-white/5 backdrop-blur-xl border-2 border-dashed border-white/15
+            text-slate-300 hover:text-white hover:border-white/25
+          "
+        >
+          + Deploy New Agent
+        </button>
+      </div>
+    </div>
   );
 }
 
