@@ -104,11 +104,34 @@ export abstract class BaseSpecialist {
    * Helper to extract domain context from user
    */
   protected getDomainContext(userContext: UserContext): string {
-    const { currentProject, recentTopics, baseMemory, agentMemoryByType } = userContext;
+    const {
+      currentProject,
+      recentTopics,
+      baseMemory,
+      agentMemoryByType,
+      projectMemory,
+      projectContext,
+      projectDailyLog,
+    } = userContext;
     const parts: string[] = [];
 
     if (currentProject) {
       parts.push(`Current project: ${currentProject}`);
+    }
+
+    if (projectContext) {
+      const contextLines = [
+        `Project name: ${projectContext.name}`,
+        projectContext.description ? `Description: ${projectContext.description}` : null,
+        projectContext.repo_url ? `Repo: ${projectContext.repo_url}` : null,
+        projectContext.deploy_target ? `Deploy target: ${projectContext.deploy_target}` : null,
+        typeof projectContext.approvals_required === 'boolean'
+          ? `Approvals required: ${projectContext.approvals_required ? 'yes' : 'no'}`
+          : null,
+      ].filter(Boolean) as string[];
+      if (contextLines.length > 0) {
+        parts.push(`Project context:\n${contextLines.join('\n')}`);
+      }
     }
 
     if (recentTopics && recentTopics.length > 0) {
@@ -117,6 +140,21 @@ export abstract class BaseSpecialist {
 
     if (baseMemory) {
       parts.push(`Base memory:\n${baseMemory}`);
+    }
+
+    if (projectMemory) {
+      parts.push(`Project memory:\n${projectMemory}`);
+    }
+
+    if (projectDailyLog) {
+      const dailyParts = [
+        projectDailyLog.summary ? `Summary: ${projectDailyLog.summary}` : null,
+        projectDailyLog.tasks ? `Tasks: ${projectDailyLog.tasks}` : null,
+        projectDailyLog.audits ? `Audits: ${projectDailyLog.audits}` : null,
+      ].filter(Boolean) as string[];
+      if (dailyParts.length > 0) {
+        parts.push(`Today's log (${projectDailyLog.log_date}):\n${dailyParts.join('\n')}`);
+      }
     }
 
     const agentOverlay = agentMemoryByType?.[this.agentType];

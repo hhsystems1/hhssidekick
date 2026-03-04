@@ -9,4 +9,5 @@ export * from './agents';
 export * from './calendar';
 export * from './profiles';
 export * from './memory';
+export * from './projects';
 export * from './settings';

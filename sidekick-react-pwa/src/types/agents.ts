@@ -19,10 +19,25 @@ export type BehavioralMode =
 export interface UserContext {
   userId: string;
   currentProject?: string;
+  projectContext?: {
+    id: string;
+    name: string;
+    description?: string;
+    repo_url?: string;
+    deploy_target?: string;
+    approvals_required?: boolean;
+  };
+  projectDailyLog?: {
+    log_date: string;
+    summary: string;
+    tasks: string;
+    audits: string;
+  };
   recentTopics?: string[];
   preferences?: Record<string, unknown>;
   baseMemory?: string;
   agentMemoryByType?: Partial<Record<AgentType, string>>;
+  projectMemory?: string;
 }
 
 export interface Message {

@@ -8,6 +8,7 @@ import { ChatPage } from './ChatPage';
 import { Layout } from './Layout';
 import SettingsPage from './pages/settings/SettingsPage';
 import { AuthProvider } from './context/AuthContext';
+import { ProjectProvider } from './context/ProjectContext';
 import { TasksPage } from './pages/TasksPage';
 import { FilesPage } from './pages/FilesPage';
 import { SkillsPage } from './pages/SkillsPage';
@@ -18,6 +19,7 @@ import { AppBuilderPage } from './pages/AppBuilderPage';
 function App() {
   return (
     <AuthProvider>
+      <ProjectProvider>
       <Toaster
         position="top-right"
         toastOptions={{
@@ -59,6 +61,7 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
+      </ProjectProvider>
     </AuthProvider>
   );
 }

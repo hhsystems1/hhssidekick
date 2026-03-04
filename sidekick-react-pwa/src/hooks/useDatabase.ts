@@ -600,3 +600,170 @@ export function useAllAgentMemory() {
 
   return { memoryByType, loading, error, reload: loadAll };
 }
+
+/**
+ * Hook to load and manage projects
+ */
+export function useProjects() {
+  const { user } = useAuth();
+  const userId = user?.id;
+  const [projects, setProjects] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    const { data, error } = await db.listProjects(userId);
+    if (error) {
+      setError(error);
+      setProjects([]);
+    } else {
+      setProjects(data);
+    }
+    setLoading(false);
+  }, [userId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const create = useCallback(async (project: { name: string; description?: string; repo_url?: string; deploy_target?: string; approvals_required?: boolean; }) => {
+    if (!userId) return false;
+    const { data, error } = await db.createProject(userId, project);
+    if (error || !data) return false;
+    setProjects((prev) => [data, ...prev]);
+    return true;
+  }, [userId]);
+
+  const update = useCallback(async (projectId: string, updates: Record<string, unknown>) => {
+    const { data, error } = await db.updateProject(projectId, updates);
+    if (error || !data) return false;
+    setProjects((prev) => prev.map((p) => (p.id === projectId ? data : p)));
+    return true;
+  }, []);
+
+  return { projects, loading, error, create, update, reload: load };
+}
+
+/**
+ * Hook to load and update project memory
+ */
+export function useProjectMemory(projectId?: string) {
+  const [content, setContent] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!projectId) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    const data = await db.getProjectMemory(projectId);
+    setContent(data?.content || '');
+    setLoading(false);
+  }, [projectId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const update = useCallback(async (nextContent: string) => {
+    if (!projectId) return false;
+    const { error } = await db.upsertProjectMemory(projectId, nextContent);
+    if (error) {
+      setError(error);
+      return false;
+    }
+    setContent(nextContent);
+    return true;
+  }, [projectId]);
+
+  return { content, loading, error, update, reload: load };
+}
+
+/**
+ * Hook to load and update project daily log
+ */
+export function useProjectDailyLog(projectId?: string, logDate?: string) {
+  const [summary, setSummary] = useState('');
+  const [tasks, setTasks] = useState('');
+  const [audits, setAudits] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!projectId || !logDate) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    const data = await db.getProjectDailyLog(projectId, logDate);
+    setSummary(data?.summary || '');
+    setTasks(data?.tasks || '');
+    setAudits(data?.audits || '');
+    setLoading(false);
+  }, [projectId, logDate]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const update = useCallback(async (next: { summary?: string; tasks?: string; audits?: string }) => {
+    if (!projectId || !logDate) return false;
+    const { error } = await db.upsertProjectDailyLog(projectId, logDate, {
+      summary: next.summary ?? summary,
+      tasks: next.tasks ?? tasks,
+      audits: next.audits ?? audits,
+    });
+    if (error) {
+      setError(error);
+      return false;
+    }
+    if (next.summary !== undefined) setSummary(next.summary);
+    if (next.tasks !== undefined) setTasks(next.tasks);
+    if (next.audits !== undefined) setAudits(next.audits);
+    return true;
+  }, [projectId, logDate, summary, tasks, audits]);
+
+  return { summary, tasks, audits, loading, error, update, reload: load };
+}
+/**
+ * Hook to load a single project by id
+ */
+export function useProject(projectId?: string) {
+  const [project, setProject] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!projectId) {
+      setProject(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    const { data, error } = await db.getProjectById(projectId);
+    if (error) {
+      setError(error);
+      setProject(null);
+    } else {
+      setProject(data);
+    }
+    setLoading(false);
+  }, [projectId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  return { project, loading, error, reload: load };
+}

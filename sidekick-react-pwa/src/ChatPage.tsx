@@ -8,7 +8,8 @@ import { useNavigate } from 'react-router-dom';
 import { processWithAgents } from './agents';
 import { supabase } from './lib/supabaseClient';
 import { useConversations, useMessages } from './hooks/useChat';
-import { useAllAgentMemory, useUserMemory } from './hooks/useDatabase';
+import { useAllAgentMemory, useProject, useProjectDailyLog, useProjectMemory, useUserMemory } from './hooks/useDatabase';
+import { useProjectContext } from './context/ProjectContext';
 import { checkProviderHealth } from './services/ai/llm-client';
 import { requestAction } from './services/actions';
 import { Trash2 } from 'lucide-react';
@@ -38,6 +39,14 @@ export function ChatPage() {
   } | null>(null);
   const { content: baseMemory } = useUserMemory();
   const { memoryByType: agentMemoryByType } = useAllAgentMemory();
+  const { activeProjectId } = useProjectContext();
+  const { content: projectMemory } = useProjectMemory(activeProjectId || undefined);
+  const { project: activeProject } = useProject(activeProjectId || undefined);
+  const today = new Date().toISOString().slice(0, 10);
+  const { summary: dailySummary, tasks: dailyTasks, audits: dailyAudits } = useProjectDailyLog(
+    activeProjectId || undefined,
+    activeProjectId ? today : undefined
+  );
 
   const { conversations, createConversation, deleteConversation } = useConversations(userId);
   const { messages: dbMessages, addMessage } = useMessages(activeChat);
@@ -325,10 +334,29 @@ export function ChatPage() {
                 try {
                   const userContext = {
                     userId,
-                    currentProject: 'Rivryn Sidekick',
+                    currentProject: activeProject?.name || 'Rivryn Sidekick',
                     recentTopics: [],
                     baseMemory,
                     agentMemoryByType,
+                    projectMemory,
+                    projectContext: activeProject
+                      ? {
+                          id: activeProject.id,
+                          name: activeProject.name,
+                          description: activeProject.description || undefined,
+                          repo_url: activeProject.repo_url || undefined,
+                          deploy_target: activeProject.deploy_target || undefined,
+                          approvals_required: activeProject.approvals_required ?? undefined,
+                        }
+                      : undefined,
+                    projectDailyLog: activeProject
+                      ? {
+                          log_date: today,
+                          summary: dailySummary || '',
+                          tasks: dailyTasks || '',
+                          audits: dailyAudits || '',
+                        }
+                      : undefined,
                   };
 
                   // Build message history including the current user message
