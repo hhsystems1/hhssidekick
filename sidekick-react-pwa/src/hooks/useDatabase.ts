@@ -623,7 +623,7 @@ export function useProjects() {
       setError(error);
       setProjects([]);
     } else {
-      setProjects(data);
+      setProjects(Array.isArray(data) ? [...data] : []);
     }
     setLoading(false);
   }, [userId]);
