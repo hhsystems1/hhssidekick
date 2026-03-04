@@ -1,21 +1,3 @@
-export type TaskRecord = {
-  id: string;
-  title: string;
-  completed: boolean;
-  priority: 'high' | 'medium' | 'low';
-};
-
-type CalendarEventRow = Database['public']['Tables']['calendar_events']['Row'];
-
-export type CalendarDisplayEvent = {
-  id: string;
-  title: string;
-  startTime: Date;
-  endTime: Date | null;
-  attendees: string[];
-  location: string | null;
-};
-
 /**
  * Database Hooks
  * React hooks for accessing Supabase data with loading states
@@ -25,7 +7,6 @@ import { useState, useEffect, useCallback } from 'react';
 import * as db from '../services/database';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
-import type { Database } from '../services/database/types';
 
 /**
  * Hook to load tasks from database
@@ -227,19 +208,15 @@ export function useAgents() {
 export function useCalendarEvents() {
   const { user } = useAuth();
   const userId = user?.id;
-  const [events, setEvents] = useState<CalendarDisplayEvent[]>([]);
-  const [nextEvent, setNextEvent] = useState<CalendarDisplayEvent | null>(null);
+  const [events, setEvents] = useState<Array<{
+    id: string;
+    time: string;
+    title: string;
+    attendees: string[];
+  }>>([]);
+  const [nextEvent, setNextEvent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const normalizeEvent = (event: CalendarEventRow): CalendarDisplayEvent => ({
-    id: event.id,
-    title: event.title,
-    startTime: new Date(event.start_time),
-    endTime: event.end_time ? new Date(event.end_time) : null,
-    attendees: event.attendees || [],
-    location: event.location || null,
-  });
 
   const loadEvents = useCallback(async () => {
     if (!userId) return;
@@ -249,8 +226,16 @@ export function useCalendarEvents() {
       const data = await db.getTodayEvents(userId);
       const next = await db.getNextEvent(userId);
 
-      setEvents(data.map(normalizeEvent));
-      setNextEvent(next ? normalizeEvent(next) : null);
+      setEvents(data.map(event => ({
+        id: event.id,
+        time: new Date(event.start_time).toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+        }),
+        title: event.title,
+        attendees: event.attendees || [],
+      })));
+      setNextEvent(next);
     } catch (err: any) {
       console.error('Failed to load events:', err);
       setError(err.message);
@@ -268,6 +253,9 @@ export function useCalendarEvents() {
   return { events, nextEvent, loading, error, reload: loadEvents };
 }
 
+/**
+ * Hook to load conversations from database
+ */
 export function useConversations() {
   const { user } = useAuth();
   const userId = user?.id;

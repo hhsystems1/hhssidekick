@@ -17,7 +17,7 @@ export interface FocusItem {
 
 export interface QuickAction {
   id: string;
-  type: 'task' | 'files' | 'message' | 'meeting';
+  type: 'task' | 'files' | 'message';
   label: string;
   icon: string;
 }
@@ -32,7 +32,6 @@ export interface UpdateItem {
 }
 
 export interface CommandCenterProps {
-  onNavigateToSchedule?: () => void;
   onNavigateToTasks?: () => void;
   onNavigateToChat?: () => void;
   onNavigateToFiles?: () => void;
