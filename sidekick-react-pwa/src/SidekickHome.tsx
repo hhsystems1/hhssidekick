@@ -155,6 +155,14 @@ export const SidekickHome: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8 pt-8 border-t border-slate-800">
+          <StatCard label="Active Campaigns" value="3" onClick={() => navigate('/tasks')} />
+          <StatCard label="Leads This Week" value="47" onClick={() => navigate('/tasks')} />
+          <StatCard label="SOPs Created" value="12" onClick={() => navigate('/training')} />
+          <StatCard label="Training Complete" value="68%" onClick={() => navigate('/training')} />
+        </div>
       </div>
 
       {showNewAgentDialog && (
@@ -266,6 +274,24 @@ function AgentCard({ agent, onToggle }: AgentCardProps) {
       </div>
       <p className="text-sm text-slate-400">{agent.metric}</p>
     </div>
+  );
+}
+
+interface StatCardProps {
+  label: string;
+  value: string;
+  onClick: () => void;
+}
+
+function StatCard({ label, value, onClick }: StatCardProps) {
+  return (
+    <button
+      onClick={onClick}
+      className="bg-slate-900/60 rounded-lg p-4 border border-slate-800 hover:border-slate-700 transition-colors text-left"
+    >
+      <p className="text-sm text-slate-400 mb-1">{label}</p>
+      <p className="text-2xl font-semibold text-slate-100">{value}</p>
+    </button>
   );
 }
 
