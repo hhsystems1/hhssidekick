@@ -55,8 +55,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const { data: { user } } = await supabase.auth.getUser();
         if (cancelled) return;
         setUser(user ?? null);
+        setLoading(false);
         if (user) {
-          await ensureUserProfile(user);
+          void ensureUserProfile(user);
         }
       } catch (timeoutErr) {
         console.error('Fallback auth fetch failed:', timeoutErr);
@@ -71,8 +72,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (cancelled) return;
         setSession(data.session);
         setUser(data.session?.user ?? null);
+        setLoading(false);
         if (data.session?.user) {
-          await ensureUserProfile(data.session.user);
+          void ensureUserProfile(data.session.user);
         }
       } catch (err) {
         console.error('Auth session load failed:', err);
@@ -90,10 +92,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (cancelled) return;
         setSession(session);
         setUser(session?.user ?? null);
-        if (session?.user) {
-          await ensureUserProfile(session.user);
-        }
         setLoading(false);
+        if (session?.user) {
+          void ensureUserProfile(session.user);
+        }
       }
     );
 
