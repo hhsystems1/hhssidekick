@@ -51,9 +51,19 @@ Deno.serve(async (req) => {
     const tokenData = await tokenRes.json();
 
     const accessTokenEnc = await encryptText(tokenData.access_token, encryptionKey);
-    const refreshTokenEnc = tokenData.refresh_token
-      ? await encryptText(tokenData.refresh_token, encryptionKey)
-      : null;
+
+    let refreshTokenEnc: string | null = null;
+    if (tokenData.refresh_token) {
+      refreshTokenEnc = await encryptText(tokenData.refresh_token, encryptionKey);
+    } else {
+      const { data: existingToken } = await admin
+        .from('connector_tokens')
+        .select('refresh_token_enc')
+        .eq('user_id', stateRow.user_id)
+        .eq('provider', 'google')
+        .single();
+      refreshTokenEnc = existingToken?.refresh_token_enc || null;
+    }
 
     const expiresAt = new Date(Date.now() + tokenData.expires_in * 1000).toISOString();
 

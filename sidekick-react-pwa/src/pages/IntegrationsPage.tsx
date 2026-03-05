@@ -58,10 +58,18 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
 export const IntegrationsPage: React.FC = () => {
   const [googleConnected, setGoogleConnected] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleScopes, setGoogleScopes] = useState<string[]>([]);
+
+  const requiredActionScopes = [
+    'https://www.googleapis.com/auth/gmail.send',
+    'https://www.googleapis.com/auth/calendar.events',
+  ];
+  const missingActionScopes = requiredActionScopes.filter((scope) => !googleScopes.includes(scope));
 
   const loadStatus = async () => {
     const status = await getGoogleStatus();
     setGoogleConnected(!!status.connected);
+    setGoogleScopes(status.scopes || []);
   };
 
   useEffect(() => {
@@ -90,16 +98,25 @@ export const IntegrationsPage: React.FC = () => {
               title="Google"
               description="Gmail, Calendar, Drive, and Docs."
               status={googleConnected ? 'connected' : 'not_connected'}
-              ctaLabel={googleConnected ? 'Disconnect' : googleLoading ? 'Connecting...' : 'Connect'}
+              ctaLabel={
+                googleConnected
+                  ? missingActionScopes.length > 0
+                    ? 'Upgrade Access'
+                    : 'Disconnect'
+                  : googleLoading
+                    ? 'Connecting...'
+                    : 'Connect'
+              }
               onClick={async () => {
                 if (googleLoading) return;
-                if (googleConnected) {
+                if (googleConnected && missingActionScopes.length === 0) {
                   setGoogleLoading(true);
                   const res = await disconnectGoogle();
                   setGoogleLoading(false);
                   if (res.success) {
                     toast.success('Google disconnected');
                     setGoogleConnected(false);
+                    setGoogleScopes([]);
                   } else {
                     toast.error(res.error || 'Failed to disconnect');
                   }
@@ -116,9 +133,15 @@ export const IntegrationsPage: React.FC = () => {
               }}
               icon={<Mail size={22} />}
             />
-            <p className="text-xs text-slate-500">
-              No setup needed. Sidekick handles OAuth centrally.
-            </p>
+            {googleConnected && missingActionScopes.length > 0 ? (
+              <p className="text-xs text-amber-300">
+                Reconnect to enable Gmail send + Calendar actions.
+              </p>
+            ) : (
+              <p className="text-xs text-slate-500">
+                No setup needed. Sidekick handles OAuth centrally.
+              </p>
+            )}
           </div>
         </div>
 
