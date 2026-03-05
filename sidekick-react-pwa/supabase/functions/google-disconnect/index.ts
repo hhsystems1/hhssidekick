@@ -1,11 +1,19 @@
 import { getUserFromRequest, getAdminClient } from '../_shared/supabase.ts';
 import { decryptText } from '../_shared/crypto.ts';
+import { handleCors, jsonResponse } from '../_shared/cors.ts';
 
 Deno.serve(async (req) => {
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
   try {
+    if (req.method !== 'POST') {
+      return jsonResponse({ error: 'Method not allowed' }, 405);
+    }
+
     const { user } = await getUserFromRequest(req);
     if (!user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+      return jsonResponse({ error: 'Unauthorized' }, 401);
     }
 
     const admin = getAdminClient();
@@ -40,10 +48,8 @@ Deno.serve(async (req) => {
       action: 'disconnected',
     });
 
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return jsonResponse({ success: true });
   } catch (error) {
-    return new Response(JSON.stringify({ error: (error as Error).message }), { status: 500 });
+    return jsonResponse({ error: (error as Error).message }, 500);
   }
 });

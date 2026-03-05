@@ -1,10 +1,18 @@
 import { getUserFromRequest, getAdminClient } from '../_shared/supabase.ts';
+import { handleCors, jsonResponse } from '../_shared/cors.ts';
 
 Deno.serve(async (req) => {
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
   try {
+    if (req.method !== 'POST') {
+      return jsonResponse({ error: 'Method not allowed' }, 405);
+    }
+
     const { user } = await getUserFromRequest(req);
     if (!user) {
-      return new Response(JSON.stringify({ connected: false }), { status: 401 });
+      return jsonResponse({ connected: false }, 401);
     }
 
     const admin = getAdminClient();
@@ -16,20 +24,15 @@ Deno.serve(async (req) => {
       .single();
 
     if (!data) {
-      return new Response(JSON.stringify({ connected: false }), {
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return jsonResponse({ connected: false });
     }
 
-    return new Response(
-      JSON.stringify({
-        connected: data.status === 'connected',
-        scopes: data.scopes || [],
-        expires_at: data.expires_at,
-      }),
-      { headers: { 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({
+      connected: data.status === 'connected',
+      scopes: data.scopes || [],
+      expires_at: data.expires_at,
+    });
   } catch (error) {
-    return new Response(JSON.stringify({ error: (error as Error).message }), { status: 500 });
+    return jsonResponse({ error: (error as Error).message }, 500);
   }
 });
