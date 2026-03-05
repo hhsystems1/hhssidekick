@@ -6,7 +6,11 @@ export async function getGoogleStatus() {
     return { connected: false } as const;
   }
 
-  const { data, error } = await supabase.functions.invoke('google-status');
+  const { data, error } = await supabase.functions.invoke('google-status', {
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
+  });
   if (error) {
     return { connected: false, error: error.message } as const;
   }
@@ -22,6 +26,9 @@ export async function startGoogleConnect(redirectTo: string) {
   const { data, error } = await supabase.functions.invoke('google-connect', {
     method: 'POST',
     body: { redirect_to: redirectTo },
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
   });
 
   if (error) {
@@ -37,7 +44,11 @@ export async function disconnectGoogle() {
     return { success: false, error: 'No active session. Please sign in again.' } as const;
   }
 
-  const { data, error } = await supabase.functions.invoke('google-disconnect');
+  const { data, error } = await supabase.functions.invoke('google-disconnect', {
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
+  });
   if (error) {
     return { success: false, error: error.message } as const;
   }
