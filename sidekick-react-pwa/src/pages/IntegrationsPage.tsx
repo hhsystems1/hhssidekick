@@ -69,7 +69,7 @@ export const IntegrationsPage: React.FC = () => {
   const loadStatus = async () => {
     const status = await getGoogleStatus();
     setGoogleConnected(!!status.connected);
-    setGoogleScopes(status.scopes || []);
+    setGoogleScopes('scopes' in status && Array.isArray(status.scopes) ? status.scopes : []);
   };
 
   useEffect(() => {
