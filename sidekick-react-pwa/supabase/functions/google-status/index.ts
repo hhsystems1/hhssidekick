@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
 
     const { user } = await getUserFromRequest(req);
     if (!user) {
-      return jsonResponse({ connected: false }, 401);
+      return jsonResponse({ connected: false });
     }
 
     const admin = getAdminClient();
