@@ -26,8 +26,9 @@ export async function getUserFromRequest(req: Request) {
   const jwt = authHeader?.replace('Bearer ', '') || null;
   if (!jwt) return { user: null, jwt: null };
 
-  const client = getUserClient(jwt);
-  const { data, error } = await client.auth.getUser();
+  // Verify JWT with service-role client so edge auth does not depend on anon key env.
+  const admin = getAdminClient();
+  const { data, error } = await admin.auth.getUser(jwt);
   if (error || !data.user) {
     return { user: null, jwt };
   }
