@@ -7,6 +7,7 @@ import React, { useEffect, useState } from 'react';
 import { Github, Mail, Calendar, Cloud, Shield, CheckCircle2 } from 'lucide-react';
 import { getGoogleStatus, startGoogleConnect, disconnectGoogle } from '../services/connectors/google';
 import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
 interface IntegrationCardProps {
   title: string;
@@ -15,6 +16,7 @@ interface IntegrationCardProps {
   ctaLabel: string;
   onClick: () => void;
   icon: React.ReactNode;
+  disabled?: boolean;
 }
 
 const IntegrationCard: React.FC<IntegrationCardProps> = ({
@@ -24,6 +26,7 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
   ctaLabel,
   onClick,
   icon,
+  disabled = false,
 }) => {
   return (
     <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
@@ -46,6 +49,7 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
         </div>
         <button
           onClick={onClick}
+          disabled={disabled}
           className="px-3 py-2 rounded-lg border border-slate-700 text-slate-200 text-sm hover:border-slate-500"
         >
           {ctaLabel}
@@ -56,6 +60,7 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
 };
 
 export const IntegrationsPage: React.FC = () => {
+  const { user, loading: authLoading } = useAuth();
   const [googleConnected, setGoogleConnected] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleScopes, setGoogleScopes] = useState<string[]>([]);
@@ -73,8 +78,13 @@ export const IntegrationsPage: React.FC = () => {
   };
 
   useEffect(() => {
+    if (!user) {
+      setGoogleConnected(false);
+      setGoogleScopes([]);
+      return;
+    }
     loadStatus();
-  }, []);
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -99,7 +109,11 @@ export const IntegrationsPage: React.FC = () => {
               description="Gmail, Calendar, Drive, and Docs."
               status={googleConnected ? 'connected' : 'not_connected'}
               ctaLabel={
-                googleConnected
+                authLoading
+                  ? 'Checking session...'
+                  : !user
+                    ? 'Sign In Required'
+                    : googleConnected
                   ? missingActionScopes.length > 0
                     ? 'Upgrade Access'
                     : 'Disconnect'
@@ -109,6 +123,10 @@ export const IntegrationsPage: React.FC = () => {
               }
               onClick={async () => {
                 if (googleLoading) return;
+                if (!user) {
+                  toast.error('Sign in first to connect Google.');
+                  return;
+                }
                 if (googleConnected && missingActionScopes.length === 0) {
                   setGoogleLoading(true);
                   const res = await disconnectGoogle();
@@ -132,8 +150,13 @@ export const IntegrationsPage: React.FC = () => {
                 }
               }}
               icon={<Mail size={22} />}
+              disabled={authLoading || googleLoading}
             />
-            {googleConnected && missingActionScopes.length > 0 ? (
+            {!user ? (
+              <p className="text-xs text-amber-300">
+                Sign in first, then connect Google.
+              </p>
+            ) : googleConnected && missingActionScopes.length > 0 ? (
               <p className="text-xs text-amber-300">
                 Reconnect to enable Gmail send + Calendar actions.
               </p>

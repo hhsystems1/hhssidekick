@@ -48,12 +48,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     };
 
-    const authTimeout = setTimeout(() => {
-      if (!cancelled) {
-        console.warn('Auth initialization timed out, continuing without session.');
-        setLoading(false);
+    const authTimeout = setTimeout(async () => {
+      if (cancelled) return;
+      console.warn('Auth initialization delayed; attempting direct user fetch.');
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (cancelled) return;
+        setUser(user ?? null);
+        if (user) {
+          await ensureUserProfile(user);
+        }
+      } catch (timeoutErr) {
+        console.error('Fallback auth fetch failed:', timeoutErr);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-    }, 8000);
+    }, 15000);
 
     const init = async () => {
       try {
