@@ -4,8 +4,9 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Github, Mail, Calendar, Cloud, Shield, CheckCircle2 } from 'lucide-react';
+import { Github, Mail, Calendar, Cloud, Shield, CheckCircle2, TerminalSquare, KeyRound } from 'lucide-react';
 import { getGoogleStatus, startGoogleConnect, disconnectGoogle } from '../services/connectors/google';
+import { listToolCapabilities, saveToolCredential, type CapabilityStatus } from '../services/connectors/capabilities';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
@@ -64,29 +65,40 @@ export const IntegrationsPage: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
   const [googleConnected, setGoogleConnected] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [googleScopes, setGoogleScopes] = useState<string[]>([]);
+  const [capabilities, setCapabilities] = useState<CapabilityStatus[]>([]);
+  const [capabilitiesLoading, setCapabilitiesLoading] = useState(false);
   const [sessionPresent, setSessionPresent] = useState(false);
   const [tokenRef, setTokenRef] = useState<string | null>(null);
-
-  const requiredActionScopes = [
-    'https://www.googleapis.com/auth/gmail.send',
-    'https://www.googleapis.com/auth/calendar.events',
-  ];
-  const missingActionScopes = requiredActionScopes.filter((scope) => !googleScopes.includes(scope));
+  const [credentialModalProvider, setCredentialModalProvider] = useState<string | null>(null);
+  const [credentialLabel, setCredentialLabel] = useState('');
+  const [credentialSecret, setCredentialSecret] = useState('');
+  const [savingCredential, setSavingCredential] = useState(false);
 
   const loadStatus = async () => {
     const status = await getGoogleStatus();
     setGoogleConnected(!!status.connected);
-    setGoogleScopes('scopes' in status && Array.isArray(status.scopes) ? status.scopes : []);
+  };
+
+  const loadCapabilities = async () => {
+    setCapabilitiesLoading(true);
+    const result = await listToolCapabilities();
+    if (result.error) {
+      toast.error(result.error);
+      setCapabilities([]);
+    } else {
+      setCapabilities(result.capabilities);
+    }
+    setCapabilitiesLoading(false);
   };
 
   useEffect(() => {
     if (!user) {
       setGoogleConnected(false);
-      setGoogleScopes([]);
+      setCapabilities([]);
       return;
     }
     loadStatus();
+    loadCapabilities();
   }, [user]);
 
   useEffect(() => {
@@ -108,6 +120,43 @@ export const IntegrationsPage: React.FC = () => {
     inspectSession();
   }, [user, authLoading]);
 
+  const groupedCapabilities = capabilities.reduce<Record<string, CapabilityStatus[]>>((groups, capability) => {
+    if (!groups[capability.provider]) {
+      groups[capability.provider] = [];
+    }
+    groups[capability.provider].push(capability);
+    return groups;
+  }, {});
+
+  const providerSummaries = Object.values(groupedCapabilities).map((group) => {
+    const first = group[0];
+    return {
+      provider: first.provider,
+      title: first.title,
+      description: group.map((item) => item.description).join(' '),
+      authKind: first.authKind,
+      connected: group.some((item) => item.connected),
+      configured: group.some((item) => item.configured),
+      missingScopes: group.flatMap((item) => item.missingScopes || []),
+      connectionLabel: group.find((item) => item.connectionLabel)?.connectionLabel || null,
+    };
+  });
+
+  const getProviderIcon = (provider: string) => {
+    switch (provider) {
+      case 'github':
+        return <Github size={22} />;
+      case 'google':
+        return <Mail size={22} />;
+      case 'rivryn':
+        return <KeyRound size={22} />;
+      case 'local':
+        return <TerminalSquare size={22} />;
+      default:
+        return <Cloud size={22} />;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <div className="max-w-6xl mx-auto p-4 lg:p-8">
@@ -120,77 +169,94 @@ export const IntegrationsPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <IntegrationCard
-            title="GitHub"
-            description="Repos, issues, PRs, and code search."
-            status="not_connected"
-            ctaLabel="Connect"
-            onClick={() => alert('GitHub OAuth setup coming next.')}
-            icon={<Github size={22} />}
-          />
-          <div className="space-y-2">
-            <IntegrationCard
-              title="Google"
-              description="Gmail, Calendar, Drive, and Docs."
-              status={googleConnected ? 'connected' : 'not_connected'}
-              ctaLabel={
-                authLoading
-                  ? 'Checking session...'
-                  : !user
+          {providerSummaries.map((provider) => (
+            <div key={provider.provider} className="space-y-2">
+              <IntegrationCard
+                title={provider.title}
+                description={provider.description}
+                status={provider.connected ? 'connected' : 'not_connected'}
+                ctaLabel={
+                  !user
                     ? 'Sign In Required'
-                    : googleConnected
-                  ? missingActionScopes.length > 0
-                    ? 'Upgrade Access'
-                    : 'Disconnect'
-                  : googleLoading
-                    ? 'Connecting...'
-                    : 'Connect'
-              }
-              onClick={async () => {
-                if (googleLoading) return;
-                if (!user) {
-                  toast.error('Sign in first to connect Google.');
-                  return;
+                    : provider.provider === 'google'
+                      ? googleLoading
+                        ? 'Connecting...'
+                        : googleConnected && provider.missingScopes.length === 0
+                          ? 'Disconnect'
+                          : googleConnected
+                            ? 'Upgrade Access'
+                            : 'Connect'
+                      : provider.authKind === 'api_key'
+                        ? provider.connected
+                          ? 'Update Key'
+                          : 'Add API Key'
+                        : 'Available'
                 }
-                if (googleConnected && missingActionScopes.length === 0) {
-                  setGoogleLoading(true);
-                  const res = await disconnectGoogle();
-                  setGoogleLoading(false);
-                  if (res.success) {
-                    toast.success('Google disconnected');
-                    setGoogleConnected(false);
-                    setGoogleScopes([]);
-                  } else {
-                    toast.error(res.error || 'Failed to disconnect');
+                onClick={async () => {
+                  if (!user) {
+                    toast.error('Sign in first to connect tools.');
+                    return;
                   }
-                  return;
-                }
-                setGoogleLoading(true);
-                const res = await startGoogleConnect(`${window.location.origin}/integrations`);
-                setGoogleLoading(false);
-                if (res.url) {
-                  window.location.href = res.url;
-                } else {
-                  toast.error(res.error || 'Failed to start Google connect');
-                }
-              }}
-              icon={<Mail size={22} />}
-              disabled={authLoading || googleLoading}
-            />
-            {!user ? (
-              <p className="text-xs text-amber-300">
-                Sign in first, then connect Google.
-              </p>
-            ) : googleConnected && missingActionScopes.length > 0 ? (
-              <p className="text-xs text-amber-300">
-                Reconnect to enable Gmail send + Calendar actions.
-              </p>
-            ) : (
-              <p className="text-xs text-slate-500">
-                No setup needed. Sidekick handles OAuth centrally.
-              </p>
-            )}
-          </div>
+
+                  if (provider.provider === 'google') {
+                    if (googleLoading) return;
+                    if (googleConnected && provider.missingScopes.length === 0) {
+                      setGoogleLoading(true);
+                      const res = await disconnectGoogle();
+                      setGoogleLoading(false);
+                      if (res.success) {
+                        toast.success('Google disconnected');
+                        setGoogleConnected(false);
+                        loadCapabilities();
+                      } else {
+                        toast.error(res.error || 'Failed to disconnect');
+                      }
+                      return;
+                    }
+
+                    setGoogleLoading(true);
+                    const res = await startGoogleConnect(`${window.location.origin}/integrations`);
+                    setGoogleLoading(false);
+                    if (res.url) {
+                      window.location.href = res.url;
+                    } else {
+                      toast.error(res.error || 'Failed to start Google connect');
+                    }
+                    return;
+                  }
+
+                  if (provider.authKind === 'api_key') {
+                    setCredentialModalProvider(provider.provider);
+                    setCredentialLabel(provider.connectionLabel || '');
+                    setCredentialSecret('');
+                  }
+                }}
+                icon={getProviderIcon(provider.provider)}
+                disabled={authLoading || capabilitiesLoading || provider.authKind === 'local'}
+              />
+              {!user ? (
+                <p className="text-xs text-amber-300">
+                  Sign in first, then connect tools.
+                </p>
+              ) : provider.provider === 'google' && googleConnected && provider.missingScopes.length > 0 ? (
+                <p className="text-xs text-amber-300">
+                  Reconnect Google to enable Sidekick actions.
+                </p>
+              ) : provider.authKind === 'api_key' ? (
+                <p className="text-xs text-slate-500">
+                  Paste one key once. Sidekick stores it encrypted and reuses it for agent runs.
+                </p>
+              ) : provider.authKind === 'local' ? (
+                <p className="text-xs text-slate-500">
+                  Available only on trusted workspaces with execution enabled.
+                </p>
+              ) : (
+                <p className="text-xs text-slate-500">
+                  No extra setup page needed. Sidekick handles this through the shared capability layer.
+                </p>
+              )}
+            </div>
+          ))}
         </div>
 
         <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -213,10 +279,78 @@ export const IntegrationsPage: React.FC = () => {
 
         <div className="mt-8 bg-slate-900/60 border border-slate-800 rounded-xl p-5">
           <p className="text-sm text-slate-400">
-            OAuth integration and scope control will be added next. This page is ready for the backend hookup.
+            The agent now uses a shared capability model: OAuth for Google, encrypted API keys for GitHub and Rivryn, and local execution for trusted workspaces.
           </p>
         </div>
       </div>
+
+      {credentialModalProvider && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-slate-100">Add API Key</h3>
+            <p className="mt-2 text-sm text-slate-400">
+              Store an encrypted key for {credentialModalProvider}. The agent will use it during approved runs.
+            </p>
+            <div className="mt-4 space-y-3">
+              <input
+                value={credentialLabel}
+                onChange={(e) => setCredentialLabel(e.target.value)}
+                placeholder="Label (optional)"
+                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+              />
+              <textarea
+                value={credentialSecret}
+                onChange={(e) => setCredentialSecret(e.target.value)}
+                placeholder="Paste API key or token"
+                className="w-full min-h-[120px] rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+              />
+            </div>
+            <div className="mt-6 flex items-center gap-3">
+              <button
+                onClick={() => {
+                  setCredentialModalProvider(null);
+                  setCredentialLabel('');
+                  setCredentialSecret('');
+                }}
+                className="flex-1 rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!credentialModalProvider || !credentialSecret.trim()) {
+                    toast.error('API key required');
+                    return;
+                  }
+
+                  setSavingCredential(true);
+                  const result = await saveToolCredential(
+                    credentialModalProvider,
+                    credentialSecret.trim(),
+                    credentialLabel.trim() || undefined
+                  );
+                  setSavingCredential(false);
+
+                  if (!result.success) {
+                    toast.error(result.error || 'Failed to save API key');
+                    return;
+                  }
+
+                  toast.success('API key saved');
+                  setCredentialModalProvider(null);
+                  setCredentialLabel('');
+                  setCredentialSecret('');
+                  loadCapabilities();
+                }}
+                disabled={savingCredential}
+                className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm text-emerald-50 hover:bg-emerald-500 disabled:opacity-50"
+              >
+                {savingCredential ? 'Saving...' : 'Save Key'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -241,6 +241,70 @@ export interface Database {
           updated_at?: string;
         };
       };
+      connector_integrations: {
+        Row: {
+          id: string;
+          user_id: string;
+          provider: string;
+          status: string;
+          scopes: string[] | null;
+          expires_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          provider: string;
+          status?: string;
+          scopes?: string[] | null;
+          expires_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          provider?: string;
+          status?: string;
+          scopes?: string[] | null;
+          expires_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      tool_credentials: {
+        Row: {
+          id: string;
+          user_id: string;
+          provider: string;
+          label: string | null;
+          secret_enc: string;
+          config: Record<string, any> | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          provider: string;
+          label?: string | null;
+          secret_enc: string;
+          config?: Record<string, any> | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          provider?: string;
+          label?: string | null;
+          secret_enc?: string;
+          config?: Record<string, any> | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
   };
 }

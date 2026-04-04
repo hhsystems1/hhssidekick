@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:agent": "tsx test-agent.ts"
+    "test:agent": "tsx test-agent.ts",
+    "worker:local-agent": "node workers/local-agent-runner.mjs"
   },
   "dependencies": {
     "@langchain/community": "^0.3.17",

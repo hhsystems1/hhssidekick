@@ -10,10 +10,51 @@ import { useAgents } from '../hooks/useDatabase';
 import { DeployAgentDialog } from '../components/DeployAgentDialog';
 import { enqueueAgentRun } from '../services/agents/runner';
 
+const JOB_ACTIONS = [
+  {
+    value: 'github.repo.read',
+    label: 'GitHub Read Repo',
+    sample: '{\n  "owner": "octocat",\n  "repo": "Hello-World"\n}',
+  },
+  {
+    value: 'github.repo.write',
+    label: 'GitHub Write File',
+    sample:
+      '{\n  "owner": "octocat",\n  "repo": "Hello-World",\n  "path": "notes.txt",\n  "message": "Update notes",\n  "content": "hello from sidekick"\n}',
+  },
+  {
+    value: 'gmail.send',
+    label: 'Send Gmail',
+    sample:
+      '{\n  "to": "someone@example.com",\n  "subject": "Sidekick test",\n  "body": "Message body"\n}',
+  },
+  {
+    value: 'calendar.create',
+    label: 'Create Calendar Event',
+    sample:
+      '{\n  "summary": "Sidekick Meeting",\n  "start": { "dateTime": "2026-03-13T10:00:00-07:00" },\n  "end": { "dateTime": "2026-03-13T10:30:00-07:00" }\n}',
+  },
+  {
+    value: 'rivryn.project.read',
+    label: 'Rivryn API Call',
+    sample:
+      '{\n  "endpoint": "projects",\n  "method": "GET"\n}',
+  },
+  {
+    value: 'code.exec',
+    label: 'Local Code Command',
+    sample:
+      '{\n  "command": "npm",\n  "args": ["run", "build"],\n  "cwd": "/absolute/workspace/path"\n}',
+  },
+];
+
 export const AgentsPage: React.FC = () => {
   const { agents, loading, toggleAgent, addAgent, deleteAgent, reload } = useAgents();
   const [showDeployDialog, setShowDeployDialog] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'idle'>('all');
+  const [jobComposerAgentId, setJobComposerAgentId] = useState<string | null>(null);
+  const [jobAction, setJobAction] = useState<string>(JOB_ACTIONS[0].value);
+  const [jobParams, setJobParams] = useState<string>(JOB_ACTIONS[0].sample);
 
   const filteredAgents = agents.filter(agent => {
     if (filterStatus === 'all') return true;
@@ -193,16 +234,11 @@ export const AgentsPage: React.FC = () => {
 
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   <button
-                    onClick={async () => {
-                      if (runningAgentId) return;
-                      setRunningAgentId(agent.id);
-                      const res = await enqueueAgentRun(agent.id, { reason: 'manual_run' });
-                      setRunningAgentId(null);
-                      if (res.success) {
-                        toast.success('Agent queued to run');
-                      } else {
-                        toast.error(res.error || 'Failed to run agent');
-                      }
+                    onClick={() => {
+                      setJobComposerAgentId(agent.id);
+                      const defaultAction = JOB_ACTIONS[0];
+                      setJobAction(defaultAction.value);
+                      setJobParams(defaultAction.sample);
                     }}
                     className="py-2 border border-emerald-600/60 rounded-lg text-emerald-300 hover:border-emerald-500 transition-colors text-sm flex items-center justify-center gap-2 disabled:opacity-50"
                     disabled={runningAgentId === agent.id}
@@ -244,6 +280,91 @@ export const AgentsPage: React.FC = () => {
             }
           }}
         />
+      )}
+
+      {jobComposerAgentId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-2xl rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-slate-100">Queue Agent Job</h3>
+            <p className="mt-2 text-sm text-slate-400">
+              Choose a capability action and provide JSON params. `code.exec` jobs require the local worker.
+            </p>
+
+            <div className="mt-4 space-y-4">
+              <div>
+                <label className="text-sm text-slate-300">Action</label>
+                <select
+                  value={jobAction}
+                  onChange={(e) => {
+                    const selected = JOB_ACTIONS.find((item) => item.value === e.target.value) || JOB_ACTIONS[0];
+                    setJobAction(selected.value);
+                    setJobParams(selected.sample);
+                  }}
+                  className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+                >
+                  {JOB_ACTIONS.map((action) => (
+                    <option key={action.value} value={action.value}>
+                      {action.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm text-slate-300">Params JSON</label>
+                <textarea
+                  value={jobParams}
+                  onChange={(e) => setJobParams(e.target.value)}
+                  className="mt-2 w-full min-h-[220px] rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 font-mono"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center gap-3">
+              <button
+                onClick={() => setJobComposerAgentId(null)}
+                className="flex-1 rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!jobComposerAgentId || runningAgentId) return;
+
+                  let parsedParams: Record<string, unknown>;
+                  try {
+                    parsedParams = JSON.parse(jobParams);
+                  } catch {
+                    toast.error('Params must be valid JSON');
+                    return;
+                  }
+
+                  setRunningAgentId(jobComposerAgentId);
+                  const res = await enqueueAgentRun(jobComposerAgentId, {
+                    capability_action: jobAction,
+                    params: parsedParams,
+                  });
+                  setRunningAgentId(null);
+
+                  if (res.success) {
+                    toast.success(
+                      jobAction.startsWith('code.')
+                        ? 'Local code job queued. Start the local worker to process it.'
+                        : 'Agent job queued'
+                    );
+                    setJobComposerAgentId(null);
+                  } else {
+                    toast.error(res.error || 'Failed to queue job');
+                  }
+                }}
+                disabled={runningAgentId === jobComposerAgentId}
+                className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm text-emerald-50 hover:bg-emerald-500 disabled:opacity-50"
+              >
+                {runningAgentId === jobComposerAgentId ? 'Queueing...' : 'Queue Job'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

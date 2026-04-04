@@ -1,5 +1,6 @@
-import { getAdminClient, getUserFromRequest } from '../_shared/supabase.ts';
 import { handleCors, jsonResponse } from '../_shared/cors.ts';
+import { executeCapabilityAction } from '../_shared/capability-executor.ts';
+import { getAdminClient, getUserFromRequest } from '../_shared/supabase.ts';
 
 Deno.serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -37,23 +38,16 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'Action not approved' }, 400);
     }
 
-    const { data: execData, error: execError } = await admin.functions.invoke('google-actions', {
-      body: {
-        action_type: action.action_type,
-        params: action.params,
-      },
-      headers: {
-        Authorization: req.headers.get('Authorization') || '',
-      },
-    });
-
-    if (execError) {
+    let execData;
+    try {
+      execData = await executeCapabilityAction(user.id, action.action_type, action.params || {});
+    } catch (execError) {
       await admin.from('action_requests').update({
         status: 'failed',
-        error: execError.message,
+        error: (execError as Error).message,
         executed_at: new Date().toISOString(),
       }).eq('id', actionId);
-      return jsonResponse({ error: execError.message }, 500);
+      return jsonResponse({ error: (execError as Error).message }, 500);
     }
 
     await admin.from('action_requests').update({
