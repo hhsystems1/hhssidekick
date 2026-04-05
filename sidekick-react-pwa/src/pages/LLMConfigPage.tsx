@@ -14,6 +14,7 @@ import {
   type AIProvider,
 } from '../config/ai-models';
 import { testConnection } from '../services/ai/llm-client';
+import { listOllamaModels } from '../services/ai/ollama';
 import { useAuth } from '../context/AuthContext';
 import { useLlmSettingsSync } from '../context/LlmSettingsContext';
 import { useUserProfile } from '../hooks/useDatabase';
@@ -37,6 +38,8 @@ export const LLMConfigPage: React.FC = () => {
   const [preferredProvider, setPreferredProvider] = useState<AIProvider | ''>('');
   const [saving, setSaving] = useState(false);
   const [testStatus, setTestStatus] = useState<'idle' | 'running' | 'ok' | 'fail'>('idle');
+  const [discoveringModels, setDiscoveringModels] = useState(false);
+  const [discoveredModels, setDiscoveredModels] = useState<string[]>([]);
 
   useEffect(() => {
     const s = profile?.llm_settings;
@@ -90,13 +93,46 @@ export const LLMConfigPage: React.FC = () => {
     }
   };
 
+  const handleUseLocalOllama = () => {
+    setPreferredProvider('ollama');
+    setOllamaHost('http://localhost:11434');
+    if (!ollamaModel.trim()) {
+      setOllamaModel('llama3.2:latest');
+    }
+  };
+
+  const handleUseRemoteOllama = () => {
+    setPreferredProvider('ollama');
+    if (!ollamaHost.trim()) {
+      setOllamaHost('http://100.x.x.x:11434');
+    }
+  };
+
+  const handleDiscoverModels = async () => {
+    setDiscoveringModels(true);
+    try {
+      const models = await listOllamaModels();
+      setDiscoveredModels(models);
+      if (models.length === 0) {
+        toast.error('No models found. Make sure Ollama is reachable and has at least one model pulled.');
+        return;
+      }
+      if (!ollamaModel.trim()) {
+        setOllamaModel(models[0]);
+      }
+      toast.success(`Found ${models.length} model${models.length === 1 ? '' : 's'}`);
+    } finally {
+      setDiscoveringModels(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <div className="max-w-6xl mx-auto p-4 lg:p-8">
         <div className="mb-6">
           <h1 className="text-3xl font-bold">LLM Config</h1>
           <p className="text-slate-400">
-            Set your Ollama host (e.g. Tailscale IP on your home machine), default model, and provider. Saved per account.
+            Connect your model once from the app. Consumers should not need to edit config files or code to use Ollama.
           </p>
         </div>
 
@@ -137,17 +173,61 @@ export const LLMConfigPage: React.FC = () => {
           </div>
         </div>
 
+        <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
+            <p className="text-sm font-semibold text-slate-100">1. Pick a source</p>
+            <p className="text-xs text-slate-500 mt-2">Use Ollama on this device or point to a remote machine on your network or Tailscale.</p>
+          </div>
+          <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
+            <p className="text-sm font-semibold text-slate-100">2. Detect models</p>
+            <p className="text-xs text-slate-500 mt-2">SideKick can ask Ollama which models are already installed so users do not have to remember model names.</p>
+          </div>
+          <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
+            <p className="text-sm font-semibold text-slate-100">3. Save to account</p>
+            <p className="text-xs text-slate-500 mt-2">The host, provider, and default model are stored on the user profile, not in local config files.</p>
+          </div>
+        </div>
+
         <div className="mb-6 bg-slate-900/60 border border-slate-800 rounded-xl p-5 space-y-4">
           <div className="flex items-center gap-2 text-slate-200 font-semibold">
             <Network size={18} className="text-emerald-400" />
             Account LLM settings
           </div>
           <p className="text-xs text-slate-500">
-            Use your Tailscale IP or hostname with port <code className="text-slate-400">11434</code>. On the Ollama machine run{' '}
-            <code className="text-slate-400">ollama serve</code> and allow LAN access if needed. From your phone, connect to Tailscale
-            then open RivRyn SideKick—the browser must reach that host (HTTPS app calling HTTP Tailscale IP may be blocked by mixed
-            content; if so use a local tunnel or HTTPS reverse proxy until the desktop connector ships).
+            For most users, click <code className="text-slate-400">Use this device</code>. If Ollama runs on another machine, paste its URL here. The browser still has to reach that host directly.
           </p>
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleUseLocalOllama}
+              disabled={!user || profileLoading}
+              className="rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:border-slate-500 disabled:opacity-50"
+            >
+              Use this device
+            </button>
+            <button
+              type="button"
+              onClick={handleUseRemoteOllama}
+              disabled={!user || profileLoading}
+              className="rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:border-slate-500 disabled:opacity-50"
+            >
+              Use remote Ollama
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPreferredProvider('');
+                setOllamaHost('');
+                setOllamaModel('');
+                setDiscoveredModels([]);
+              }}
+              disabled={!user || profileLoading}
+              className="rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-300 hover:border-slate-500 disabled:opacity-50"
+            >
+              Clear
+            </button>
+          </div>
 
           <label className="block text-sm text-slate-300">Preferred provider</label>
           <select
@@ -164,14 +244,27 @@ export const LLMConfigPage: React.FC = () => {
           </select>
 
           <label className="block text-sm text-slate-300">Ollama host URL</label>
-          <input
-            type="text"
-            value={ollamaHost}
-            onChange={(e) => setOllamaHost(e.target.value)}
-            placeholder="http://100.x.x.x:11434 or http://my-pc.tailnet-name.ts.net:11434"
-            disabled={!user || profileLoading}
-            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600"
-          />
+          <div className="flex flex-col gap-2 md:flex-row">
+            <input
+              type="text"
+              value={ollamaHost}
+              onChange={(e) => setOllamaHost(e.target.value)}
+              placeholder="http://localhost:11434 or http://my-machine:11434"
+              disabled={!user || profileLoading}
+              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600"
+            />
+            <button
+              type="button"
+              onClick={() => void handleDiscoverModels()}
+              disabled={!user || profileLoading || discoveringModels}
+              className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-slate-500 disabled:opacity-50"
+            >
+              {discoveringModels ? 'Detecting...' : 'Detect models'}
+            </button>
+          </div>
+          <p className="text-xs text-slate-500">
+            Examples: <code className="text-slate-400">http://localhost:11434</code> for the same device, or a Tailscale/LAN address for another machine.
+          </p>
 
           <label className="block text-sm text-slate-300">Default Ollama model (optional)</label>
           <input
@@ -182,6 +275,23 @@ export const LLMConfigPage: React.FC = () => {
             disabled={!user || profileLoading}
             className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600"
           />
+          {discoveredModels.length > 0 ? (
+            <div className="space-y-2">
+              <label className="block text-sm text-slate-300">Detected models</label>
+              <select
+                value={ollamaModel}
+                onChange={(e) => setOllamaModel(e.target.value)}
+                disabled={!user || profileLoading}
+                className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+              >
+                {discoveredModels.map((model) => (
+                  <option key={model} value={model}>
+                    {model}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
 
           <div className="flex flex-wrap gap-2 pt-2">
             <button
