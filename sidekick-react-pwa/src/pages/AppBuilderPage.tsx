@@ -189,7 +189,7 @@ export const AppBuilderPage: React.FC = () => {
                 <p><span className="text-slate-500">Repo:</span> {state.repoName || 'Not set'} ({state.visibility})</p>
               </div>
               <div className="bg-slate-950/40 border border-slate-800 rounded-lg p-3 text-xs text-slate-400">
-                Next step: Sidekick will create the repo and open Rivryn for project setup.
+                Next step: RivRyn SideKick will create the repo and open Rivryn for project setup.
               </div>
             </div>
           )}

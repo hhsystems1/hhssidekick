@@ -8,6 +8,7 @@ import { ChatPage } from './ChatPage';
 import { Layout } from './Layout';
 import SettingsPage from './pages/settings/SettingsPage';
 import { AuthProvider } from './context/AuthContext';
+import { LlmSettingsProvider } from './context/LlmSettingsContext';
 import { ProjectProvider } from './context/ProjectContext';
 import { TasksPage } from './pages/TasksPage';
 import { FilesPage } from './pages/FilesPage';
@@ -19,6 +20,7 @@ import { AppBuilderPage } from './pages/AppBuilderPage';
 function App() {
   return (
     <AuthProvider>
+      <LlmSettingsProvider>
       <ProjectProvider>
       <Toaster
         position="top-right"
@@ -62,6 +64,7 @@ function App() {
         </Routes>
       </BrowserRouter>
       </ProjectProvider>
+      </LlmSettingsProvider>
     </AuthProvider>
   );
 }

@@ -1,5 +1,5 @@
 /**
- * Type definitions for Sidekick agent system
+ * Type definitions for RivRyn SideKick agent system
  */
 
 export type AgentType =

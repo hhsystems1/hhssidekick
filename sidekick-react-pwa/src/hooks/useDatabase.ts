@@ -312,6 +312,7 @@ export function useUserProfile() {
     full_name: string | null;
     avatar_url: string | null;
     timezone: string | null;
+    llm_settings: Record<string, unknown> | null;
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -333,6 +334,7 @@ export function useUserProfile() {
           full_name: data.full_name,
           avatar_url: data.avatar_url,
           timezone: data.timezone,
+          llm_settings: (data.llm_settings as Record<string, unknown> | null) ?? null,
         });
       }
     } catch (err: any) {
@@ -352,6 +354,7 @@ export function useUserProfile() {
     full_name?: string | null;
     avatar_url?: string | null;
     timezone?: string | null;
+    llm_settings?: Record<string, unknown> | null;
   }) => {
     if (!userId) return false;
     try {
@@ -363,6 +366,7 @@ export function useUserProfile() {
           full_name: data.full_name,
           avatar_url: data.avatar_url,
           timezone: data.timezone,
+          llm_settings: (data.llm_settings as Record<string, unknown> | null) ?? null,
         });
         return true;
       }

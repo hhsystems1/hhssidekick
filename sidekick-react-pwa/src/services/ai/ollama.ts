@@ -13,11 +13,13 @@ import { getOllamaURL } from '../../config/ai-models';
  * Uses browser-compatible Ollama client for Vite/React
  */
 let ollamaClient: Ollama | null = null;
+let clientHost: string | null = null;
 
 export function getOllamaClient(): Ollama {
-  if (!ollamaClient) {
-    const baseUrl = getOllamaURL();
+  const baseUrl = getOllamaURL();
+  if (!ollamaClient || clientHost !== baseUrl) {
     ollamaClient = new Ollama({ host: baseUrl });
+    clientHost = baseUrl;
   }
   return ollamaClient;
 }
@@ -173,7 +175,7 @@ export async function pullOllamaModel(
 }
 
 /**
- * Verify that required models are available for Sidekick agents
+ * Verify that required models are available for RivRyn SideKick agents
  * Returns list of missing models that need to be pulled
  *
  * @param requiredModels - Array of model names to check

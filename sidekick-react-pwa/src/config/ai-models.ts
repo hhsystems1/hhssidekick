@@ -6,6 +6,11 @@
  */
 
 import type { AgentType } from '../types/agents';
+import {
+  getUserLlmOllamaHost,
+  getUserOllamaModelDefault,
+  getUserPreferredProvider,
+} from './llm-runtime';
 
 export type AIProvider = 'groq' | 'ollama' | 'openai' | 'anthropic';
 
@@ -101,6 +106,11 @@ export const AGENT_MODELS: Record<AgentType, ModelConfig> = {
  * Get the configured provider from environment variables
  */
 export function getAIProvider(): AIProvider {
+  const userPref = getUserPreferredProvider();
+  if (userPref === 'groq' || userPref === 'ollama' || userPref === 'openai' || userPref === 'anthropic') {
+    return userPref;
+  }
+
   const provider = import.meta.env.VITE_AI_PROVIDER?.toLowerCase();
 
   if (provider === 'groq' || provider === 'ollama' || provider === 'openai' || provider === 'anthropic') {
@@ -126,16 +136,43 @@ export function getModelForAgent(agentType: AgentType, provider?: AIProvider): s
     return envOverride;
   }
 
+  if (currentProvider === 'ollama') {
+    const userModel = getUserOllamaModelDefault();
+    if (userModel) {
+      return userModel;
+    }
+  }
+
   // Use default from config
   const config = AGENT_MODELS[agentType];
   return config[currentProvider] || config.groq;
 }
 
 /**
- * Get Ollama base URL from environment
+ * Normalize Ollama base URL (user profile, env, or localhost default).
+ */
+export function normalizeOllamaBaseUrl(url: string): string {
+  let u = url.trim();
+  if (!u) return 'http://localhost:11434';
+  if (!/^https?:\/\//i.test(u)) {
+    u = `http://${u}`;
+  }
+  return u.replace(/\/+$/, '');
+}
+
+/**
+ * Get Ollama base URL: per-account setting wins, then env, then localhost.
  */
 export function getOllamaURL(): string {
-  return import.meta.env.VITE_OLLAMA_URL || 'http://localhost:11434';
+  const userHost = getUserLlmOllamaHost();
+  if (userHost) {
+    return normalizeOllamaBaseUrl(userHost);
+  }
+  const envUrl = import.meta.env.VITE_OLLAMA_URL;
+  if (envUrl && String(envUrl).trim()) {
+    return normalizeOllamaBaseUrl(String(envUrl));
+  }
+  return 'http://localhost:11434';
 }
 
 /**

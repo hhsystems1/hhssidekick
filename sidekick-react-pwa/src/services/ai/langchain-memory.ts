@@ -210,7 +210,7 @@ export async function summarizeConversation(
     return '';
   }
 
-  const prompt = `Summarize the following conversation between a user and their AI thinking partner (Sidekick).
+  const prompt = `Summarize the following conversation between a user and their AI thinking partner (RivRyn SideKick).
 Focus on:
 - Key decisions made
 - Projects or ideas discussed

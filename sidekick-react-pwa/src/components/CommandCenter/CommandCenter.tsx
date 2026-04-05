@@ -1,6 +1,6 @@
 /**
  * CommandCenter Component
- * Main dashboard component for the Sidekick app
+ * Main dashboard component for the RivRyn SideKick app
  */
 
 import React, { useState, useEffect } from 'react';

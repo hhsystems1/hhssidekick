@@ -181,6 +181,7 @@ export interface Database {
           full_name: string | null;
           avatar_url: string | null;
           timezone: string | null;
+          llm_settings: Record<string, unknown> | null;
           created_at: string;
           updated_at: string;
         };
@@ -190,6 +191,7 @@ export interface Database {
           full_name?: string | null;
           avatar_url?: string | null;
           timezone?: string | null;
+          llm_settings?: Record<string, unknown> | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -199,6 +201,7 @@ export interface Database {
           full_name?: string | null;
           avatar_url?: string | null;
           timezone?: string | null;
+          llm_settings?: Record<string, unknown> | null;
           created_at?: string;
           updated_at?: string;
         };

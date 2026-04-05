@@ -334,7 +334,7 @@ export function ChatPage() {
                 try {
                   const userContext = {
                     userId,
-                    currentProject: activeProject?.name || 'Rivryn Sidekick',
+                    currentProject: activeProject?.name || 'RivRyn SideKick',
                     recentTopics: [],
                     baseMemory,
                     agentMemoryByType,

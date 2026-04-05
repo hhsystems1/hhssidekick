@@ -119,7 +119,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </h2>
           <p className="text-slate-400 mt-1">
             {mode === 'signin'
-              ? 'Sign in to access your Sidekick'
+              ? 'Sign in to access RivRyn SideKick'
               : 'Get started with your AI assistant'}
           </p>
         </div>

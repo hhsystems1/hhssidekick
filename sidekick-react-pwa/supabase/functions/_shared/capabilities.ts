@@ -25,7 +25,7 @@ export const CAPABILITY_REGISTRY: CapabilityDefinition[] = [
     id: 'google.gmail.send',
     provider: 'google',
     title: 'Google Gmail',
-    description: 'Send email drafts and outbound messages.',
+    description: 'Send outbound email (action gmail.send: to, subject, body).',
     authKind: 'oauth',
     requiredScopes: ['https://www.googleapis.com/auth/gmail.send'],
     actions: ['gmail.send'],
@@ -34,7 +34,8 @@ export const CAPABILITY_REGISTRY: CapabilityDefinition[] = [
     id: 'google.calendar.create',
     provider: 'google',
     title: 'Google Calendar',
-    description: 'Create and update calendar events.',
+    description:
+      'Create calendar events. Pass addMeet: true (or conferenceMeet) in params to attach a Google Meet link.',
     authKind: 'oauth',
     requiredScopes: ['https://www.googleapis.com/auth/calendar.events'],
     actions: ['calendar.create'],

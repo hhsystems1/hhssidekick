@@ -20,19 +20,19 @@ const JOB_ACTIONS = [
     value: 'github.repo.write',
     label: 'GitHub Write File',
     sample:
-      '{\n  "owner": "octocat",\n  "repo": "Hello-World",\n  "path": "notes.txt",\n  "message": "Update notes",\n  "content": "hello from sidekick"\n}',
+      '{\n  "owner": "octocat",\n  "repo": "Hello-World",\n  "path": "notes.txt",\n  "message": "Update notes",\n  "content": "hello from RivRyn SideKick"\n}',
   },
   {
     value: 'gmail.send',
     label: 'Send Gmail',
     sample:
-      '{\n  "to": "someone@example.com",\n  "subject": "Sidekick test",\n  "body": "Message body"\n}',
+      '{\n  "to": "someone@example.com",\n  "subject": "RivRyn SideKick test",\n  "body": "Message body"\n}',
   },
   {
     value: 'calendar.create',
     label: 'Create Calendar Event',
     sample:
-      '{\n  "summary": "Sidekick Meeting",\n  "start": { "dateTime": "2026-03-13T10:00:00-07:00" },\n  "end": { "dateTime": "2026-03-13T10:30:00-07:00" }\n}',
+      '{\n  "summary": "RivRyn SideKick Meeting",\n  "start": { "dateTime": "2026-03-13T10:00:00-07:00" },\n  "end": { "dateTime": "2026-03-13T10:30:00-07:00" },\n  "addMeet": true\n}',
   },
   {
     value: 'rivryn.project.read',

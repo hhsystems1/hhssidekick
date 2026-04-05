@@ -135,13 +135,30 @@ async function executeGoogleAction(userId: string, actionType: string, params: R
   }
 
   if (actionType === 'calendar.create') {
-    const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+    const raw = { ...params } as Record<string, unknown>;
+    const addMeet = raw.addMeet === true || raw.conferenceMeet === true || raw.add_google_meet === true;
+    delete raw.addMeet;
+    delete raw.conferenceMeet;
+    delete raw.add_google_meet;
+
+    let url = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
+    if (addMeet) {
+      url += '?conferenceDataVersion=1';
+      raw.conferenceData = {
+        createRequest: {
+          requestId: crypto.randomUUID(),
+          conferenceSolutionKey: { type: 'hangoutsMeet' },
+        },
+      };
+    }
+
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(params),
+      body: JSON.stringify(raw),
     });
 
     if (!response.ok) {
@@ -202,7 +219,7 @@ async function executeGitHubAction(userId: string, actionType: string, params: R
     const owner = String(params.owner || '');
     const repo = String(params.repo || '');
     const path = String(params.path || '');
-    const message = String(params.message || 'Update via Sidekick');
+    const message = String(params.message || 'Update via RivRyn SideKick');
     const content = String(params.content || '');
     const branch = params.branch ? String(params.branch) : undefined;
     const sha = params.sha ? String(params.sha) : undefined;
@@ -285,7 +302,7 @@ export async function executeCapabilityAction(
   }
 
   if (actionType.startsWith('code.')) {
-    throw new Error('Local code capabilities require the local Sidekick worker');
+    throw new Error('Local code capabilities require the local RivRyn SideKick worker');
   }
 
   throw new Error(`Unsupported capability action: ${actionType}`);

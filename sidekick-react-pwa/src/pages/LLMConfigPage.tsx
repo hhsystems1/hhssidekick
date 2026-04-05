@@ -1,64 +1,206 @@
 /**
- * LLMConfigPage Component
- * LLM configuration placeholder
+ * LLM configuration: per-account Ollama host (e.g. Tailscale IP), default model, provider preference.
  */
 
-import React, { useState } from 'react';
-import { Cpu, Key, Sliders, CheckCircle2, XCircle, Server } from 'lucide-react';
-import { getAIProvider, hasGroqKey, hasOpenAIKey, hasAnthropicKey, getOllamaURL } from '../config/ai-models';
+import React, { useEffect, useState } from 'react';
+import { Cpu, Key, Sliders, CheckCircle2, XCircle, Server, Save, Network } from 'lucide-react';
+import {
+  getAIProvider,
+  hasGroqKey,
+  hasOpenAIKey,
+  hasAnthropicKey,
+  getOllamaURL,
+  normalizeOllamaBaseUrl,
+  type AIProvider,
+} from '../config/ai-models';
 import { testConnection } from '../services/ai/llm-client';
+import { useAuth } from '../context/AuthContext';
+import { useLlmSettingsSync } from '../context/LlmSettingsContext';
+import { useUserProfile } from '../hooks/useDatabase';
+import toast from 'react-hot-toast';
+
+const PROVIDERS: { id: AIProvider | ''; label: string }[] = [
+  { id: '', label: 'App default (env VITE_AI_PROVIDER)' },
+  { id: 'groq', label: 'Groq' },
+  { id: 'ollama', label: 'Ollama (your host)' },
+  { id: 'openai', label: 'OpenAI' },
+  { id: 'anthropic', label: 'Anthropic' },
+];
 
 export const LLMConfigPage: React.FC = () => {
-  const provider = getAIProvider();
-  const ollamaUrl = getOllamaURL();
+  const { user } = useAuth();
+  const { profile, loading: profileLoading, updateProfile, reload: reloadProfile } = useUserProfile();
+  const { refreshFromProfile } = useLlmSettingsSync();
+
+  const [ollamaHost, setOllamaHost] = useState('');
+  const [ollamaModel, setOllamaModel] = useState('');
+  const [preferredProvider, setPreferredProvider] = useState<AIProvider | ''>('');
+  const [saving, setSaving] = useState(false);
   const [testStatus, setTestStatus] = useState<'idle' | 'running' | 'ok' | 'fail'>('idle');
 
+  useEffect(() => {
+    const s = profile?.llm_settings;
+    if (!s || typeof s !== 'object') {
+      setOllamaHost('');
+      setOllamaModel('');
+      setPreferredProvider('');
+      return;
+    }
+    setOllamaHost(typeof s.ollama_host === 'string' ? s.ollama_host : '');
+    setOllamaModel(typeof s.ollama_model_default === 'string' ? s.ollama_model_default : '');
+    const p = typeof s.preferred_provider === 'string' ? s.preferred_provider.toLowerCase() : '';
+    if (p === 'groq' || p === 'ollama' || p === 'openai' || p === 'anthropic') {
+      setPreferredProvider(p);
+    } else {
+      setPreferredProvider('');
+    }
+  }, [profile?.llm_settings]);
+
+  const resolvedProvider = getAIProvider();
+  const resolvedOllamaUrl = getOllamaURL();
+
   const status = [
-    { label: 'Groq', ok: hasGroqKey(), detail: 'VITE_GROQ_API_KEY' },
-    { label: 'OpenAI', ok: hasOpenAIKey(), detail: 'VITE_OPENAI_API_KEY' },
-    { label: 'Anthropic', ok: hasAnthropicKey(), detail: 'VITE_ANTHROPIC_API_KEY' },
-    { label: 'Ollama', ok: true, detail: ollamaUrl },
+    { label: 'Groq', ok: hasGroqKey(), detail: 'VITE_GROQ_API_KEY in .env' },
+    { label: 'OpenAI', ok: hasOpenAIKey(), detail: 'VITE_OPENAI_API_KEY in .env' },
+    { label: 'Anthropic', ok: hasAnthropicKey(), detail: 'VITE_ANTHROPIC_API_KEY in .env' },
+    { label: 'Ollama', ok: true, detail: resolvedOllamaUrl },
   ];
+
+  const handleSave = async () => {
+    if (!user) {
+      toast.error('Sign in to save LLM settings.');
+      return;
+    }
+    setSaving(true);
+    try {
+      const llm_settings: Record<string, unknown> = {
+        ollama_host: ollamaHost.trim() ? normalizeOllamaBaseUrl(ollamaHost.trim()) : null,
+        ollama_model_default: ollamaModel.trim() || null,
+        preferred_provider: preferredProvider || null,
+      };
+      const ok = await updateProfile({ llm_settings });
+      if (ok) {
+        await refreshFromProfile();
+        toast.success('LLM settings saved');
+      } else {
+        toast.error('Could not save settings. Did you run the database migration for llm_settings?');
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <div className="max-w-6xl mx-auto p-4 lg:p-8">
         <div className="mb-6">
           <h1 className="text-3xl font-bold">LLM Config</h1>
-          <p className="text-slate-400">Set model providers, keys, and defaults.</p>
+          <p className="text-slate-400">
+            Set your Ollama host (e.g. Tailscale IP on your home machine), default model, and provider. Saved per account.
+          </p>
         </div>
+
+        {!user ? (
+          <div className="rounded-xl border border-amber-800/60 bg-amber-950/30 p-4 text-amber-200 text-sm">
+            Sign in to store Ollama host and preferences on your profile.
+          </div>
+        ) : null}
 
         <div className="mb-6 bg-slate-900/60 border border-slate-800 rounded-xl p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="flex items-center gap-2 text-sm">
                 <Server size={16} className="text-emerald-400" />
-                <span className="text-slate-300">Current provider:</span>
-                <span className="text-emerald-300 font-semibold">{provider}</span>
+                <span className="text-slate-300">Active provider (resolved):</span>
+                <span className="text-emerald-300 font-semibold">{resolvedProvider}</span>
               </div>
               <p className="text-xs text-slate-500 mt-2">
-                Set `VITE_AI_PROVIDER` to `groq`, `openai`, `anthropic`, or `ollama`.
+                Ollama URL in use: <span className="text-slate-400">{resolvedOllamaUrl}</span>
               </p>
             </div>
             <div className="flex items-center gap-2">
               <button
+                type="button"
                 onClick={async () => {
                   setTestStatus('running');
                   const ok = await testConnection();
                   setTestStatus(ok ? 'ok' : 'fail');
                 }}
-                disabled={testStatus === 'running'}
+                disabled={testStatus === 'running' || profileLoading}
                 className="px-3 py-2 rounded-lg border border-slate-700 text-slate-200 text-sm hover:border-slate-500 disabled:opacity-50"
               >
                 {testStatus === 'running' ? 'Testing...' : 'Test LLM'}
               </button>
-              {testStatus === 'ok' && (
-                <span className="text-xs text-emerald-300">Connected</span>
-              )}
-              {testStatus === 'fail' && (
-                <span className="text-xs text-red-300">Failed</span>
-              )}
+              {testStatus === 'ok' && <span className="text-xs text-emerald-300">Connected</span>}
+              {testStatus === 'fail' && <span className="text-xs text-red-300">Failed</span>}
             </div>
+          </div>
+        </div>
+
+        <div className="mb-6 bg-slate-900/60 border border-slate-800 rounded-xl p-5 space-y-4">
+          <div className="flex items-center gap-2 text-slate-200 font-semibold">
+            <Network size={18} className="text-emerald-400" />
+            Account LLM settings
+          </div>
+          <p className="text-xs text-slate-500">
+            Use your Tailscale IP or hostname with port <code className="text-slate-400">11434</code>. On the Ollama machine run{' '}
+            <code className="text-slate-400">ollama serve</code> and allow LAN access if needed. From your phone, connect to Tailscale
+            then open RivRyn SideKick—the browser must reach that host (HTTPS app calling HTTP Tailscale IP may be blocked by mixed
+            content; if so use a local tunnel or HTTPS reverse proxy until the desktop connector ships).
+          </p>
+
+          <label className="block text-sm text-slate-300">Preferred provider</label>
+          <select
+            value={preferredProvider}
+            onChange={(e) => setPreferredProvider((e.target.value || '') as AIProvider | '')}
+            disabled={!user || profileLoading}
+            className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+          >
+            {PROVIDERS.map((p) => (
+              <option key={p.id || 'default'} value={p.id}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+
+          <label className="block text-sm text-slate-300">Ollama host URL</label>
+          <input
+            type="text"
+            value={ollamaHost}
+            onChange={(e) => setOllamaHost(e.target.value)}
+            placeholder="http://100.x.x.x:11434 or http://my-pc.tailnet-name.ts.net:11434"
+            disabled={!user || profileLoading}
+            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600"
+          />
+
+          <label className="block text-sm text-slate-300">Default Ollama model (optional)</label>
+          <input
+            type="text"
+            value={ollamaModel}
+            onChange={(e) => setOllamaModel(e.target.value)}
+            placeholder="e.g. llama3.2:latest"
+            disabled={!user || profileLoading}
+            className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600"
+          />
+
+          <div className="flex flex-wrap gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => void handleSave()}
+              disabled={!user || saving || profileLoading}
+              className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm text-emerald-50 hover:bg-emerald-500 disabled:opacity-50"
+            >
+              <Save size={16} />
+              {saving ? 'Saving…' : 'Save to account'}
+            </button>
+            <button
+              type="button"
+              onClick={() => void reloadProfile()}
+              disabled={profileLoading}
+              className="rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500"
+            >
+              Reload
+            </button>
           </div>
         </div>
 
@@ -82,22 +224,26 @@ export const LLMConfigPage: React.FC = () => {
           <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-6">
             <Cpu size={24} className="text-emerald-400" />
             <h3 className="mt-4 text-lg font-semibold">Providers</h3>
-            <p className="text-sm text-slate-400 mt-2">Connect OpenAI, Anthropic, or local models.</p>
+            <p className="text-sm text-slate-400 mt-2">Cloud keys from env; Ollama host from your account.</p>
           </div>
           <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-6">
             <Key size={24} className="text-emerald-400" />
             <h3 className="mt-4 text-lg font-semibold">API Keys</h3>
-            <p className="text-sm text-slate-400 mt-2">Manage secrets securely for each provider.</p>
+            <p className="text-sm text-slate-400 mt-2">Groq/OpenAI/Anthropic still use VITE_* keys in the app build for now.</p>
           </div>
           <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-6">
             <Sliders size={24} className="text-emerald-400" />
             <h3 className="mt-4 text-lg font-semibold">Defaults</h3>
-            <p className="text-sm text-slate-400 mt-2">Set temperature, max tokens, and routing.</p>
+            <p className="text-sm text-slate-400 mt-2">Ollama default model applies to all agent types unless env overrides.</p>
           </div>
         </div>
 
         <div className="mt-8 bg-slate-900/60 border border-slate-800 rounded-xl p-6">
-          <p className="text-slate-400">LLM configuration will be wired next.</p>
+          <p className="text-sm text-slate-400">
+            Run <code className="text-slate-300">database/add_profile_llm_settings.sql</code> in Supabase if the save fails—your{' '}
+            <code className="text-slate-300">profiles</code> table needs the <code className="text-slate-300">llm_settings</code>{' '}
+            column.
+          </p>
         </div>
       </div>
     </div>

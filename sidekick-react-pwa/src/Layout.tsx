@@ -162,7 +162,7 @@ export const Layout: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
           <div className="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
             <h3 className="text-lg font-semibold text-slate-100">Sign out?</h3>
-            <p className="mt-2 text-sm text-slate-400">Are you sure you want to sign out of Rivryn Sidekick?</p>
+            <p className="mt-2 text-sm text-slate-400">Are you sure you want to sign out of RivRyn SideKick?</p>
             <div className="mt-6 flex items-center gap-3">
               <button
                 onClick={() => setConfirmSignOutOpen(false)}

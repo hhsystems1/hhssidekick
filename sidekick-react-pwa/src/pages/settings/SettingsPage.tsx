@@ -317,7 +317,7 @@ export const SettingsPage: React.FC = () => {
               >
                 <div>
                   <p className="text-sm font-medium text-slate-200">Help Center</p>
-                  <p className="text-xs text-slate-500 mt-0.5">Get help with using Sidekick</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Get help with using RivRyn SideKick</p>
                 </div>
                 <span className="text-slate-500">→</span>
               </button>

@@ -6,6 +6,7 @@ create table if not exists profiles (
   avatar_url text,
   timezone text,
   preferences jsonb default '{"notifications": {"push": true, "email": true, "taskReminders": true}, "appearance": {"theme": "system", "fontSize": "medium"}, "privacy": {"twoFactorEnabled": false, "shareAnalytics": true}}'::jsonb,
+  llm_settings jsonb not null default '{}'::jsonb,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );

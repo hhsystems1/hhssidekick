@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Github, Mail, Calendar, Cloud, Shield, CheckCircle2, TerminalSquare, KeyRound } from 'lucide-react';
+import { Github, Mail, Calendar, Cloud, Shield, CheckCircle2, TerminalSquare, KeyRound, Phone } from 'lucide-react';
 import { getGoogleStatus, startGoogleConnect, disconnectGoogle } from '../services/connectors/google';
 import { listToolCapabilities, saveToolCredential, type CapabilityStatus } from '../services/connectors/capabilities';
 import toast from 'react-hot-toast';
@@ -162,10 +162,31 @@ export const IntegrationsPage: React.FC = () => {
       <div className="max-w-6xl mx-auto p-4 lg:p-8">
         <div className="mb-6">
           <h1 className="text-3xl font-bold">Integrations</h1>
-          <p className="text-slate-400">Connect Sidekick to your tools.</p>
-          <div className="mt-3 rounded-lg border border-slate-800 bg-slate-900/50 p-3 text-xs text-slate-400">
-            Auth debug: user `{user?.id ? 'present' : 'missing'}` | session token `{sessionPresent ? 'present' : 'missing'}` | token ref `{tokenRef || 'n/a'}`
-          </div>
+          <p className="text-slate-400">Connect RivRyn SideKick to your tools.</p>
+          {import.meta.env.DEV ? (
+            <div className="mt-3 rounded-lg border border-slate-800 bg-slate-900/50 p-3 text-xs text-slate-400">
+              Auth debug: user `{user?.id ? 'present' : 'missing'}` | session token `{sessionPresent ? 'present' : 'missing'}` | token ref `{tokenRef || 'n/a'}`
+            </div>
+          ) : null}
+        </div>
+
+        <div className="mb-6 rounded-xl border border-slate-800 bg-slate-900/50 p-5">
+          <h2 className="text-lg font-semibold text-slate-100">Google Workspace (one sign-in)</h2>
+          <p className="mt-2 text-sm text-slate-400">
+            Connecting Google grants the scopes needed for agent actions. Reconnect if you see “Upgrade Access” (missing scopes).
+          </p>
+          <ul className="mt-3 list-disc list-inside text-sm text-slate-300 space-y-1">
+            <li>
+              <strong className="text-slate-200">Gmail</strong> — send email (<code className="text-xs text-slate-500">gmail.send</code>)
+            </li>
+            <li>
+              <strong className="text-slate-200">Calendar</strong> — create events; optional Google Meet via{' '}
+              <code className="text-xs text-slate-500">addMeet: true</code> on <code className="text-xs text-slate-500">calendar.create</code>
+            </li>
+            <li>
+              <strong className="text-slate-200">Drive</strong> — read-only access for future doc tooling
+            </li>
+          </ul>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -240,11 +261,11 @@ export const IntegrationsPage: React.FC = () => {
                 </p>
               ) : provider.provider === 'google' && googleConnected && provider.missingScopes.length > 0 ? (
                 <p className="text-xs text-amber-300">
-                  Reconnect Google to enable Sidekick actions.
+                  Reconnect Google to enable RivRyn SideKick actions.
                 </p>
               ) : provider.authKind === 'api_key' ? (
                 <p className="text-xs text-slate-500">
-                  Paste one key once. Sidekick stores it encrypted and reuses it for agent runs.
+                  Paste one key once. RivRyn SideKick stores it encrypted and reuses it for agent runs.
                 </p>
               ) : provider.authKind === 'local' ? (
                 <p className="text-xs text-slate-500">
@@ -252,28 +273,43 @@ export const IntegrationsPage: React.FC = () => {
                 </p>
               ) : (
                 <p className="text-xs text-slate-500">
-                  No extra setup page needed. Sidekick handles this through the shared capability layer.
+                  No extra setup page needed. RivRyn SideKick handles this through the shared capability layer.
                 </p>
               )}
             </div>
           ))}
         </div>
 
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
             <Calendar size={20} className="text-emerald-400" />
-            <p className="mt-3 text-sm font-semibold">Calendar Sync</p>
-            <p className="text-xs text-slate-500 mt-1">Auto‑schedule tasks and meetings.</p>
+            <p className="mt-3 text-sm font-semibold">Calendar & Meet</p>
+            <p className="text-xs text-slate-500 mt-1">Create events; Meet links when the action requests them.</p>
+          </div>
+          <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
+            <Mail size={20} className="text-emerald-400" />
+            <p className="mt-3 text-sm font-semibold">Email</p>
+            <p className="text-xs text-slate-500 mt-1">Outbound send through Gmail after connect.</p>
           </div>
           <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
             <Cloud size={20} className="text-emerald-400" />
             <p className="mt-3 text-sm font-semibold">Drive Access</p>
-            <p className="text-xs text-slate-500 mt-1">Use docs as training sources.</p>
+            <p className="text-xs text-slate-500 mt-1">Read-only scope for upcoming doc workflows.</p>
           </div>
-          <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
-            <Shield size={20} className="text-emerald-400" />
-            <p className="mt-3 text-sm font-semibold">Security</p>
-            <p className="text-xs text-slate-500 mt-1">Granular scopes and audit trails.</p>
+          <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5 border-dashed border-slate-600">
+            <Phone size={20} className="text-slate-500" />
+            <p className="mt-3 text-sm font-semibold text-slate-300">Voice / PSTN</p>
+            <p className="text-xs text-slate-500 mt-1">Planned: Twilio or similar for calls; not wired yet.</p>
+          </div>
+        </div>
+
+        <div className="mt-4 bg-slate-900/40 border border-slate-800 rounded-xl p-5">
+          <div className="flex items-start gap-2">
+            <Shield size={18} className="text-emerald-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-slate-200">Security</p>
+              <p className="text-xs text-slate-500 mt-1">Tokens are encrypted; actions can require approval in Settings.</p>
+            </div>
           </div>
         </div>
 

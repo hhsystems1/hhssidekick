@@ -5,8 +5,8 @@
 
 export const BRANDING = {
   // App Information
-  appName: 'Sidekick', // Change this to your actual app name
-  appTagline: 'Your AI-Powered Business Assistant',
+  appName: 'RivRyn SideKick',
+  appTagline: 'Your RivRyn AI-powered assistant',
 
   // Logo Configuration (update when you have your logo)
   logo: {
