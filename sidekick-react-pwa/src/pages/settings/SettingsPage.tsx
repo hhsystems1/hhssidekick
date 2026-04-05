@@ -8,7 +8,7 @@ import { EditProfileDialog } from '../../components/EditProfileDialog';
 import { ChangePasswordDialog } from '../../components/ChangePasswordDialog';
 import { SessionManagementDialog } from '../../components/SessionManagementDialog';
 import { DataPrivacyDialog } from '../../components/DataPrivacyDialog';
-import { approveAction, listPendingActions, rejectAction, executeAction } from '../../services/actions';
+import { approveAction, listPendingActions, rejectAction, executeAction, queueApprovedAction, getActionAgentId, type PendingAction } from '../../services/actions';
 
 interface SettingsItem {
   label: string;
@@ -38,7 +38,7 @@ export const SettingsPage: React.FC = () => {
   const [showThemeDialog, setShowThemeDialog] = useState(false);
   const [showLanguageDialog, setShowLanguageDialog] = useState(false);
   const [showFontSizeDialog, setShowFontSizeDialog] = useState(false);
-  const [pendingActions, setPendingActions] = useState<any[]>([]);
+  const [pendingActions, setPendingActions] = useState<PendingAction[]>([]);
   const [pendingLoading, setPendingLoading] = useState(false);
 
   useEffect(() => {
@@ -189,6 +189,16 @@ export const SettingsPage: React.FC = () => {
                   >
                     <div>
                       <p className="text-sm font-medium text-slate-200">{action.action_type}</p>
+                      {action.action_type === 'gmail.send' ? (
+                        <p className="text-xs text-slate-400 mt-1">
+                          To: {String(action.params?.to || 'Unknown')} | Subject: {String(action.params?.subject || 'No subject')}
+                        </p>
+                      ) : null}
+                      {action.action_type === 'calendar.create' ? (
+                        <p className="text-xs text-slate-400 mt-1">
+                          Event: {String(action.params?.summary || 'Untitled event')}
+                        </p>
+                      ) : null}
                       <p className="text-xs text-slate-500 mt-0.5">
                         {action.created_at}
                       </p>
@@ -196,18 +206,31 @@ export const SettingsPage: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={async () => {
+                          const agentId = getActionAgentId(action);
                           const res = await approveAction(action.id);
-                          if (res.success) {
-                            setPendingActions((prev) => prev.filter((a) => a.id !== action.id));
-                            toast.success('Action approved');
-                          } else {
+                          if (!res.success) {
                             toast.error(res.error || 'Failed to approve');
+                            return;
                           }
+
+                          if (agentId) {
+                            const queueRes = await queueApprovedAction(action.id, agentId);
+                            if (!queueRes.success) {
+                              toast.error(queueRes.error || 'Approved, but failed to queue job');
+                              return;
+                            }
+                            setPendingActions((prev) => prev.filter((a) => a.id !== action.id));
+                            toast.success('Action approved and queued');
+                            return;
+                          }
+
+                          setPendingActions((prev) => prev.filter((a) => a.id !== action.id));
+                          toast.success('Action approved');
                         }}
                         className="px-3 py-1.5 text-xs rounded-lg bg-emerald-600 text-emerald-50 hover:bg-emerald-500"
                       >
                         <CheckCircle2 size={14} className="inline-block mr-1" />
-                        Approve
+                        {getActionAgentId(action) ? 'Approve & Queue' : 'Approve'}
                       </button>
                       <button
                         onClick={async () => {

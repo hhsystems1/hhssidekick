@@ -1,4 +1,13 @@
 import { supabase } from '../lib/supabaseClient';
+import { enqueueAgentRun } from './agents/runner';
+
+export interface PendingAction {
+  id: string;
+  action_type: string;
+  params: Record<string, unknown>;
+  status: string;
+  created_at: string;
+}
 
 export async function listPendingActions() {
   const { data, error } = await supabase
@@ -11,7 +20,7 @@ export async function listPendingActions() {
     return { actions: [], error: error.message } as const;
   }
 
-  return { actions: data || [], error: null } as const;
+  return { actions: (data || []) as PendingAction[], error: null } as const;
 }
 
 export async function approveAction(actionId: string) {
@@ -51,6 +60,23 @@ export async function requestAction(actionType: string, params: Record<string, u
   }
 
   return { success: true, action: data.action } as const;
+}
+
+export function getActionAgentId(action: { params?: Record<string, unknown> | null }) {
+  const agentId = action.params?._sidekick_agent_id;
+  return typeof agentId === 'string' && agentId ? agentId : null;
+}
+
+export async function queueApprovedAction(actionId: string, agentId: string) {
+  const res = await enqueueAgentRun(agentId, {
+    action_id: actionId,
+  });
+
+  if (!res.success) {
+    return { success: false, error: res.error } as const;
+  }
+
+  return { success: true, job: res.job } as const;
 }
 
 export async function executeAction(actionId: string) {

@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { useAgents } from '../hooks/useDatabase';
 import { DeployAgentDialog } from '../components/DeployAgentDialog';
 import { enqueueAgentRun } from '../services/agents/runner';
+import { requestAction } from '../services/actions';
 
 const JOB_ACTIONS = [
   {
@@ -287,7 +288,7 @@ export const AgentsPage: React.FC = () => {
           <div className="w-full max-w-2xl rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
             <h3 className="text-lg font-semibold text-slate-100">Queue Agent Job</h3>
             <p className="mt-2 text-sm text-slate-400">
-              Choose a capability action and provide JSON params. `code.exec` jobs require the local worker.
+              Choose a capability action and provide JSON params. `gmail.send` and `calendar.create` now go through approval first. `code.exec` jobs require the local worker.
             </p>
 
             <div className="mt-4 space-y-4">
@@ -340,15 +341,22 @@ export const AgentsPage: React.FC = () => {
                   }
 
                   setRunningAgentId(jobComposerAgentId);
-                  const res = await enqueueAgentRun(jobComposerAgentId, {
-                    capability_action: jobAction,
-                    params: parsedParams,
-                  });
+                  const res = jobAction === 'gmail.send' || jobAction === 'calendar.create'
+                    ? await requestAction(jobAction, {
+                        ...parsedParams,
+                        _sidekick_agent_id: jobComposerAgentId,
+                      })
+                    : await enqueueAgentRun(jobComposerAgentId, {
+                        capability_action: jobAction,
+                        params: parsedParams,
+                      });
                   setRunningAgentId(null);
 
                   if (res.success) {
                     toast.success(
-                      jobAction.startsWith('code.')
+                      jobAction === 'gmail.send' || jobAction === 'calendar.create'
+                        ? 'Action submitted for approval. Approve it in Settings to queue the agent run.'
+                        : jobAction.startsWith('code.')
                         ? 'Local code job queued. Start the local worker to process it.'
                         : 'Agent job queued'
                     );

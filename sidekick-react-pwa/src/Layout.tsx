@@ -88,7 +88,7 @@ export const Layout: React.FC = () => {
   return (
     <div className="h-screen w-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
       {/* Main Content */}
-      <div className="h-full flex flex-col pb-16">
+      <div className={`h-full flex flex-col ${user ? 'pb-16' : ''}`}>
         {/* Header */}
         <div className="h-14 border-b border-slate-800 flex items-center justify-between px-4 bg-slate-950/60 z-30 shrink-0">
           <div className="flex items-center gap-2">
@@ -146,10 +146,11 @@ export const Layout: React.FC = () => {
         </footer>
       </div>
 
-      {/* Navbar */}
-      <div>
-        <Navbar onNavigate={handleNavigate} onAction={handleAction} />
-      </div>
+      {user ? (
+        <div>
+          <Navbar onNavigate={handleNavigate} onAction={handleAction} />
+        </div>
+      ) : null}
 
       {/* Auth Modal */}
       <AuthModal

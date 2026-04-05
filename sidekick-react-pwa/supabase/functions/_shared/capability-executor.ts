@@ -7,6 +7,12 @@ const GOOGLE_REQUIRED_SCOPES: Record<string, string[]> = {
   'calendar.create': ['https://www.googleapis.com/auth/calendar.events'],
 };
 
+function sanitizeCapabilityParams(params: Record<string, unknown>) {
+  return Object.fromEntries(
+    Object.entries(params).filter(([key]) => !key.startsWith('_sidekick_'))
+  );
+}
+
 async function getGoogleAccessToken(userId: string) {
   const admin = getAdminClient();
   const encryptionKey = Deno.env.get('CONNECTOR_ENCRYPTION_KEY');
@@ -286,18 +292,20 @@ export async function executeCapabilityAction(
   actionType: string,
   params: Record<string, unknown> = {}
 ) {
+  const sanitizedParams = sanitizeCapabilityParams(params);
+
   if (actionType.startsWith('github.')) {
-    const result = await executeGitHubAction(userId, actionType, params);
+    const result = await executeGitHubAction(userId, actionType, sanitizedParams);
     return { provider: 'github', actionType, result };
   }
 
   if (actionType.startsWith('rivryn.')) {
-    const result = await executeRivrynAction(userId, actionType, params);
+    const result = await executeRivrynAction(userId, actionType, sanitizedParams);
     return { provider: 'rivryn', actionType, result };
   }
 
   if (actionType === 'gmail.send' || actionType === 'calendar.create') {
-    const result = await executeGoogleAction(userId, actionType, params);
+    const result = await executeGoogleAction(userId, actionType, sanitizedParams);
     return { provider: 'google', actionType, result };
   }
 

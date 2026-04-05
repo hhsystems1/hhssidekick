@@ -566,8 +566,9 @@ export function ChatPage() {
               </button>
               <button
                 onClick={async () => {
+                  let res;
                   if (actionType === 'gmail.send') {
-                    await requestAction('gmail.send', {
+                    res = await requestAction('gmail.send', {
                       to: actionForm.to,
                       subject: actionForm.subject,
                       body: actionForm.body,
@@ -575,13 +576,27 @@ export function ChatPage() {
                   } else {
                     const start = `${actionForm.date}T${actionForm.startTime}:00`;
                     const end = `${actionForm.date}T${actionForm.endTime}:00`;
-                    await requestAction('calendar.create', {
+                    res = await requestAction('calendar.create', {
                       summary: actionForm.title,
                       start: { dateTime: start, timeZone: actionForm.timeZone },
                       end: { dateTime: end, timeZone: actionForm.timeZone },
                     });
                   }
-                  setActionComposerOpen(false);
+                  if (res?.success) {
+                    setActionComposerOpen(false);
+                  }
+                  if (res?.success) {
+                    setActionForm({
+                      to: '',
+                      subject: '',
+                      body: '',
+                      title: '',
+                      date: '',
+                      startTime: '',
+                      endTime: '',
+                      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+                    });
+                  }
                 }}
                 className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm text-emerald-50 hover:bg-emerald-500"
               >
