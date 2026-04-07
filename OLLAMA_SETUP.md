@@ -162,7 +162,39 @@ curl http://localhost:11434/api/generate -d '{
 
 ## SIDEKICK CONFIGURATION
 
-### Step 5: Update Environment Variables
+### Step 5: Choose Your Setup Style
+
+There are now two valid ways to use Ollama with SideKick:
+
+1. developer-style environment config
+2. consumer-style in-app account config
+
+For this project, the preferred consumer path is the in-app config page, not manual `.env` editing.
+
+### Recommended: In-App Account Config
+
+Open SideKick and go to `LLM Config`.
+
+Then:
+
+1. choose `Use this device` if Ollama is on the same machine as the browser
+2. choose `Use remote Ollama` if Ollama is running on your PC or another machine
+3. set the host URL
+4. click `Detect models`
+5. pick a model
+6. save to account
+
+This stores:
+
+- preferred provider
+- Ollama host
+- default Ollama model
+
+in `profiles.llm_settings`.
+
+### Optional: Environment Variables
+
+This still works, but should mainly be treated as a fallback or developer setup.
 
 Edit `.env` file:
 
@@ -196,6 +228,145 @@ VITE_ANTHROPIC_API_KEY=
 VITE_SUPABASE_URL=https://zefcnmjqebpcnprhbmkc.supabase.co
 VITE_SUPABASE_ANON_KEY=sb_secret_N4wyJJZFwtIwjigVwel0SQ_b6h15oMn
 ```
+
+Important:
+
+- `VITE_OLLAMA_URL` is no longer required for consumers if they save Ollama host in the app
+- account-level settings override the default env URL
+
+---
+
+## TAILSCALE SETUP: OLLAMA ON YOUR PC
+
+This section is important for the hosted SideKick app at `https://skhhs.netlify.app`.
+
+If Ollama runs on your PC and you want to use it from your phone or another machine over Tailscale, you must configure both network access and CORS correctly.
+
+### What breaks if you do not do this
+
+If you point the hosted app at `http://localhost:11434`, it will fail unless the browser is on the same machine as Ollama.
+
+If you point the hosted app at your PC over Tailscale but do not allow the Netlify origin, the browser will show a CORS error like:
+
+```text
+Access to fetch at 'http://YOUR-HOST:11434/api/tags' from origin 'https://skhhs.netlify.app' has been blocked by CORS policy
+```
+
+### Step 5A: Install and sign into Tailscale
+
+Install Tailscale on:
+
+- the PC running Ollama
+- the phone or other device that will use SideKick
+
+Sign into the same tailnet on both.
+
+### Step 5B: Start Ollama so Tailscale devices can reach it
+
+On the PC running Ollama:
+
+```bash
+OLLAMA_HOST=0.0.0.0:11434 OLLAMA_ORIGINS=https://skhhs.netlify.app ollama serve
+```
+
+For local development plus production web app:
+
+```bash
+OLLAMA_HOST=0.0.0.0:11434 OLLAMA_ORIGINS=https://skhhs.netlify.app,http://localhost:5173 ollama serve
+```
+
+What these do:
+
+- `OLLAMA_HOST=0.0.0.0:11434` makes Ollama listen beyond local loopback
+- `OLLAMA_ORIGINS=...` allows browser requests from your hosted SideKick app
+
+### Step 5C: Find your PC Tailscale address
+
+Use either:
+
+- Tailscale IP, such as `100.x.x.x`
+- Tailscale DNS name, if enabled in your tailnet
+
+Example:
+
+```text
+http://100.88.10.24:11434
+```
+
+### Step 5D: Put that address into SideKick
+
+In `LLM Config`, set:
+
+- provider: `Ollama`
+- host URL: your PC Tailscale address
+- model: use `Detect models` or type one manually
+
+Do not use `localhost` unless the browser and Ollama are on the same machine.
+
+### Step 5E: Verify connectivity
+
+From the PC:
+
+```bash
+curl http://127.0.0.1:11434/api/tags
+```
+
+From another Tailscale device, test the PC address if possible:
+
+```bash
+curl http://100.88.10.24:11434/api/tags
+```
+
+If that works but the browser still fails, the problem is almost always `OLLAMA_ORIGINS`.
+
+---
+
+## TROUBLESHOOTING TAILSCALE + NETLIFY + OLLAMA
+
+### Error: CORS policy blocked request
+
+Meaning:
+
+- the browser reached Ollama
+- Ollama did not allow the web origin
+
+Fix:
+
+```bash
+OLLAMA_ORIGINS=https://skhhs.netlify.app ollama serve
+```
+
+Then restart Ollama.
+
+### Error: Failed to fetch
+
+Possible causes:
+
+- wrong host URL
+- Tailscale not connected
+- Ollama not running
+- Ollama not listening on `0.0.0.0`
+- browser blocked before reading response
+
+### Error: Model not found
+
+Fix:
+
+```bash
+ollama pull llama3.2:latest
+```
+
+Or whatever model you selected.
+
+### Error: `localhost` does not work from phone
+
+Meaning:
+
+- your phone is trying to call itself, not your PC
+
+Fix:
+
+- use your PC’s Tailscale IP or DNS name instead of `localhost`
 
 ---
 

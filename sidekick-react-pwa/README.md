@@ -1,73 +1,49 @@
-# React + TypeScript + Vite
+# Sidekick React PWA
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This directory contains the main SideKick web app.
 
-Currently, two official plugins are available:
+For the full project guide, start with the root README:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- [README.md](/Users/turtleclaw/Desktop/hhssidekick/README.md)
 
-## React Compiler
+Most important docs:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- [OLLAMA_SETUP.md](/Users/turtleclaw/Desktop/hhssidekick/OLLAMA_SETUP.md)
+- [AGENT_CAPABILITY_ROADMAP.md](/Users/turtleclaw/Desktop/hhssidekick/AGENT_CAPABILITY_ROADMAP.md)
 
-## Expanding the ESLint configuration
+## App Quick Start
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cd sidekick-react-pwa
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Build
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```bash
+npm run build
+```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Key Areas
+
+- frontend routes: `src/pages/`
+- chat and agent UX: `src/ChatPage.tsx`, `src/agents/`
+- LLM config: `src/pages/LLMConfigPage.tsx`
+- integrations: `src/pages/IntegrationsPage.tsx`
+- approval flow: `src/services/actions.ts`, `src/pages/settings/SettingsPage.tsx`
+- runner and capabilities: `supabase/functions/`
+
+## Ollama Note
+
+If the app is hosted on Netlify and Ollama runs on another machine, browser access requires:
+
+- reachable host, such as a Tailscale IP or DNS name
+- `OLLAMA_HOST` configured so Ollama listens externally
+- `OLLAMA_ORIGINS` configured to allow the hosted web origin
+
+Example:
+
+```bash
+OLLAMA_HOST=0.0.0.0:11434 OLLAMA_ORIGINS=https://skhhs.netlify.app ollama serve
 ```
