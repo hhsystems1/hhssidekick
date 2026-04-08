@@ -77,34 +77,30 @@ export const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="app-backdrop absolute inset-0 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* Dialog */}
-      <div className="relative w-full max-w-md mx-4 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-800">
+      <div className="bg-app-panel border-app relative mx-4 w-full max-w-md overflow-hidden rounded-2xl border shadow-2xl">
+        <div className="border-app flex items-center justify-between border-b p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-emerald-900/50 flex items-center justify-center">
               <Shield size={20} className="text-emerald-400" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-slate-100">Change Password</h3>
-              <p className="text-xs text-slate-500">Update your password</p>
+              <h3 className="text-app text-lg font-semibold">Change Password</h3>
+              <p className="text-app-soft text-xs">Update your password</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-800 rounded-full transition-colors"
+            className="hover-bg-app rounded-full p-2 transition-colors"
           >
-            <X size={20} className="text-slate-400" />
+            <X size={20} className="text-app-muted" />
           </button>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           {error && (
             <div className="flex items-center gap-2 p-3 bg-red-950/30 border border-red-900/50 rounded-lg text-red-400 text-sm">
@@ -115,22 +111,22 @@ export const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({
 
           {/* New Password */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+            <label className="text-app-muted mb-1.5 block text-sm font-medium">
               New Password
             </label>
             <div className="relative">
-              <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+              <Lock size={18} className="text-app-soft absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type={showNew ? 'text' : 'password'}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-10 pr-12 py-3 bg-slate-950 border border-slate-800 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition-colors"
+                className="app-input w-full rounded-lg border py-3 pl-10 pr-12 transition-colors focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600"
               />
               <button
                 type="button"
                 onClick={() => setShowNew(!showNew)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                className="text-app-soft hover:text-app absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
               >
                 {showNew ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -141,13 +137,13 @@ export const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({
                   {[1, 2, 3, 4].map((level) => (
                     <div
                       key={level}
-                      className={`h-1 flex-1 rounded-full transition-colors ${
-                        level <= passwordStrength.strength ? passwordStrength.color : 'bg-slate-800'
+                    className={`h-1 flex-1 rounded-full transition-colors ${
+                        level <= passwordStrength.strength ? passwordStrength.color : 'bg-app-muted'
                       }`}
                     />
                   ))}
                 </div>
-                <p className="text-xs text-slate-500">
+                <p className="text-app-soft text-xs">
                   Password strength: <span className={passwordStrength.color.replace('bg-', 'text-')}>{passwordStrength.label}</span>
                 </p>
               </div>
@@ -156,22 +152,22 @@ export const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({
 
           {/* Confirm Password */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+            <label className="text-app-muted mb-1.5 block text-sm font-medium">
               Confirm New Password
             </label>
             <div className="relative">
-              <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+              <Lock size={18} className="text-app-soft absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type={showConfirm ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-10 pr-12 py-3 bg-slate-950 border border-slate-800 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition-colors"
+                className="app-input w-full rounded-lg border py-3 pl-10 pr-12 transition-colors focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600"
               />
               <button
                 type="button"
                 onClick={() => setShowConfirm(!showConfirm)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                className="text-app-soft hover:text-app absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
               >
                 {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -194,29 +190,28 @@ export const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({
           </div>
 
           {/* Password requirements */}
-          <div className="bg-slate-950/50 rounded-lg p-3 space-y-1">
-            <p className="text-xs text-slate-500 font-medium mb-2">Password requirements:</p>
-            <div className={`flex items-center gap-2 text-xs ${newPassword.length >= 8 ? 'text-emerald-400' : 'text-slate-500'}`}>
+          <div className="bg-app-panel-soft rounded-lg p-3 space-y-1">
+            <p className="text-app-soft mb-2 text-xs font-medium">Password requirements:</p>
+            <div className={`flex items-center gap-2 text-xs ${newPassword.length >= 8 ? 'text-emerald-400' : 'text-app-soft'}`}>
               <span>{newPassword.length >= 8 ? '●' : '○'}</span>
               <span>At least 8 characters</span>
             </div>
-            <div className={`flex items-center gap-2 text-xs ${/[A-Z]/.test(newPassword) ? 'text-emerald-400' : 'text-slate-500'}`}>
+            <div className={`flex items-center gap-2 text-xs ${/[A-Z]/.test(newPassword) ? 'text-emerald-400' : 'text-app-soft'}`}>
               <span>{/[A-Z]/.test(newPassword) ? '●' : '○'}</span>
               <span>One uppercase letter</span>
             </div>
-            <div className={`flex items-center gap-2 text-xs ${/[0-9]/.test(newPassword) ? 'text-emerald-400' : 'text-slate-500'}`}>
+            <div className={`flex items-center gap-2 text-xs ${/[0-9]/.test(newPassword) ? 'text-emerald-400' : 'text-app-soft'}`}>
               <span>{/[0-9]/.test(newPassword) ? '●' : '○'}</span>
               <span>One number</span>
             </div>
           </div>
         </form>
 
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-4 border-t border-slate-800">
+        <div className="border-app flex items-center justify-end gap-3 border-t p-4">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-slate-400 hover:text-slate-200 transition-colors"
+            className="text-app-muted hover:text-app px-4 py-2 transition-colors"
           >
             Cancel
           </button>

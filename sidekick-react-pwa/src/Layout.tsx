@@ -6,13 +6,12 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { BRANDING } from './config/branding';
-import { AuthModal } from './components/AuthModal';
 import { Navbar } from './components/Navbar';
 import { useAuth } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { buildAuthRedirect } from './utils/auth-routing';
 
 export const Layout: React.FC = () => {
-  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [confirmSignOutOpen, setConfirmSignOutOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -86,11 +85,9 @@ export const Layout: React.FC = () => {
   };
 
   return (
-    <div className="h-screen w-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
-      {/* Main Content */}
+    <div className="bg-app text-app h-screen w-screen">
       <div className={`h-full flex flex-col ${user ? 'pb-16' : ''}`}>
-        {/* Header */}
-        <div className="h-14 border-b border-slate-800 flex items-center justify-between px-4 bg-slate-950/60 z-30 shrink-0">
+        <div className="bg-app-panel-soft border-app h-14 shrink-0 border-b flex items-center justify-between px-4 z-30 backdrop-blur-xl">
           <div className="flex items-center gap-2">
             <img
               src="/Rivrynsk.png"
@@ -98,20 +95,26 @@ export const Layout: React.FC = () => {
               className="h-12 w-auto"
             />
           </div>
-          <h2 className="text-sm font-medium text-slate-400">
+          <h2 className="text-app-muted text-sm font-medium">
             {getPageTitle()}
           </h2>
           <div className="flex items-center gap-2">
             {user ? (
               <button
                 onClick={() => setConfirmSignOutOpen(true)}
-                className="px-3 py-1.5 border border-slate-700 rounded-lg text-xs text-slate-300 hover:border-slate-500 hover:text-slate-100 transition-colors"
+                className="border-app text-app-muted hover-bg-app hover:text-app rounded-lg border px-3 py-1.5 text-xs transition-colors"
               >
                 Sign Out
               </button>
             ) : (
               <button
-                onClick={() => setAuthModalOpen(true)}
+                onClick={() =>
+                  navigate(
+                    buildAuthRedirect(`${location.pathname}${location.search}`, {
+                      context: 'Sign in to continue into RivRyn SideKick.',
+                    })
+                  )
+                }
                 className="px-3 py-1.5 bg-emerald-700 text-emerald-50 rounded-lg font-medium hover:bg-emerald-600 transition-colors text-xs"
               >
                 Sign In
@@ -120,15 +123,13 @@ export const Layout: React.FC = () => {
           </div>
         </div>
 
-        {/* Page Content */}
         <div className="flex-1 overflow-y-auto">
           <ProtectedRoute>
             <Outlet />
           </ProtectedRoute>
         </div>
 
-        {/* Footer */}
-        <footer className="border-t border-slate-800 bg-slate-950/60 px-4 py-3 text-xs text-slate-400 shrink-0">
+        <footer className="bg-app-panel-soft border-app text-app-muted shrink-0 border-t px-4 py-3 text-xs backdrop-blur-xl">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
             <div className="flex items-center gap-4">
               <span>© 2024 {BRANDING.appName}</span>
@@ -136,11 +137,11 @@ export const Layout: React.FC = () => {
               <span>Powered by AI</span>
             </div>
             <div className="flex items-center gap-3">
-              <a href="#" className="hover:text-slate-200 transition-colors">Privacy</a>
+              <a href="#" className="hover:text-app transition-colors">Privacy</a>
               <span>•</span>
-              <a href="#" className="hover:text-slate-200 transition-colors">Terms</a>
+              <a href="#" className="hover:text-app transition-colors">Terms</a>
               <span>•</span>
-              <a href="#" className="hover:text-slate-200 transition-colors">Support</a>
+              <a href="#" className="hover:text-app transition-colors">Support</a>
             </div>
           </div>
         </footer>
@@ -152,22 +153,15 @@ export const Layout: React.FC = () => {
         </div>
       ) : null}
 
-      {/* Auth Modal */}
-      <AuthModal
-        isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-      />
-
-      {/* Sign Out पुष्टि */}
       {confirmSignOutOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
-            <h3 className="text-lg font-semibold text-slate-100">Sign out?</h3>
-            <p className="mt-2 text-sm text-slate-400">Are you sure you want to sign out of RivRyn SideKick?</p>
+        <div className="app-backdrop fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="bg-app-panel border-app w-full max-w-sm rounded-2xl border p-6 shadow-2xl">
+            <h3 className="text-app text-lg font-semibold">Sign out?</h3>
+            <p className="text-app-muted mt-2 text-sm">Are you sure you want to sign out of RivRyn SideKick?</p>
             <div className="mt-6 flex items-center gap-3">
               <button
                 onClick={() => setConfirmSignOutOpen(false)}
-                className="flex-1 rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500"
+                className="border-app text-app-muted hover-bg-app flex-1 rounded-lg border px-4 py-2 text-sm"
               >
                 Cancel
               </button>

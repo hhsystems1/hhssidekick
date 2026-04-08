@@ -112,13 +112,13 @@ export const CalendarEventDialog: React.FC<CalendarEventDialogProps> = ({ event,
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-900 rounded-xl border border-slate-800 max-w-md w-full p-6">
+    <div className="app-backdrop fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="bg-app-panel border-app w-full max-w-md rounded-xl border p-6">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-semibold text-slate-100">Event Details</h3>
+          <h3 className="text-app text-xl font-semibold">Event Details</h3>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-slate-800 rounded transition-colors text-slate-400 hover:text-slate-100"
+            className="text-app-muted hover-bg-app hover:text-app rounded p-1 transition-colors"
             aria-label="Close"
           >
             <X size={20} />
@@ -127,7 +127,7 @@ export const CalendarEventDialog: React.FC<CalendarEventDialogProps> = ({ event,
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-slate-300 mb-2">
+            <label htmlFor="title" className="text-app-muted mb-2 block text-sm font-medium">
               Event Title
             </label>
             <input
@@ -136,7 +136,7 @@ export const CalendarEventDialog: React.FC<CalendarEventDialogProps> = ({ event,
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g., Team Meeting"
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="app-input w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               autoFocus
               required
             />
@@ -144,7 +144,7 @@ export const CalendarEventDialog: React.FC<CalendarEventDialogProps> = ({ event,
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="startTime" className="block text-sm font-medium text-slate-300 mb-2">
+              <label htmlFor="startTime" className="text-app-muted mb-2 block text-sm font-medium">
                 Start Time
               </label>
               <input
@@ -152,13 +152,13 @@ export const CalendarEventDialog: React.FC<CalendarEventDialogProps> = ({ event,
                 type="datetime-local"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="app-input w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="endTime" className="block text-sm font-medium text-slate-300 mb-2">
+              <label htmlFor="endTime" className="text-app-muted mb-2 block text-sm font-medium">
                 End Time (Optional)
               </label>
               <input
@@ -166,13 +166,13 @@ export const CalendarEventDialog: React.FC<CalendarEventDialogProps> = ({ event,
                 type="datetime-local"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
-                className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="app-input w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
           </div>
 
           <div>
-            <label htmlFor="location" className="block text-sm font-medium text-slate-300 mb-2">
+            <label htmlFor="location" className="text-app-muted mb-2 block text-sm font-medium">
               Location (Optional)
             </label>
             <input
@@ -181,12 +181,12 @@ export const CalendarEventDialog: React.FC<CalendarEventDialogProps> = ({ event,
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder="e.g., Conference Room A"
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="app-input w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 
           <div>
-            <label htmlFor="attendees" className="block text-sm font-medium text-slate-300 mb-2">
+            <label htmlFor="attendees" className="text-app-muted mb-2 block text-sm font-medium">
               Attendees (comma-separated)
             </label>
             <input
@@ -195,7 +195,7 @@ export const CalendarEventDialog: React.FC<CalendarEventDialogProps> = ({ event,
               value={attendees}
               onChange={(e) => setAttendees(e.target.value)}
               placeholder="e.g., John, Sarah, Mike"
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="app-input w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 
@@ -213,7 +213,7 @@ export const CalendarEventDialog: React.FC<CalendarEventDialogProps> = ({ event,
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 transition-colors"
+              className="bg-app-muted text-app-muted rounded-lg px-4 py-2 transition-colors hover:bg-slate-700"
             >
               Cancel
             </button>

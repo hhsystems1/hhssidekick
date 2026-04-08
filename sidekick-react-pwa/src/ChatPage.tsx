@@ -133,41 +133,40 @@ export function ChatPage() {
 
   return (
     <>
-      <div className="h-full grid grid-cols-1 md:grid-cols-[280px,1fr] overflow-hidden">
-      {/* Desktop sidebar */}
-      <aside className="hidden md:flex flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 overflow-hidden">
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 px-3 py-2 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+      <div className="h-full grid grid-cols-1 overflow-hidden md:grid-cols-[280px,1fr]">
+      <aside className="bg-app-panel-soft border-app hidden overflow-hidden border-r md:flex md:flex-col">
+        <div className="bg-app-panel border-app sticky top-0 z-10 flex items-center justify-between border-b px-3 py-2 backdrop-blur">
           <h2 className="text-sm font-semibold">Chats</h2>
         </div>
         <div className="flex-1 overflow-y-auto relative">
           {conversations.map((conv) => (
             <div
               key={conv.id}
-              className={`flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800 ${activeChat === conv.id ? 'bg-slate-100 dark:bg-slate-800/70' : ''}`}
+              className={`flex w-full items-center gap-2 px-3 py-2 text-left ${activeChat === conv.id ? 'bg-app-muted' : 'hover-bg-app'}`}
             >
               <button
                 onClick={() => setActiveChat(conv.id)}
                 className="flex w-full items-center gap-2 text-left"
               >
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-200 text-base dark:bg-slate-700">💬</div>
+                <div className="bg-app-muted flex h-9 w-9 items-center justify-center rounded-full text-base">💬</div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <div className="truncate text-sm font-medium">{conv.title}</div>
                     <span className="h-2 w-2 rounded-full bg-emerald-400" />
                   </div>
-                  <div className="truncate text-xs text-slate-500 dark:text-slate-400">{getConversationLastMessage(conv.id)}</div>
+                  <div className="text-app-soft truncate text-xs">{getConversationLastMessage(conv.id)}</div>
                 </div>
               </button>
               <button
                 onClick={() => setConfirmDeleteChat({ id: conv.id, title: conv.title ?? 'Untitled' })}
-                className="p-2 text-slate-400 hover:text-red-400"
+                className="text-app-muted p-2 hover:text-red-400"
                 aria-label="Delete chat"
               >
                 <Trash2 size={16} />
               </button>
             </div>
           ))}
-          <div className="sticky bottom-0 z-10 bg-white/90 backdrop-blur dark:bg-slate-900/80 p-3 border-t border-slate-200 dark:border-slate-800">
+          <div className="bg-app-panel border-app sticky bottom-0 z-10 border-t p-3 backdrop-blur">
             <button
               onClick={handleNewChat}
               className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 text-emerald-50 py-2.5 text-sm font-medium hover:bg-emerald-500"
@@ -179,19 +178,18 @@ export function ChatPage() {
         </div>
       </aside>
 
-      {/* Mobile chat list */}
-      <div className={`md:hidden ${showChatList ? 'flex' : 'hidden'} flex-col h-full bg-white dark:bg-slate-900/60`}>
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 px-3 py-2 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+      <div className={`bg-app-panel-soft h-full flex-col md:hidden ${showChatList ? 'flex' : 'hidden'}`}>
+        <div className="bg-app-panel border-app sticky top-0 z-10 flex items-center justify-between border-b px-3 py-2 backdrop-blur">
           <h2 className="text-sm font-semibold">Chats</h2>
         </div>
         <div className="flex-1 overflow-y-auto relative">
           {conversations.length === 0 ? (
-            <div className="p-6 text-center text-slate-500">
-              <p className="text-sm font-medium">No chats yet</p>
+            <div className="text-app-soft p-6 text-center">
+              <p className="text-app text-sm font-medium">No chats yet</p>
               <p className="text-xs mt-1">Create a new conversation to start.</p>
               <button
                 onClick={handleNewChat}
-                className="mt-4 inline-flex items-center justify-center rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                className="border-app text-app-muted hover-bg-app mt-4 inline-flex items-center justify-center rounded-md border px-3 py-2 text-sm"
               >
                 New chat
               </button>
@@ -200,24 +198,24 @@ export function ChatPage() {
             conversations.map((conv) => (
               <div
                 key={conv.id}
-                className={`flex w-full items-center gap-2 px-3 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800 ${activeChat === conv.id ? 'bg-slate-100 dark:bg-slate-800/70' : ''}`}
+                className={`flex w-full items-center gap-2 px-3 py-3 text-left ${activeChat === conv.id ? 'bg-app-muted' : 'hover-bg-app'}`}
               >
                 <button
                   onClick={() => setActiveChat(conv.id)}
                   className="flex w-full items-center gap-2 text-left"
                 >
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-200 text-base dark:bg-slate-700">💬</div>
+                  <div className="bg-app-muted flex h-9 w-9 items-center justify-center rounded-full text-base">💬</div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <div className="truncate text-sm font-medium">{conv.title}</div>
                       <span className="h-2 w-2 rounded-full bg-emerald-400" />
                     </div>
-                    <div className="truncate text-xs text-slate-500 dark:text-slate-400">{getConversationLastMessage(conv.id)}</div>
+                    <div className="text-app-soft truncate text-xs">{getConversationLastMessage(conv.id)}</div>
                   </div>
                 </button>
                 <button
                 onClick={() => setConfirmDeleteChat({ id: conv.id, title: conv.title ?? 'Untitled' })}
-                  className="p-2 text-slate-400 hover:text-red-400"
+                  className="text-app-muted p-2 hover:text-red-400"
                   aria-label="Delete chat"
                 >
                   <Trash2 size={16} />
@@ -225,7 +223,7 @@ export function ChatPage() {
               </div>
             ))
           )}
-          <div className="sticky bottom-0 z-10 bg-white/90 backdrop-blur dark:bg-slate-900/80 p-3 border-t border-slate-200 dark:border-slate-800">
+          <div className="bg-app-panel border-app sticky bottom-0 z-10 border-t p-3 backdrop-blur">
             <button
               onClick={handleNewChat}
               className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 text-emerald-50 py-2.5 text-sm font-medium hover:bg-emerald-500"
@@ -240,11 +238,11 @@ export function ChatPage() {
       <main className={`flex h-full flex-col ${showChatList ? 'hidden md:flex' : 'flex'}`}>
         {activeChat ? (
           <>
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white/90 px-3 py-2 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+            <div className="bg-app-panel border-app sticky top-0 z-10 flex items-center justify-between border-b px-3 py-2 backdrop-blur">
               <div className="flex items-center gap-2 text-sm font-medium">
                 <button
                   onClick={() => setShowChatList(true)}
-                  className="md:hidden inline-flex h-6 w-6 items-center justify-center rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                  className="border-app text-app-muted hover-bg-app inline-flex h-6 w-6 items-center justify-center rounded-md border md:hidden"
                   aria-label="Back to chats"
                 >
                   <span className="material-icons text-[18px]">arrow_back</span>
@@ -275,7 +273,7 @@ export function ChatPage() {
               </div>
             )}
 
-            <div className="flex-1 space-y-2 overflow-y-auto bg-slate-50 p-3 dark:bg-slate-900" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <div className="bg-app flex-1 space-y-2 overflow-y-auto p-3" style={{ WebkitOverflowScrolling: 'touch' }}>
               {combinedMessages.map((msg) => (
                 <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                   {(() => {
@@ -401,7 +399,7 @@ export function ChatPage() {
                   setIsSending(false);
                 }
               }}
-              className="flex items-center gap-2 border-t border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-900/60"
+              className="bg-app-panel border-app flex items-center gap-2 border-t p-2"
             >
               <input
                 type="text"
@@ -409,7 +407,7 @@ export function ChatPage() {
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder={isSending ? 'Sending...' : 'Type a message...'}
                 disabled={isSending}
-                className="flex-1 rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-slate-400 focus:border-emerald-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                className="app-input flex-1 rounded-2xl border px-3 py-2 text-sm outline-none placeholder:text-slate-400 focus:border-emerald-400"
               />
               <button
                 type="submit"
@@ -423,9 +421,9 @@ export function ChatPage() {
           </>
         ) : (
           <div className="flex h-full items-center justify-center">
-            <div className="text-center text-slate-500">
-              <span className="material-icons text-4xl text-slate-400">chat</span>
-              <h2 className="mt-1 text-sm font-medium">Select a chat to start messaging</h2>
+            <div className="text-app-soft text-center">
+              <span className="text-app-muted material-icons text-4xl">chat</span>
+              <h2 className="text-app mt-1 text-sm font-medium">Select a chat to start messaging</h2>
               <p className="text-xs">Or create a new conversation</p>
             </div>
           </div>
@@ -434,16 +432,16 @@ export function ChatPage() {
     </div>
 
       {confirmDeleteChat && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
-            <h3 className="text-lg font-semibold text-slate-100">Delete chat?</h3>
-            <p className="mt-2 text-sm text-slate-400">
+        <div className="app-backdrop fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="bg-app-panel border-app w-full max-w-sm rounded-2xl border p-6 shadow-2xl">
+            <h3 className="text-app text-lg font-semibold">Delete chat?</h3>
+            <p className="text-app-muted mt-2 text-sm">
               This will permanently remove “{confirmDeleteChat.title}”.
             </p>
             <div className="mt-6 flex items-center gap-3">
               <button
                 onClick={() => setConfirmDeleteChat(null)}
-                className="flex-1 rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500"
+                className="border-app text-app-muted hover-bg-app flex-1 rounded-lg border px-4 py-2 text-sm"
               >
                 Cancel
               </button>
@@ -464,13 +462,13 @@ export function ChatPage() {
       )}
 
       {actionComposerOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-lg rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+        <div className="app-backdrop fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="bg-app-panel border-app w-full max-w-lg rounded-2xl border p-6 shadow-2xl">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-slate-100">New Action</h3>
+              <h3 className="text-app text-lg font-semibold">New Action</h3>
               <button
                 onClick={() => setActionComposerOpen(false)}
-                className="text-slate-400 hover:text-slate-100"
+                className="text-app-muted hover:text-app"
               >
                 ✕
               </button>
@@ -482,7 +480,7 @@ export function ChatPage() {
                 className={`flex-1 px-3 py-2 rounded-lg text-sm ${
                   actionType === 'gmail.send'
                     ? 'bg-emerald-600 text-emerald-50'
-                    : 'bg-slate-800 text-slate-300'
+                    : 'bg-app-muted text-app-muted'
                 }`}
               >
                 Email
@@ -492,7 +490,7 @@ export function ChatPage() {
                 className={`flex-1 px-3 py-2 rounded-lg text-sm ${
                   actionType === 'calendar.create'
                     ? 'bg-emerald-600 text-emerald-50'
-                    : 'bg-slate-800 text-slate-300'
+                    : 'bg-app-muted text-app-muted'
                 }`}
               >
                 Calendar
@@ -505,19 +503,19 @@ export function ChatPage() {
                   value={actionForm.to}
                   onChange={(e) => setActionForm({ ...actionForm, to: e.target.value })}
                   placeholder="To"
-                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+                  className="app-input w-full rounded-lg border px-3 py-2 text-sm"
                 />
                 <input
                   value={actionForm.subject}
                   onChange={(e) => setActionForm({ ...actionForm, subject: e.target.value })}
                   placeholder="Subject"
-                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+                  className="app-input w-full rounded-lg border px-3 py-2 text-sm"
                 />
                 <textarea
                   value={actionForm.body}
                   onChange={(e) => setActionForm({ ...actionForm, body: e.target.value })}
                   placeholder="Email body"
-                  className="w-full min-h-[120px] rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+                  className="app-input min-h-[120px] w-full rounded-lg border px-3 py-2 text-sm"
                 />
               </div>
             ) : (
@@ -526,33 +524,33 @@ export function ChatPage() {
                   value={actionForm.title}
                   onChange={(e) => setActionForm({ ...actionForm, title: e.target.value })}
                   placeholder="Event title"
-                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+                  className="app-input w-full rounded-lg border px-3 py-2 text-sm"
                 />
                 <input
                   type="date"
                   value={actionForm.date}
                   onChange={(e) => setActionForm({ ...actionForm, date: e.target.value })}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+                  className="app-input w-full rounded-lg border px-3 py-2 text-sm"
                 />
                 <div className="grid grid-cols-2 gap-2">
                   <input
                     type="time"
                     value={actionForm.startTime}
                     onChange={(e) => setActionForm({ ...actionForm, startTime: e.target.value })}
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+                    className="app-input w-full rounded-lg border px-3 py-2 text-sm"
                   />
                   <input
                     type="time"
                     value={actionForm.endTime}
                     onChange={(e) => setActionForm({ ...actionForm, endTime: e.target.value })}
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+                    className="app-input w-full rounded-lg border px-3 py-2 text-sm"
                   />
                 </div>
                 <input
                   value={actionForm.timeZone}
                   onChange={(e) => setActionForm({ ...actionForm, timeZone: e.target.value })}
                   placeholder="Time zone (e.g., America/New_York)"
-                  className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+                  className="app-input w-full rounded-lg border px-3 py-2 text-sm"
                 />
               </div>
             )}
@@ -560,7 +558,7 @@ export function ChatPage() {
             <div className="mt-6 flex items-center gap-3">
               <button
                 onClick={() => setActionComposerOpen(false)}
-                className="flex-1 rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:border-slate-500"
+                className="border-app text-app-muted hover-bg-app flex-1 rounded-lg border px-4 py-2 text-sm"
               >
                 Cancel
               </button>

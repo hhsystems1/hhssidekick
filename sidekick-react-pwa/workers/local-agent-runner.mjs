@@ -32,6 +32,38 @@ function isAllowedCommand(command, args) {
   return args.length > 0 && allowedArgs.includes(args[0]);
 }
 
+function normalizeLocalPayload(payload = {}) {
+  if (payload.params && typeof payload.params === 'object') {
+    return payload;
+  }
+
+  const action = typeof payload.capability_action === 'string' ? payload.capability_action : null;
+  const instruction =
+    typeof payload.capability_instruction === 'string' ? payload.capability_instruction.trim() : '';
+
+  if (action !== 'code.exec' || !instruction) {
+    return payload;
+  }
+
+  const lines = instruction.split('\n');
+  const commandLine = lines[0]?.trim() || '';
+  const cwdLine = lines.find((line) => /^\s*(cwd|directory|path)\s*:/i.test(line));
+  const timeoutLine = lines.find((line) => /^\s*(timeout|timeout_ms)\s*:/i.test(line));
+  const parts = commandLine.match(/(?:[^\s"]+|"[^"]*")+/g) || [];
+  const [command, ...args] = parts.map((part) => part.replace(/^"(.*)"$/, '$1'));
+
+  return {
+    ...payload,
+    params: {
+      command,
+      args,
+      cwd: cwdLine ? cwdLine.replace(/^[^:]+:\s*/, '').trim() : undefined,
+      timeoutMs: timeoutLine ? Number(timeoutLine.replace(/^[^:]+:\s*/, '').trim()) : undefined,
+    },
+    normalized_from_instruction: true,
+  };
+}
+
 async function claimQueuedJobs() {
   const { data, error } = await supabase
     .from('agent_jobs')
@@ -120,12 +152,13 @@ async function handleCodeExec(payload) {
 }
 
 async function processJob(job) {
-  const action = job.payload?.capability_action;
+  const payload = normalizeLocalPayload(job.payload || {});
+  const action = payload.capability_action;
   if (action === 'code.read') {
-    return await handleCodeRead(job.payload);
+    return await handleCodeRead(payload);
   }
   if (action === 'code.exec') {
-    return await handleCodeExec(job.payload);
+    return await handleCodeExec(payload);
   }
   throw new Error(`Unsupported local action: ${action}`);
 }

@@ -4,58 +4,62 @@
  */
 
 import React, { useState } from 'react';
-import { Pause, Plus, Trash2, Zap } from 'lucide-react';
+import { Pause, Play, Plus, Trash2, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAgents } from '../hooks/useDatabase';
 import { DeployAgentDialog } from '../components/DeployAgentDialog';
 import { enqueueAgentRun } from '../services/agents/runner';
 import { requestAction } from '../services/actions';
+import {
+  normalizeCapabilityInstruction,
+  type JobActionType,
+} from '../services/agents/capabilityComposer';
 
 const JOB_ACTIONS = [
   {
     value: 'github.repo.read',
     label: 'GitHub Read Repo',
-    sample: '{\n  "owner": "octocat",\n  "repo": "Hello-World"\n}',
+    sample: 'Read the octocat/Hello-World repo\npath: README.md',
   },
   {
     value: 'github.repo.write',
     label: 'GitHub Write File',
     sample:
-      '{\n  "owner": "octocat",\n  "repo": "Hello-World",\n  "path": "notes.txt",\n  "message": "Update notes",\n  "content": "hello from RivRyn SideKick"\n}',
+      'repo: octocat/Hello-World\npath: notes.txt\nmessage: Update notes\ncontent: hello from RivRyn SideKick',
   },
   {
     value: 'gmail.send',
     label: 'Send Gmail',
     sample:
-      '{\n  "to": "someone@example.com",\n  "subject": "RivRyn SideKick test",\n  "body": "Message body"\n}',
+      'to: someone@example.com\nsubject: RivRyn SideKick test\nbody: Message body',
   },
   {
     value: 'calendar.create',
     label: 'Create Calendar Event',
     sample:
-      '{\n  "summary": "RivRyn SideKick Meeting",\n  "start": { "dateTime": "2026-03-13T10:00:00-07:00" },\n  "end": { "dateTime": "2026-03-13T10:30:00-07:00" },\n  "addMeet": true\n}',
+      'title: RivRyn SideKick Meeting\ndate: 2026-04-09\nstart time: 10:00\nend time: 10:30\ntimezone: America/Denver\nadd meet: yes',
   },
   {
     value: 'rivryn.project.read',
     label: 'Rivryn API Call',
     sample:
-      '{\n  "endpoint": "projects",\n  "method": "GET"\n}',
+      'endpoint: projects\nmethod: GET',
   },
   {
     value: 'code.exec',
     label: 'Local Code Command',
     sample:
-      '{\n  "command": "npm",\n  "args": ["run", "build"],\n  "cwd": "/absolute/workspace/path"\n}',
+      'npm run build\ncwd: /absolute/workspace/path',
   },
-];
+] as const;
 
 export const AgentsPage: React.FC = () => {
   const { agents, loading, toggleAgent, addAgent, deleteAgent, reload } = useAgents();
   const [showDeployDialog, setShowDeployDialog] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'idle'>('all');
   const [jobComposerAgentId, setJobComposerAgentId] = useState<string | null>(null);
-  const [jobAction, setJobAction] = useState<string>(JOB_ACTIONS[0].value);
-  const [jobParams, setJobParams] = useState<string>(JOB_ACTIONS[0].sample);
+  const [jobAction, setJobAction] = useState<JobActionType>(JOB_ACTIONS[0].value);
+  const [jobInstruction, setJobInstruction] = useState<string>(JOB_ACTIONS[0].sample);
 
   const filteredAgents = agents.filter(agent => {
     if (filterStatus === 'all') return true;
@@ -93,6 +97,12 @@ export const AgentsPage: React.FC = () => {
 
   const activeAgentsCount = agents.filter(a => a.status === 'active').length;
   const [runningAgentId, setRunningAgentId] = useState<string | null>(null);
+  const selectedAction = JOB_ACTIONS.find((action) => action.value === jobAction) || JOB_ACTIONS[0];
+  const parsedInstruction = normalizeCapabilityInstruction(
+    jobAction,
+    jobInstruction,
+    Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+  );
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -203,11 +213,7 @@ export const AgentsPage: React.FC = () => {
                       {agent.status === 'active' ? (
                         <Pause size={18} />
                       ) : (
-                        <img
-                          src="/Rlogo.png"
-                          alt="Rivryn"
-                          className="w-8 h-8"
-                        />
+                        <Play size={18} className="fill-current" />
                       )}
                     </button>
                     <button
@@ -239,7 +245,7 @@ export const AgentsPage: React.FC = () => {
                       setJobComposerAgentId(agent.id);
                       const defaultAction = JOB_ACTIONS[0];
                       setJobAction(defaultAction.value);
-                      setJobParams(defaultAction.sample);
+                      setJobInstruction(defaultAction.sample);
                     }}
                     className="py-2 border border-emerald-600/60 rounded-lg text-emerald-300 hover:border-emerald-500 transition-colors text-sm flex items-center justify-center gap-2 disabled:opacity-50"
                     disabled={runningAgentId === agent.id}
@@ -288,7 +294,7 @@ export const AgentsPage: React.FC = () => {
           <div className="w-full max-w-2xl rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
             <h3 className="text-lg font-semibold text-slate-100">Queue Agent Job</h3>
             <p className="mt-2 text-sm text-slate-400">
-              Choose a capability action and provide JSON params. `gmail.send` and `calendar.create` now go through approval first. `code.exec` jobs require the local worker.
+              Describe the job in plain English or with simple `field: value` lines. JSON still works for compatibility. `gmail.send` and `calendar.create` go through approval first. `code.exec` jobs require the local worker.
             </p>
 
             <div className="mt-4 space-y-4">
@@ -299,7 +305,7 @@ export const AgentsPage: React.FC = () => {
                   onChange={(e) => {
                     const selected = JOB_ACTIONS.find((item) => item.value === e.target.value) || JOB_ACTIONS[0];
                     setJobAction(selected.value);
-                    setJobParams(selected.sample);
+                    setJobInstruction(selected.sample);
                   }}
                   className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
                 >
@@ -312,12 +318,40 @@ export const AgentsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-sm text-slate-300">Params JSON</label>
+                <div className="flex items-center justify-between gap-3">
+                  <label className="text-sm text-slate-300">Instruction</label>
+                  <button
+                    type="button"
+                    onClick={() => setJobInstruction(selectedAction.sample)}
+                    className="text-xs text-emerald-300 hover:text-emerald-200"
+                  >
+                    Reset example
+                  </button>
+                </div>
                 <textarea
-                  value={jobParams}
-                  onChange={(e) => setJobParams(e.target.value)}
-                  className="mt-2 w-full min-h-[220px] rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 font-mono"
+                  value={jobInstruction}
+                  onChange={(e) => setJobInstruction(e.target.value)}
+                  className="mt-2 w-full min-h-[220px] rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
                 />
+                <p className="mt-2 text-xs text-slate-500">
+                  Example formats: plain English, `repo: owner/name`, `to: person@example.com`, or pasted JSON.
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-slate-800 bg-slate-950/80 p-4">
+                <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-500">
+                  Parsed request
+                </p>
+                {parsedInstruction.ok ? (
+                  <>
+                    <p className="mt-2 text-sm text-emerald-300">{parsedInstruction.value.summary}</p>
+                    <pre className="mt-3 overflow-x-auto whitespace-pre-wrap text-xs text-slate-300">
+                      {JSON.stringify(parsedInstruction.value.params, null, 2)}
+                    </pre>
+                  </>
+                ) : (
+                  <p className="mt-2 text-sm text-amber-300">{parsedInstruction.error}</p>
+                )}
               </div>
             </div>
 
@@ -332,29 +366,32 @@ export const AgentsPage: React.FC = () => {
                 onClick={async () => {
                   if (!jobComposerAgentId || runningAgentId) return;
 
-                  let parsedParams: Record<string, unknown>;
-                  try {
-                    parsedParams = JSON.parse(jobParams);
-                  } catch {
-                    toast.error('Params must be valid JSON');
+                  const normalized = normalizeCapabilityInstruction(
+                    jobAction,
+                    jobInstruction,
+                    Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+                  );
+                  if (!normalized.ok) {
+                    toast.error(normalized.error);
                     return;
                   }
 
                   setRunningAgentId(jobComposerAgentId);
-                  const res = jobAction === 'gmail.send' || jobAction === 'calendar.create'
+                  const res = normalized.value.approvalRequired
                     ? await requestAction(jobAction, {
-                        ...parsedParams,
+                        ...normalized.value.params,
                         _sidekick_agent_id: jobComposerAgentId,
                       })
                     : await enqueueAgentRun(jobComposerAgentId, {
                         capability_action: jobAction,
-                        params: parsedParams,
+                        capability_instruction: jobInstruction.trim(),
+                        capability_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
                       });
                   setRunningAgentId(null);
 
                   if (res.success) {
                     toast.success(
-                      jobAction === 'gmail.send' || jobAction === 'calendar.create'
+                      normalized.value.approvalRequired
                         ? 'Action submitted for approval. Approve it in Settings to queue the agent run.'
                         : jobAction.startsWith('code.')
                         ? 'Local code job queued. Start the local worker to process it.'

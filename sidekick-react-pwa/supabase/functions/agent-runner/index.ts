@@ -1,10 +1,14 @@
 import { executeCapabilityAction } from '../_shared/capability-executor.ts';
+import {
+  normalizeCapabilityInstruction,
+  type JobActionType,
+} from '../_shared/capability-instruction.ts';
 import { getAdminClient } from '../_shared/supabase.ts';
 
 const MAX_JOBS = 5;
 
 async function runJob(job: Record<string, any>) {
-  const payload = (job.payload || {}) as Record<string, any>;
+  const payload = normalizeJobPayload((job.payload || {}) as Record<string, any>);
 
   if (payload.action_id) {
     const admin = getAdminClient();
@@ -56,7 +60,7 @@ async function runJob(job: Record<string, any>) {
       mode: 'manual_run',
       message: 'Agent runner is live, but this job did not include an executable capability action.',
       next_step:
-        'Enqueue a job with payload.capability_action (for example github.repo.read, gmail.send, or code.exec via the local worker).',
+        'Enqueue a job with payload.capability_action and either payload.params or payload.capability_instruction.',
     };
   }
 
@@ -132,3 +136,25 @@ Deno.serve(async () => {
     return new Response(JSON.stringify({ error: (error as Error).message }), { status: 500 });
   }
 });
+
+function normalizeJobPayload(payload: Record<string, unknown>) {
+  const nextPayload = { ...payload } as Record<string, unknown>;
+  const action = typeof nextPayload.capability_action === 'string'
+    ? (nextPayload.capability_action as JobActionType)
+    : null;
+  const instruction = typeof nextPayload.capability_instruction === 'string'
+    ? nextPayload.capability_instruction
+    : null;
+  const existingParams = nextPayload.params;
+
+  if (!action || !instruction || (existingParams && typeof existingParams === 'object')) {
+    return nextPayload;
+  }
+
+  const timeZone = typeof nextPayload.capability_timezone === 'string'
+    ? nextPayload.capability_timezone
+    : 'UTC';
+  nextPayload.params = normalizeCapabilityInstruction(action, instruction, timeZone);
+  nextPayload.normalized_from_instruction = true;
+  return nextPayload;
+}

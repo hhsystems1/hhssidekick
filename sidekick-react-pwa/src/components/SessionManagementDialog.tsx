@@ -68,46 +68,42 @@ export const SessionManagementDialog: React.FC<SessionManagementDialogProps> = (
 
   const getDeviceIcon = (device: string) => {
     if (device.toLowerCase().includes('iphone') || device.toLowerCase().includes('android')) {
-      return <Smartphone size={20} className="text-slate-400" />;
+      return <Smartphone size={20} className="text-app-muted" />;
     }
     if (device.toLowerCase().includes('mac') || device.toLowerCase().includes('windows')) {
-      return <Monitor size={20} className="text-slate-400" />;
+      return <Monitor size={20} className="text-app-muted" />;
     }
-    return <Globe size={20} className="text-slate-400" />;
+    return <Globe size={20} className="text-app-muted" />;
   };
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="app-backdrop absolute inset-0 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* Dialog */}
-      <div className="relative w-full max-w-lg mx-4 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden max-h-[80vh] flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-800 flex-shrink-0">
+      <div className="bg-app-panel border-app relative mx-4 flex max-h-[80vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border shadow-2xl">
+        <div className="border-app flex shrink-0 items-center justify-between border-b p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-emerald-900/50 flex items-center justify-center">
               <Monitor size={20} className="text-emerald-400" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-slate-100">Session Management</h3>
-              <p className="text-xs text-slate-500">Manage your active sessions</p>
+              <h3 className="text-app text-lg font-semibold">Session Management</h3>
+              <p className="text-app-soft text-xs">Manage your active sessions</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-800 rounded-full transition-colors"
+            className="hover-bg-app rounded-full p-2 transition-colors"
           >
-            <X size={20} className="text-slate-400" />
+            <X size={20} className="text-app-muted" />
           </button>
         </div>
 
-        {/* Sessions List */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           <div className="bg-blue-950/30 border border-blue-900/50 rounded-lg p-3 flex items-start gap-3">
             <AlertCircle size={18} className="text-blue-400 mt-0.5 flex-shrink-0" />
@@ -125,7 +121,7 @@ export const SessionManagementDialog: React.FC<SessionManagementDialogProps> = (
               className={`p-4 rounded-xl border ${
                 session.current
                   ? 'bg-emerald-950/20 border-emerald-800/50'
-                  : 'bg-slate-950/60 border-slate-800'
+                  : 'bg-app-panel-soft border-app'
               }`}
             >
               <div className="flex items-start justify-between">
@@ -133,7 +129,7 @@ export const SessionManagementDialog: React.FC<SessionManagementDialogProps> = (
                   <div className="mt-1">{getDeviceIcon(session.device)}</div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-slate-200">{session.device}</p>
+                      <p className="text-app text-sm font-medium">{session.device}</p>
                       {session.current && (
                         <span className="text-xs bg-emerald-900/50 text-emerald-400 px-2 py-0.5 rounded-full">
                           Current
@@ -141,11 +137,11 @@ export const SessionManagementDialog: React.FC<SessionManagementDialogProps> = (
                       )}
                     </div>
                     <div className="flex items-center gap-3 mt-1">
-                      <span className="text-xs text-slate-500 flex items-center gap-1">
+                      <span className="text-app-soft flex items-center gap-1 text-xs">
                         <Globe size={12} />
                         {session.location}
                       </span>
-                      <span className="text-xs text-slate-500 flex items-center gap-1">
+                      <span className="text-app-soft flex items-center gap-1 text-xs">
                         <Clock size={12} />
                         {session.lastActive}
                       </span>
@@ -155,7 +151,7 @@ export const SessionManagementDialog: React.FC<SessionManagementDialogProps> = (
                 {!session.current && (
                   <button
                     onClick={() => handleRevokeSession(session.id)}
-                    className="text-xs text-red-400 hover:text-red-300 transition-colors px-2 py-1 hover:bg-red-950/30 rounded"
+                    className="rounded px-2 py-1 text-xs text-red-400 transition-colors hover:bg-red-950/30 hover:text-red-300"
                   >
                     Revoke
                   </button>
@@ -165,8 +161,7 @@ export const SessionManagementDialog: React.FC<SessionManagementDialogProps> = (
           ))}
         </div>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-slate-800 flex-shrink-0">
+        <div className="border-app shrink-0 border-t p-4">
           <button
             onClick={handleSignOutOtherSessions}
             disabled={loading}

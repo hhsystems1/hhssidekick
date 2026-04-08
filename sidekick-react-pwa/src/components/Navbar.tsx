@@ -104,7 +104,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, onAction }) => {
   return (
     <nav
       ref={navbarRef}
-      className={`fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 transition-all duration-300 ease-out ${
+      className={`bg-app-panel border-app fixed bottom-0 left-0 right-0 z-50 border-t backdrop-blur-xl transition-all duration-300 ease-out ${
         isExpanded
           ? 'h-[75vh] rounded-t-3xl shadow-[0_-20px_60px_rgba(0,0,0,0.6)]'
           : 'h-16'
@@ -175,20 +175,20 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, onAction }) => {
           {currentView !== 'main' ? (
             <button
               onClick={() => setCurrentView('main')}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition-all active:scale-95"
+              className="bg-app-muted text-app-muted hover-bg-app hover:text-app flex items-center gap-2 rounded-lg px-3 py-2 transition-all active:scale-95"
             >
               <ChevronLeft className="w-5 h-5" />
               <span className="text-sm font-medium">Back</span>
             </button>
           ) : (
-            <span className="text-lg font-semibold text-white">{getViewTitle()}</span>
+            <span className="text-app text-lg font-semibold">{getViewTitle()}</span>
           )}
           <button
             onClick={() => {
               setIsExpanded(false);
               setCurrentView('main');
             }}
-            className="w-9 h-9 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition-all active:scale-95"
+            className="bg-app-muted text-app-muted hover-bg-app hover:text-app flex h-9 w-9 items-center justify-center rounded-lg transition-all active:scale-95"
           >
             <X className="w-5 h-5" />
           </button>
@@ -218,8 +218,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, onAction }) => {
         </div>
 
         {/* Footer */}
-        <div className="h-14 px-4 border-t border-slate-800 flex items-center justify-center">
-          <span className="text-xs text-slate-500">
+        <div className="border-app flex h-14 items-center justify-center border-t px-4">
+          <span className="text-app-soft text-xs">
             Select a page
           </span>
         </div>
@@ -242,7 +242,7 @@ const MenuButton: React.FC<MenuButtonProps> = ({ icon, label, color, onClick }) 
     danger: "bg-red-500/20 text-red-400 border-red-500/30",
     success: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
     warning: "bg-amber-500/20 text-amber-400 border-amber-500/30",
-    default: "bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700 hover:text-white",
+    default: "bg-app-muted text-app-muted border-app hover-bg-app hover:text-app",
   };
 
   return (

@@ -73,52 +73,47 @@ export const DataPrivacyDialog: React.FC<DataPrivacyDialogProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="app-backdrop absolute inset-0 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* Dialog */}
-      <div className="relative w-full max-w-lg mx-4 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden max-h-[80vh] flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-800 flex-shrink-0">
+      <div className="bg-app-panel border-app relative mx-4 flex max-h-[80vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border shadow-2xl">
+        <div className="border-app flex shrink-0 items-center justify-between border-b p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-emerald-900/50 flex items-center justify-center">
               <Shield size={20} className="text-emerald-400" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-slate-100">Data & Privacy</h3>
-              <p className="text-xs text-slate-500">Control your data</p>
+              <h3 className="text-app text-lg font-semibold">Data & Privacy</h3>
+              <p className="text-app-soft text-xs">Control your data</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-800 rounded-full transition-colors"
+            className="hover-bg-app rounded-full p-2 transition-colors"
           >
-            <X size={20} className="text-slate-400" />
+            <X size={20} className="text-app-muted" />
           </button>
         </div>
 
-        {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {/* Export Section */}
           <div>
-            <h4 className="text-sm font-medium text-slate-300 mb-3 flex items-center gap-2">
-              <Download size={16} className="text-slate-400" />
+            <h4 className="text-app-muted mb-3 flex items-center gap-2 text-sm font-medium">
+              <Download size={16} className="text-app-muted" />
               Export Your Data
             </h4>
             <div className="space-y-2">
               {dataCategories.map((category) => (
                 <div
                   key={category.id}
-                  className="flex items-center justify-between p-3 bg-slate-950/60 border border-slate-800 rounded-lg"
+                  className="bg-app-panel-soft border-app flex items-center justify-between rounded-lg border p-3"
                 >
                   <div className="flex items-center gap-3">
-                    <FileText size={18} className="text-slate-500" />
+                    <FileText size={18} className="text-app-soft" />
                     <div>
-                      <p className="text-sm text-slate-200">{category.name}</p>
-                      <p className="text-xs text-slate-500">{category.itemCount} items</p>
+                      <p className="text-app text-sm">{category.name}</p>
+                      <p className="text-app-soft text-xs">{category.itemCount} items</p>
                     </div>
                   </div>
                   <button
@@ -134,13 +129,12 @@ export const DataPrivacyDialog: React.FC<DataPrivacyDialogProps> = ({
             <button
               onClick={handleExportAll}
               disabled={loading !== null}
-              className="w-full mt-3 py-2 bg-slate-800 text-slate-200 rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors disabled:opacity-50"
+              className="bg-app-muted text-app mt-3 w-full rounded-lg py-2 text-sm font-medium transition-colors disabled:opacity-50 hover:bg-slate-700"
             >
               {loading === 'all' ? 'Exporting...' : 'Export All Data'}
             </button>
           </div>
 
-          {/* Privacy Info */}
           <div className="bg-blue-950/30 border border-blue-900/50 rounded-lg p-3 flex items-start gap-3">
             <Eye size={18} className="text-blue-400 mt-0.5 flex-shrink-0" />
             <div>
@@ -152,14 +146,13 @@ export const DataPrivacyDialog: React.FC<DataPrivacyDialogProps> = ({
             </div>
           </div>
 
-          {/* Delete Section */}
           <div className="pt-2">
             <h4 className="text-sm font-medium text-red-400 mb-3 flex items-center gap-2">
               <Trash2 size={16} />
               Delete Your Data
             </h4>
             <div className="bg-red-950/20 border border-red-900/50 rounded-lg p-3">
-              <p className="text-xs text-slate-400 mb-3">
+              <p className="text-app-muted mb-3 text-xs">
                 Permanently delete all your data. This action cannot be undone.
               </p>
               {!showDeleteConfirm ? (
@@ -178,7 +171,7 @@ export const DataPrivacyDialog: React.FC<DataPrivacyDialogProps> = ({
                   <div className="flex gap-2">
                     <button
                       onClick={() => setShowDeleteConfirm(false)}
-                      className="flex-1 py-2 bg-slate-800 text-slate-300 rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors"
+                      className="bg-app-muted text-app-muted flex-1 rounded-lg py-2 text-sm font-medium transition-colors hover:bg-slate-700"
                     >
                       Cancel
                     </button>

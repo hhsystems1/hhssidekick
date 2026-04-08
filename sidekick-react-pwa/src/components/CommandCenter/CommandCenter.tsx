@@ -164,11 +164,10 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
 
   return (
     <div className="p-4 lg:p-8 max-w-7xl mx-auto">
-      {/* Command Center Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-semibold text-slate-100">Command Center</h2>
-          <p className="text-sm text-slate-500">{todayLabel}</p>
+          <h2 className="text-app text-xl font-semibold">Command Center</h2>
+          <p className="text-app-soft text-sm">{todayLabel}</p>
           {user && (
             <p className="text-xs text-emerald-400 mt-1">
               Welcome back, {profile?.full_name || user.email?.split('@')[0] || 'User'}
@@ -180,9 +179,9 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
           <div className="relative">
             <button
               onClick={() => setUpdatesDropdownOpen(!updatesDropdownOpen)}
-              className="p-2 hover:bg-slate-800 rounded-lg transition-colors relative"
+              className="hover-bg-app relative rounded-lg p-2 transition-colors"
             >
-              <Bell size={20} className="text-slate-400" />
+              <Bell size={20} className="text-app-muted" />
               {updates.filter(u => !u.isRead).length > 0 && (
                 <span className="absolute top-1 right-1 w-2 h-2 bg-emerald-500 rounded-full" />
               )}
@@ -198,22 +197,20 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
           {/* Settings */}
           <button
             onClick={onNavigateToSettings}
-            className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+            className="hover-bg-app rounded-lg p-2 transition-colors"
           >
-            <Settings size={20} className="text-slate-400" />
+            <Settings size={20} className="text-app-muted" />
           </button>
         </div>
       </div>
 
-      {/* Quick Actions Row */}
       <div className="mb-6">
-        <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-3">Quick Actions</p>
+        <p className="text-app-soft mb-3 text-xs font-medium uppercase tracking-wider">Quick Actions</p>
         <QuickActions onActionPress={handleActionPress} />
       </div>
 
-      {/* Today's Focus */}
       <div className="mb-6">
-        <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-3">Today's Focus</p>
+        <p className="text-app-soft mb-3 text-xs font-medium uppercase tracking-wider">Today's Focus</p>
         <TodaysFocus
           focusItem={focusItem}
           onPrimaryAction={handlePrimaryAction}
@@ -221,19 +218,17 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
         />
       </div>
 
-      {/* 3-Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
-        {/* Column 1: Tasks */}
         <div className="space-y-4">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-slate-100 uppercase tracking-wider">Tasks</h3>
-            <span className="text-xs text-slate-500">{completedTasksCount}/{tasks.length}</span>
+            <h3 className="text-app text-sm font-semibold uppercase tracking-wider">Tasks</h3>
+            <span className="text-app-soft text-xs">{completedTasksCount}/{tasks.length}</span>
           </div>
 
           {tasksLoading ? (
-            <p className="text-slate-400 text-sm">Loading tasks...</p>
+            <p className="text-app-muted text-sm">Loading tasks...</p>
           ) : tasks.length === 0 ? (
-            <p className="text-slate-400 text-sm">No tasks for today</p>
+            <p className="text-app-muted text-sm">No tasks for today</p>
           ) : (
             tasks.slice(0, 5).map(task => (
               <TaskCard
@@ -246,58 +241,56 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
           )}
         </div>
 
-        {/* Column 2: Upcoming Tasks */}
         <div className="space-y-4">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-slate-100 uppercase tracking-wider">Upcoming</h3>
-            <span className="text-xs text-slate-500">{incompleteTasks.length} open</span>
+            <h3 className="text-app text-sm font-semibold uppercase tracking-wider">Upcoming</h3>
+            <span className="text-app-soft text-xs">{incompleteTasks.length} open</span>
           </div>
 
           {upcomingTasks.length === 0 ? (
-            <p className="text-slate-400 text-sm">No open tasks</p>
+            <p className="text-app-muted text-sm">No open tasks</p>
           ) : (
             upcomingTasks.map(task => (
               <div
                 key={task.id}
-                className="bg-slate-950/60 border border-slate-800 rounded-lg p-3"
+                className="bg-app-panel-soft border-app rounded-lg border p-3"
               >
-                <p className="text-sm font-medium text-slate-100">{task.title}</p>
-                <p className="text-xs text-slate-500 mt-1">Priority: {task.priority}</p>
+                <p className="text-app text-sm font-medium">{task.title}</p>
+                <p className="text-app-soft mt-1 text-xs">Priority: {task.priority}</p>
               </div>
             ))
           )}
 
           <button
             onClick={onNavigateToTasks}
-            className="w-full py-3 border border-slate-700 rounded-xl text-slate-400 hover:border-slate-600 hover:text-slate-100 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+            className="border-app text-app-muted hover-bg-app hover:text-app flex w-full items-center justify-center gap-2 rounded-xl border py-3 text-sm font-medium transition-colors"
           >
             <span>View Tasks</span>
             <ChevronRight size={16} />
           </button>
         </div>
 
-        {/* Column 3: Activity */}
         <div className="space-y-4">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-slate-100 uppercase tracking-wider">Recent</h3>
+            <h3 className="text-app text-sm font-semibold uppercase tracking-wider">Recent</h3>
           </div>
 
           <div className="space-y-2">
             {updates.slice(0, 3).map(update => (
               <div
                 key={update.id}
-                className={`p-3 rounded-lg border cursor-pointer hover:bg-slate-800/50 transition-colors ${
-                  update.isRead ? 'border-slate-800 bg-slate-950/40' : 'border-slate-700 bg-slate-800/30'
+                className={`border-app cursor-pointer rounded-lg border p-3 transition-colors hover:bg-slate-800/50 ${
+                  update.isRead ? 'bg-app-panel-soft' : 'bg-app-muted'
                 }`}
                 onClick={() => handleUpdateClick(update)}
               >
                 <div className="flex items-start gap-2">
                   <div className={`w-1.5 h-1.5 rounded-full mt-1.5 ${update.isRead ? 'bg-slate-600' : 'bg-emerald-500'}`} />
                   <div>
-                    <p className={`text-sm ${update.isRead ? 'text-slate-400' : 'text-slate-200'}`}>
+                    <p className={`text-sm ${update.isRead ? 'text-app-muted' : 'text-app'}`}>
                       {update.title}
                     </p>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <p className="text-app-soft mt-0.5 text-xs">
                       {new Date(update.timestamp).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
                     </p>
                   </div>
@@ -308,7 +301,6 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
         </div>
       </div>
 
-      {/* Dialogs */}
       {showNewTaskDialog && (
         <NewTaskDialog
           onClose={() => setShowNewTaskDialog(false)}
@@ -357,12 +349,12 @@ function TaskCard({ task, onToggle, onClick }: TaskCardProps) {
   const priorityColors = {
     high: 'border-red-500/60 bg-red-950/30',
     medium: 'border-yellow-500/60 bg-yellow-950/30',
-    low: 'border-slate-700 bg-slate-950/60'
+    low: 'border-app bg-app-panel-soft'
   };
 
   return (
     <div
-      className={`border-l-4 ${priorityColors[task.priority]} rounded-lg p-3 hover:shadow-lg hover:shadow-slate-900/50 transition-shadow cursor-pointer bg-slate-950/40 border border-slate-800`}
+      className={`border-l-4 ${priorityColors[task.priority]} border-app cursor-pointer rounded-lg border bg-app-panel-soft p-3 transition-shadow hover:shadow-lg hover:shadow-slate-900/50`}
       onClick={onClick}
     >
       <div className="flex items-center gap-2">
@@ -376,10 +368,10 @@ function TaskCard({ task, onToggle, onClick }: TaskCardProps) {
           {task.completed ? (
             <span className="text-emerald-400">●</span>
           ) : (
-            <span className="text-slate-500">○</span>
+            <span className="text-app-soft">○</span>
           )}
         </button>
-        <span className={`text-sm ${task.completed ? 'line-through text-slate-500' : 'text-slate-200'}`}>
+        <span className={`text-sm ${task.completed ? 'text-app-soft line-through' : 'text-app'}`}>
           {task.title}
         </span>
       </div>

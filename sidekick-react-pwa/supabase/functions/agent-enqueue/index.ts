@@ -1,4 +1,8 @@
 import { getAdminClient, getUserFromRequest } from '../_shared/supabase.ts';
+import {
+  normalizeCapabilityInstruction,
+  type JobActionType,
+} from '../_shared/capability-instruction.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -19,12 +23,14 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'agent_id required' }), { status: 400 });
     }
 
+    const normalizedPayload = normalizeQueuedPayload(payload);
+
     const admin = getAdminClient();
     const { data, error } = await admin.from('agent_jobs').insert({
       user_id: user.id,
       agent_id: agentId,
       status: 'queued',
-      payload,
+      payload: normalizedPayload,
       scheduled_at: new Date().toISOString(),
     }).select().single();
 
@@ -39,3 +45,24 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ error: (error as Error).message }), { status: 500 });
   }
 });
+
+function normalizeQueuedPayload(payload: Record<string, unknown>) {
+  const nextPayload = { ...payload };
+  const action = typeof nextPayload.capability_action === 'string'
+    ? (nextPayload.capability_action as JobActionType)
+    : null;
+  const instruction = typeof nextPayload.capability_instruction === 'string'
+    ? nextPayload.capability_instruction
+    : null;
+  const timeZone = typeof nextPayload.capability_timezone === 'string'
+    ? nextPayload.capability_timezone
+    : 'UTC';
+
+  if (!action || !instruction) {
+    return nextPayload;
+  }
+
+  nextPayload.params = normalizeCapabilityInstruction(action, instruction, timeZone);
+  nextPayload.normalized_from_instruction = true;
+  return nextPayload;
+}

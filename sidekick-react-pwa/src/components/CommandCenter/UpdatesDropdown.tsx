@@ -73,13 +73,12 @@ export const UpdatesDropdown: React.FC<UpdatesDropdownProps> = ({
   return (
     <div
       ref={dropdownRef}
-      className="absolute top-full right-0 mt-2 w-80 bg-slate-900 border border-slate-800 rounded-xl shadow-xl z-50 overflow-hidden"
+      className="bg-app-panel border-app absolute top-full right-0 z-50 mt-2 w-80 overflow-hidden rounded-xl border shadow-xl"
     >
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-slate-800">
+      <div className="border-app flex items-center justify-between border-b p-4">
         <div className="flex items-center gap-2">
-          <Bell size={18} className="text-slate-400" />
-          <span className="font-semibold text-slate-100">Updates</span>
+          <Bell size={18} className="text-app-muted" />
+          <span className="text-app font-semibold">Updates</span>
           {unreadCount > 0 && (
             <span className="bg-emerald-700 text-emerald-50 text-xs px-2 py-0.5 rounded-full">
               {unreadCount}
@@ -97,19 +96,18 @@ export const UpdatesDropdown: React.FC<UpdatesDropdownProps> = ({
           )}
           <button
             onClick={onClose}
-            className="p-1 hover:bg-slate-800 rounded transition-colors"
+            className="hover-bg-app rounded p-1 transition-colors"
           >
-            <X size={16} className="text-slate-400" />
+            <X size={16} className="text-app-muted" />
           </button>
         </div>
       </div>
 
-      {/* Updates list */}
       <div className="max-h-96 overflow-y-auto">
         {localUpdates.length === 0 ? (
           <div className="p-8 text-center">
             <Bell size={32} className="mx-auto mb-2 text-slate-600" />
-            <p className="text-slate-400 text-sm">No updates yet</p>
+            <p className="text-app-muted text-sm">No updates yet</p>
           </div>
         ) : (
           localUpdates.map((update) => {
@@ -118,8 +116,8 @@ export const UpdatesDropdown: React.FC<UpdatesDropdownProps> = ({
               <div
                 key={update.id}
                 onClick={() => onItemClick?.(update)}
-                className={`p-4 border-b border-slate-800 cursor-pointer hover:bg-slate-800/50 transition-colors ${
-                  !update.isRead ? 'bg-slate-800/30' : ''
+                className={`border-app cursor-pointer border-b p-4 transition-colors hover:bg-slate-800/50 ${
+                  !update.isRead ? 'bg-app-panel-soft' : ''
                 }`}
               >
                 <div className="flex items-start gap-3">
@@ -127,15 +125,15 @@ export const UpdatesDropdown: React.FC<UpdatesDropdownProps> = ({
                     <span className={`text-sm ${config.color}`}>{config.icon}</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium ${update.isRead ? 'text-slate-400' : 'text-slate-100'}`}>
+                    <p className={`text-sm font-medium ${update.isRead ? 'text-app-muted' : 'text-app'}`}>
                       {update.title}
                     </p>
                     {update.subtitle && (
-                      <p className="text-xs text-slate-500 mt-0.5 truncate">{update.subtitle}</p>
+                      <p className="text-app-soft mt-0.5 truncate text-xs">{update.subtitle}</p>
                     )}
                     <div className="flex items-center gap-1 mt-1">
-                      <Clock size={12} className="text-slate-500" />
-                      <span className="text-xs text-slate-500">{formatRelativeTime(update.timestamp)}</span>
+                      <Clock size={12} className="text-app-soft" />
+                      <span className="text-app-soft text-xs">{formatRelativeTime(update.timestamp)}</span>
                     </div>
                   </div>
                   {!update.isRead && (

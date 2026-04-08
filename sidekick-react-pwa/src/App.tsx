@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './index.css';
 import { Toaster } from 'react-hot-toast';
 import { SidekickHome } from './SidekickHome';
+import { AuthPage } from './pages/AuthPage';
 import { AgentsPage } from './pages/AgentsPage';
 import { TrainingPage } from './pages/TrainingPage';
 import { ChatPage } from './ChatPage';
@@ -10,6 +11,7 @@ import SettingsPage from './pages/settings/SettingsPage';
 import { AuthProvider } from './context/AuthContext';
 import { LlmSettingsProvider } from './context/LlmSettingsContext';
 import { ProjectProvider } from './context/ProjectContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { TasksPage } from './pages/TasksPage';
 import { FilesPage } from './pages/FilesPage';
 import { SkillsPage } from './pages/SkillsPage';
@@ -20,6 +22,7 @@ import { AppBuilderPage } from './pages/AppBuilderPage';
 function App() {
   return (
     <AuthProvider>
+      <ThemeProvider>
       <LlmSettingsProvider>
       <ProjectProvider>
       <Toaster
@@ -47,6 +50,7 @@ function App() {
       />
       <BrowserRouter>
         <Routes>
+          <Route path="/auth" element={<AuthPage />} />
           <Route path="/" element={<Layout />}>
             <Route index element={<SidekickHome />} />
             <Route path="chat" element={<ChatPage />} />
@@ -65,6 +69,7 @@ function App() {
       </BrowserRouter>
       </ProjectProvider>
       </LlmSettingsProvider>
+      </ThemeProvider>
     </AuthProvider>
   );
 }

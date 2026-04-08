@@ -21,6 +21,7 @@ import {
   type AIProvider
 } from '../../config/ai-models';
 import { callOllama, checkOllamaAvailable, trackOllamaUsage } from './ollama';
+import { supabase } from '../../lib/supabaseClient';
 
 /**
  * Unified request interface for all LLM providers
@@ -44,6 +45,41 @@ export interface LLMResponse {
   model: string;
   tokensUsed?: number;
   executionTimeMs: number;
+}
+
+let openAICapabilityCache: { available: boolean; checkedAt: number } | null = null;
+
+async function hasStoredOpenAICredential(): Promise<boolean> {
+  if (openAICapabilityCache && Date.now() - openAICapabilityCache.checkedAt < 30_000) {
+    return openAICapabilityCache.available;
+  }
+
+  const { data } = await supabase.auth.getSession();
+  if (!data.session) {
+    openAICapabilityCache = { available: false, checkedAt: Date.now() };
+    return false;
+  }
+
+  const { data: capabilityData, error } = await supabase.functions.invoke('tool-capabilities', {
+    method: 'GET',
+  });
+
+  if (error) {
+    return false;
+  }
+
+  const available = !!(capabilityData?.capabilities || []).find(
+    (capability: { provider?: string; connected?: boolean; configured?: boolean }) =>
+      capability.provider === 'openai' && (capability.connected || capability.configured)
+  );
+
+  openAICapabilityCache = { available, checkedAt: Date.now() };
+  return available;
+}
+
+async function hasOpenAIAccess(): Promise<boolean> {
+  if (hasOpenAIKey()) return true;
+  return await hasStoredOpenAICredential();
 }
 
 /**
@@ -74,7 +110,7 @@ export async function callLLM(request: LLMRequest): Promise<LLMResponse> {
     console.warn(`Primary provider ${primaryProvider} failed:`, error.message);
 
     // Try fallback providers
-    const fallbackProviders = getFallbackProviders(primaryProvider);
+    const fallbackProviders = await getFallbackProviders(primaryProvider);
 
     for (const fallbackProvider of fallbackProviders) {
       try {
@@ -234,13 +270,41 @@ async function callOpenAIProvider(params: {
   temperature: number;
   maxTokens: number;
 }): Promise<LLMResponse> {
+  const startTime = Date.now();
+
+  try {
+    const { data, error } = await supabase.functions.invoke('openai-api', {
+      method: 'POST',
+      body: {
+        action: 'chat.completions',
+        model: params.model,
+        messages: [
+          { role: 'system', content: params.systemPrompt },
+          { role: 'user', content: params.userMessage }
+        ],
+        temperature: params.temperature,
+        maxTokens: params.maxTokens,
+      },
+    });
+
+    if (!error && data?.content) {
+      return {
+        content: data.content,
+        provider: 'openai',
+        model: data.model || params.model,
+        tokensUsed: data.usage?.total_tokens,
+        executionTimeMs: Date.now() - startTime
+      };
+    }
+  } catch (remoteError) {
+    console.warn('Server-side OpenAI call failed, falling back to browser env key if available:', remoteError);
+  }
+
   const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
 
   if (!apiKey) {
-    throw new Error('OpenAI API key not configured (VITE_OPENAI_API_KEY)');
+    throw new Error('OpenAI is not connected. Add an OpenAI key in Integrations or configure VITE_OPENAI_API_KEY for development.');
   }
-
-  const startTime = Date.now();
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -331,20 +395,21 @@ async function callAnthropicProvider(params: {
 /**
  * Get fallback providers in priority order
  */
-function getFallbackProviders(primaryProvider: AIProvider): AIProvider[] {
+async function getFallbackProviders(primaryProvider: AIProvider): Promise<AIProvider[]> {
   const fallbacks: AIProvider[] = [];
+  const openAIAvailable = await hasOpenAIAccess();
 
   // Priority fallback chain based on primary provider
   if (primaryProvider === 'groq') {
     // Groq fails → try Ollama, then Anthropic, then OpenAI
     fallbacks.push('ollama');
     if (hasAnthropicKey()) fallbacks.push('anthropic');
-    if (hasOpenAIKey()) fallbacks.push('openai');
+    if (openAIAvailable) fallbacks.push('openai');
   } else if (primaryProvider === 'ollama') {
     // Ollama fails → try Groq, then Anthropic, then OpenAI
     if (hasGroqKey()) fallbacks.push('groq');
     if (hasAnthropicKey()) fallbacks.push('anthropic');
-    if (hasOpenAIKey()) fallbacks.push('openai');
+    if (openAIAvailable) fallbacks.push('openai');
   } else if (primaryProvider === 'openai') {
     // OpenAI fails → try Groq, then Ollama, then Anthropic
     if (hasGroqKey()) fallbacks.push('groq');
@@ -354,7 +419,7 @@ function getFallbackProviders(primaryProvider: AIProvider): AIProvider[] {
     // Anthropic fails → try Groq, then Ollama, then OpenAI
     if (hasGroqKey()) fallbacks.push('groq');
     fallbacks.push('ollama');
-    if (hasOpenAIKey()) fallbacks.push('openai');
+    if (openAIAvailable) fallbacks.push('openai');
   }
 
   return fallbacks;
@@ -389,8 +454,8 @@ export async function checkProviderHealth(): Promise<{
     case 'openai':
       return {
         provider,
-        available: hasOpenAIKey(),
-        error: hasOpenAIKey() ? undefined : 'OpenAI API key not configured'
+        available: await hasOpenAIAccess(),
+        error: (await hasOpenAIAccess()) ? undefined : 'OpenAI is not connected'
       };
 
     case 'anthropic':

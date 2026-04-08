@@ -6,6 +6,7 @@
 
 import type { AgentType } from '../../types/agents';
 import { callLLM } from '../ai/llm-client';
+import { supabase } from '../../lib/supabaseClient';
 
 // OpenAI API for embeddings
 const OPENAI_EMBEDDING_URL = 'https://api.openai.com/v1/embeddings';
@@ -15,9 +16,26 @@ const EMBEDDING_DIMENSION = 1024;
 export async function generateEmbedding(text: string): Promise<number[]> {
   const truncatedText = text.substring(0, 8000);
 
-  // Check for OpenAI API key
+  try {
+    const { data, error } = await supabase.functions.invoke('openai-api', {
+      method: 'POST',
+      body: {
+        action: 'embeddings',
+        model: EMBEDDING_MODEL,
+        input: truncatedText,
+        dimensions: EMBEDDING_DIMENSION,
+      },
+    });
+
+    if (!error && Array.isArray(data?.data) && Array.isArray(data.data[0]?.embedding)) {
+      return data.data[0].embedding as number[];
+    }
+  } catch (error) {
+    console.error('Server-side OpenAI embeddings error:', error);
+  }
+
   const openaiKey = import.meta.env.VITE_OPENAI_API_KEY;
-  
+
   if (openaiKey) {
     try {
       const response = await fetch(OPENAI_EMBEDDING_URL, {

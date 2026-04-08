@@ -49,6 +49,14 @@ export const CAPABILITY_REGISTRY: CapabilityDefinition[] = [
     actions: ['github.repo.read', 'github.repo.write'],
   },
   {
+    id: 'openai.gpt',
+    provider: 'openai',
+    title: 'OpenAI GPT / Codex',
+    description: 'Connect an OpenAI API key for GPT chat, embeddings, and Codex-backed runtime features.',
+    authKind: 'api_key',
+    actions: ['openai.responses.create', 'openai.chat.completions'],
+  },
+  {
     id: 'rivryn.project',
     provider: 'rivryn',
     title: 'Rivryn',

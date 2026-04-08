@@ -284,11 +284,12 @@ If working on Twilio:
 
 The next highest-value implementation task is:
 
-- wire the chat or agents UI so an agent can create a `gmail.send` action request and route approved actions into the queue automatically
+- harden the agent/runtime production path page by page, starting with queue execution, provider health, and approval/error states
 
 After that:
 
-- add a pending-actions screen if missing
+- finish the agent-created `gmail.send` action flow end to end
+- add or verify a visible pending-actions screen
 - then test a real Gmail send
 
 ## Status Snapshot
@@ -302,3 +303,52 @@ As of 2026-04-04:
 - local code runner exists
 - Twilio/phone capability does not exist yet
 - the end-to-end agent-triggered email flow still needs to be stitched together
+
+As of 2026-04-07:
+
+- `AgentsPage` no longer requires raw JSON for queued capability jobs
+- capability jobs now accept natural-language or `field: value` instructions in the UI
+- frontend compatibility parser exists at `sidekick-react-pwa/src/services/agents/capabilityComposer.ts`
+- `agent-enqueue` now normalizes `payload.capability_instruction` into `payload.params`
+- `agent-runner` also normalizes `payload.capability_instruction` at execution time as a fallback
+- local worker can normalize raw `code.exec` instructions before running allowed commands
+- `gmail.send` and `calendar.create` approval flow is unchanged
+- idle agent toggle icon on `AgentsPage` was changed from the Rivryn logo to a proper play/start icon
+
+## 2026-04-07 Handoff
+
+What changed today:
+
+- replaced the `AgentsPage` job composer JSON textarea with an instruction composer plus parsed-preview UI
+- preserved pasted JSON support for backward compatibility
+- moved capability-instruction normalization into runtime code so queue execution does not depend on frontend-only shaping
+- kept approval-required actions (`gmail.send`, `calendar.create`) on the existing request/approve path
+
+Files changed today:
+
+- `sidekick-react-pwa/src/pages/AgentsPage.tsx`
+- `sidekick-react-pwa/src/services/agents/capabilityComposer.ts`
+- `sidekick-react-pwa/supabase/functions/_shared/capability-instruction.ts`
+- `sidekick-react-pwa/supabase/functions/agent-enqueue/index.ts`
+- `sidekick-react-pwa/supabase/functions/agent-runner/index.ts`
+- `sidekick-react-pwa/workers/local-agent-runner.mjs`
+
+What still needs to happen before this is live:
+
+- deploy updated Supabase functions:
+  - `agent-enqueue`
+  - `agent-runner`
+- restart the local worker if it is already running and you want `code.exec` instruction parsing to be live
+- verify one hosted queue job and one local `code.exec` job from `AgentsPage`
+
+Suggested first task tomorrow:
+
+- do a production page audit starting with agents/chat/settings:
+  - remove remaining placeholder/demo behaviors
+  - verify empty states and failure states
+  - tighten provider-health and auth-edge-case messaging
+
+Suggested agent/runtime follow-up:
+
+- wire the chat agent path to create real action requests from natural prompts instead of only returning plain text
+- extract and persist suggested actions from agent responses if that contract is still needed

@@ -39,12 +39,12 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
           <button
             key={action.id}
             onClick={() => onActionPress?.(action)}
-            className="bg-slate-950/60 border border-slate-800 rounded-xl p-4 hover:border-slate-700 hover:bg-slate-950/80 transition-all active:scale-95 flex flex-col items-center gap-2"
+            className="bg-app-panel-soft border-app hover-bg-app flex flex-col items-center gap-2 rounded-xl border p-4 transition-all active:scale-95"
           >
             <div className={`w-10 h-10 rounded-full border ${config.border} flex items-center justify-center ${config.color}`}>
               <span className="text-lg">{config.icon}</span>
             </div>
-            <span className="text-sm text-slate-300 font-medium">{action.label}</span>
+            <span className="text-app-muted text-sm font-medium">{action.label}</span>
           </button>
         );
       })}

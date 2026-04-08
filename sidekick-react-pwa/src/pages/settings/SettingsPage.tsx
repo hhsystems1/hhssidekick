@@ -9,6 +9,7 @@ import { ChangePasswordDialog } from '../../components/ChangePasswordDialog';
 import { SessionManagementDialog } from '../../components/SessionManagementDialog';
 import { DataPrivacyDialog } from '../../components/DataPrivacyDialog';
 import { approveAction, listPendingActions, rejectAction, executeAction, queueApprovedAction, getActionAgentId, type PendingAction } from '../../services/actions';
+import { useTheme } from '../../context/ThemeContext';
 
 interface SettingsItem {
   label: string;
@@ -27,6 +28,7 @@ interface SettingsSection {
 export const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const { themePreference, setThemePreference } = useTheme();
   const { profile, loading: profileLoading } = useUserProfile();
   const { settings, loading: settingsLoading, updateSettings } = useUserSettings();
 
@@ -137,7 +139,7 @@ export const SettingsPage: React.FC = () => {
         {
           label: 'Theme',
           description: 'Choose your theme',
-          value: localSettings.theme === 'dark' ? 'Dark' : localSettings.theme === 'light' ? 'Light' : 'System',
+          value: themePreference === 'dark' ? 'Dark' : themePreference === 'light' ? 'Light' : 'System',
           onClick: () => setShowThemeDialog(true)
         },
         {
@@ -157,10 +159,10 @@ export const SettingsPage: React.FC = () => {
   ];
 
   return (
-    <div className="p-4 lg:p-8 max-w-4xl mx-auto">
+    <div className="mx-auto max-w-4xl p-4 lg:p-8">
       <div className="mb-8">
-        <h1 className="text-xl font-semibold text-slate-100 mb-1">Settings</h1>
-        <p className="text-sm text-slate-500">Manage your account preferences</p>
+        <h1 className="text-app mb-1 text-xl font-semibold">Settings</h1>
+        <p className="text-app-soft text-sm">Manage your account preferences</p>
       </div>
 
       {loading ? (
@@ -272,12 +274,12 @@ export const SettingsPage: React.FC = () => {
               <div key={sectionIndex}>
                 <div className="flex items-center gap-2 mb-4">
                   <section.icon size={18} className="text-slate-400" />
-                  <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
+                  <h2 className="text-app-muted text-sm font-semibold uppercase tracking-wider">
                     {section.title}
                   </h2>
                 </div>
 
-                <div className="bg-slate-950/60 border border-slate-800 rounded-xl overflow-hidden">
+                <div className="bg-app-panel-soft border-app overflow-hidden rounded-xl border">
                   {section.items.map((item, itemIndex) => {
                     const hasToggle = item.toggle !== undefined;
                     const hasValue = item.value !== undefined;
@@ -286,19 +288,19 @@ export const SettingsPage: React.FC = () => {
                       <button
                         key={itemIndex}
                         onClick={item.onClick}
-                        className={`w-full flex items-center justify-between p-4 hover:bg-slate-800/50 transition-colors cursor-pointer text-left ${
-                          itemIndex !== section.items.length - 1 ? 'border-b border-slate-800' : ''
+                        className={`hover-bg-app flex w-full cursor-pointer items-center justify-between p-4 text-left transition-colors ${
+                          itemIndex !== section.items.length - 1 ? 'border-app border-b' : ''
                         }`}
                       >
                         <div>
-                          <p className="text-sm font-medium text-slate-200">{item.label}</p>
+                          <p className="text-app text-sm font-medium">{item.label}</p>
                           {item.description && (
-                            <p className="text-xs text-slate-500 mt-0.5">{item.description}</p>
+                            <p className="text-app-soft mt-0.5 text-xs">{item.description}</p>
                           )}
                         </div>
                         <div className="flex items-center gap-3">
                           {hasValue && (
-                            <span className="text-sm text-slate-400">{item.value}</span>
+                            <span className="text-app-muted text-sm">{item.value}</span>
                           )}
                           {hasToggle && (
                             <div
@@ -314,7 +316,7 @@ export const SettingsPage: React.FC = () => {
                             </div>
                           )}
                           {!hasToggle && !hasValue && (
-                            <span className="text-slate-500">→</span>
+                            <span className="text-app-soft">→</span>
                           )}
                         </div>
                       </button>
@@ -328,36 +330,36 @@ export const SettingsPage: React.FC = () => {
           <div className="mt-8">
             <div className="flex items-center gap-2 mb-4">
               <HelpCircle size={18} className="text-slate-400" />
-              <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
+              <h2 className="text-app-muted text-sm font-semibold uppercase tracking-wider">
                 Help & Support
               </h2>
             </div>
 
-            <div className="bg-slate-950/60 border border-slate-800 rounded-xl overflow-hidden">
+            <div className="bg-app-panel-soft border-app overflow-hidden rounded-xl border">
               <button
                 onClick={() => toast('Help Center coming soon')}
-                className="w-full flex items-center justify-between p-4 hover:bg-slate-800/50 transition-colors cursor-pointer text-left border-b border-slate-800"
+                className="hover-bg-app border-app flex w-full cursor-pointer items-center justify-between border-b p-4 text-left transition-colors"
               >
                 <div>
-                  <p className="text-sm font-medium text-slate-200">Help Center</p>
-                  <p className="text-xs text-slate-500 mt-0.5">Get help with using RivRyn SideKick</p>
+                  <p className="text-app text-sm font-medium">Help Center</p>
+                  <p className="text-app-soft mt-0.5 text-xs">Get help with using RivRyn SideKick</p>
                 </div>
-                <span className="text-slate-500">→</span>
+                <span className="text-app-soft">→</span>
               </button>
               <button
                 onClick={() => toast('Contact Support coming soon')}
-                className="w-full flex items-center justify-between p-4 hover:bg-slate-800/50 transition-colors cursor-pointer text-left"
+                className="hover-bg-app flex w-full cursor-pointer items-center justify-between p-4 text-left transition-colors"
               >
                 <div>
-                  <p className="text-sm font-medium text-slate-200">Contact Support</p>
-                  <p className="text-xs text-slate-500 mt-0.5">Get help from our team</p>
+                  <p className="text-app text-sm font-medium">Contact Support</p>
+                  <p className="text-app-soft mt-0.5 text-xs">Get help from our team</p>
                 </div>
-                <span className="text-slate-500">→</span>
+                <span className="text-app-soft">→</span>
               </button>
             </div>
           </div>
 
-          <div className="mt-8 pt-8 border-t border-slate-800">
+          <div className="border-app mt-8 border-t pt-8">
             <button
               onClick={handleSignOut}
               className="w-full py-3 border border-red-900/60 text-red-400 rounded-xl hover:bg-red-950/30 transition-colors flex items-center justify-center gap-2"
@@ -401,12 +403,14 @@ export const SettingsPage: React.FC = () => {
                   <button
                     key={theme}
                     onClick={async () => {
+                      setThemePreference(theme);
+                      setLocalSettings((prev) => ({ ...prev, theme }));
                       await updateSettings({ theme });
                       toast.success(`Theme set to ${theme}`);
                       setShowThemeDialog(false);
                     }}
                     className={`w-full p-4 rounded-lg border transition-colors text-left ${
-                      localSettings.theme === theme
+                      themePreference === theme
                         ? 'border-emerald-600 bg-emerald-950/30'
                         : 'border-slate-800 hover:bg-slate-800/50'
                     }`}

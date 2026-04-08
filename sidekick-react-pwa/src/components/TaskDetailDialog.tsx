@@ -90,13 +90,13 @@ export const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({ task, onClos
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-900 rounded-xl border border-slate-800 max-w-md w-full p-6">
+    <div className="app-backdrop fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="bg-app-panel border-app w-full max-w-md rounded-xl border p-6">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-semibold text-slate-100">Task Details</h3>
+          <h3 className="text-app text-xl font-semibold">Task Details</h3>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-slate-800 rounded transition-colors text-slate-400 hover:text-slate-100"
+            className="text-app-muted hover-bg-app hover:text-app rounded p-1 transition-colors"
             aria-label="Close"
           >
             <X size={20} />
@@ -105,7 +105,7 @@ export const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({ task, onClos
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-slate-300 mb-2">
+            <label htmlFor="title" className="text-app-muted mb-2 block text-sm font-medium">
               Task Title
             </label>
             <input
@@ -114,21 +114,21 @@ export const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({ task, onClos
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g., Follow up with client"
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="app-input w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               autoFocus
               required
             />
           </div>
 
           <div>
-            <label htmlFor="priority" className="block text-sm font-medium text-slate-300 mb-2">
+            <label htmlFor="priority" className="text-app-muted mb-2 block text-sm font-medium">
               Priority
             </label>
             <select
               id="priority"
               value={priority}
               onChange={(e) => setPriority(e.target.value as 'high' | 'medium' | 'low')}
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="app-input w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="high">High Priority</option>
               <option value="medium">Medium Priority</option>
@@ -137,7 +137,7 @@ export const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({ task, onClos
           </div>
 
           <div>
-            <label htmlFor="dueDate" className="block text-sm font-medium text-slate-300 mb-2">
+            <label htmlFor="dueDate" className="text-app-muted mb-2 block text-sm font-medium">
               Due Date (Optional)
             </label>
             <input
@@ -145,7 +145,7 @@ export const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({ task, onClos
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="app-input w-full rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 
@@ -157,7 +157,7 @@ export const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({ task, onClos
               onChange={(e) => setCompleted(e.target.checked)}
               className="w-4 h-4 text-emerald-600 bg-slate-950 border-slate-700 rounded focus:ring-emerald-500 focus:ring-2"
             />
-            <label htmlFor="completed" className="ml-2 text-sm text-slate-300">
+            <label htmlFor="completed" className="text-app-muted ml-2 text-sm">
               Mark as completed
             </label>
           </div>
@@ -176,7 +176,7 @@ export const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({ task, onClos
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 transition-colors"
+              className="bg-app-muted text-app-muted rounded-lg px-4 py-2 transition-colors hover:bg-slate-700"
             >
               Cancel
             </button>
