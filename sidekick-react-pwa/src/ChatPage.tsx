@@ -13,6 +13,7 @@ import { useProjectContext } from './context/ProjectContext';
 import { checkProviderHealth } from './services/ai/llm-client';
 import { requestAction } from './services/actions';
 import { Trash2 } from 'lucide-react';
+import type { AgentActionProposal } from './types/agents';
 
 const MOCK_USER_ID = '00000000-0000-0000-0000-000000000000';
 
@@ -63,6 +64,7 @@ export function ChatPage() {
     endTime: '',
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
   });
+  const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
   useEffect(() => {
     const getUser = async () => {
@@ -334,6 +336,9 @@ export function ChatPage() {
                     userId,
                     currentProject: activeProject?.name || 'RivRyn SideKick',
                     recentTopics: [],
+                    preferences: {
+                      timeZone: localTimeZone,
+                    },
                     baseMemory,
                     agentMemoryByType,
                     projectMemory,
@@ -384,7 +389,15 @@ export function ChatPage() {
                     messageHistory,
                   });
 
-                  await addMessage(agentResponse.content, 'assistant', agentResponse.agentType, agentResponse.behavioralMode);
+                  const createdDrafts = await createDraftActionRequests(agentResponse.proposedActions || []);
+                  const assistantContent = buildAssistantMessage(agentResponse.content, createdDrafts);
+
+                  await addMessage(
+                    assistantContent,
+                    'assistant',
+                    agentResponse.agentType,
+                    agentResponse.behavioralMode
+                  );
 
                   console.log('Agent Response:', {
                     agentType: agentResponse.agentType,
@@ -606,4 +619,29 @@ export function ChatPage() {
       )}
     </>
   );
+}
+
+async function createDraftActionRequests(proposals: AgentActionProposal[]) {
+  const created: AgentActionProposal[] = [];
+
+  for (const proposal of proposals) {
+    const response = await requestAction(proposal.actionType, proposal.params);
+    if (response.success) {
+      created.push(proposal);
+    }
+  }
+
+  return created;
+}
+
+function buildAssistantMessage(baseContent: string, createdDrafts: AgentActionProposal[]) {
+  if (createdDrafts.length === 0) {
+    return baseContent;
+  }
+
+  const draftSummary = createdDrafts
+    .map((proposal) => `- ${proposal.summary}`)
+    .join('\n');
+
+  return `${baseContent}\n\nDrafted approval request${createdDrafts.length > 1 ? 's' : ''}:\n${draftSummary}\n\nReview and approve it from Settings.`;
 }

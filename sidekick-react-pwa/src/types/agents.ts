@@ -56,6 +56,16 @@ export interface AgentRequest {
   messageHistory: Message[];
 }
 
+export type ApprovalActionType = 'gmail.send' | 'calendar.create';
+
+export interface AgentActionProposal {
+  kind: 'action_request';
+  actionType: ApprovalActionType;
+  params: Record<string, unknown>;
+  approvalRequired: true;
+  summary: string;
+}
+
 export interface AgentResponse {
   content: string;
   agentType: AgentType;
@@ -63,6 +73,7 @@ export interface AgentResponse {
   routingReason?: string;
   extractedEntities?: string[];
   suggestedActions?: string[];
+  proposedActions?: AgentActionProposal[];
   metadata: {
     tokensUsed?: number;
     executionTimeMs: number;

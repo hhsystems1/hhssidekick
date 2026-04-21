@@ -352,3 +352,134 @@ Suggested agent/runtime follow-up:
 
 - wire the chat agent path to create real action requests from natural prompts instead of only returning plain text
 - extract and persist suggested actions from agent responses if that contract is still needed
+
+## 2026-04-10 Verified Current State
+
+What is confirmed in the repo right now:
+
+- pending action approval UI does exist in `sidekick-react-pwa/src/pages/settings/SettingsPage.tsx`
+- chat users can manually create `gmail.send` and `calendar.create` approval requests from `sidekick-react-pwa/src/ChatPage.tsx`
+- `AgentsPage` can create approval-required actions and attaches `_sidekick_agent_id` so approval can later queue the matching agent run
+- approving from Settings can queue the agent job through `agent-enqueue` when `_sidekick_agent_id` is present
+- hosted queue execution of approved actions is implemented in `sidekick-react-pwa/supabase/functions/agent-runner/index.ts`
+- direct execution without queue is still exposed through the Settings "Execute" button and `action-execute`
+- Twilio capability is still not implemented anywhere in the current repo pass
+
+What is still missing in practice:
+
+- natural-language chat does not yet convert ordinary assistant responses into structured `action_requests`
+- there is still no durable planner/executor contract that cleanly separates:
+  - answer in chat
+  - propose action for approval
+  - enqueue executable follow-up work
+- action/job results are not yet clearly surfaced back into the main chat experience
+- approval UX exists, but it is buried in Settings rather than being part of the primary agent workflow
+- outbound communications still lack production audit/rate-limit/webhook hardening
+
+## Recommendation As Of 2026-04-10
+
+Do not start with Twilio yet.
+
+Highest-value path is still:
+
+1. make the Gmail approval path feel first-class from chat and agents
+2. remove ambiguity between "Approve", "Approve & Queue", and "Execute"
+3. surface execution results where the user initiated the action
+4. only then add another provider
+
+Reason:
+
+- the backend pieces for Gmail already exist
+- the main remaining problem is product/runtime stitching, not provider plumbing
+- adding Twilio now would multiply UX and audit problems before the first approval flow is really finished
+
+## Concrete Next Implementation Order
+
+### Step 1: Formalize the agent action contract
+
+Create one explicit structured output shape for action proposals.
+
+Minimum contract:
+
+- `kind`: `message` or `action_request`
+- `action_type`
+- `params`
+- `approval_required`
+- optional user-facing summary text
+
+Use this contract for:
+
+- chat-originated actions
+- future planner/executor output
+- any agent suggestions that should become approvals
+
+Why first:
+
+- right now the repo can manually request actions, but agents do not have a stable native way to emit them
+
+### Step 2: Route approved actions through one path only
+
+Preferred behavior:
+
+- approval moves request to `approved`
+- if it came from an agent, queue the linked job
+- if it came from a direct user action, either:
+  - queue a lightweight execution job, or
+  - keep a clearly labeled synchronous dev-only execute path
+
+Recommendation:
+
+- treat the current Settings "Execute" button as temporary/debug behavior until a decision is made
+- long term, prefer queue-backed execution for consistency, logging, and retries
+
+### Step 3: Surface action state outside Settings
+
+Minimum UX target:
+
+- if chat created the action, show pending/approved/executed/failed state in chat
+- if `AgentsPage` created the action, show that status on the agent run card or job history
+- keep Settings as the management surface, but not the only place users can discover pending work
+
+### Step 4: Harden Gmail before provider expansion
+
+Minimum hardening checklist:
+
+- validate required email fields before request creation
+- normalize recipient values
+- redact `_sidekick_*` metadata from any user-visible payload views where needed
+- improve missing-scope and reconnect guidance
+- store a minimal outbound audit record
+- define expected failure messages for token expiry and Gmail rejection
+
+### Step 5: Then add Twilio SMS
+
+Only start this after Step 1 through Step 4 are in place.
+
+Twilio should reuse:
+
+- approval requests
+- queue-backed execution
+- encrypted credentials in `tool_credentials`
+- webhook-backed delivery/status updates
+
+## Suggested First Coding Task After Reading This
+
+Implement the structured agent action proposal contract and wire one real path from chat agent output to `action-request`.
+
+Definition of done:
+
+- a normal chat prompt like "email Sam the project update" can produce a draft `gmail.send` approval request
+- the request shows up in the existing pending actions UI
+- approving it results in a queued job or a deliberately chosen synchronous path
+- final success/failure state is visible to the user outside raw database inspection
+
+## Files Most Relevant For That Next Task
+
+- `sidekick-react-pwa/src/ChatPage.tsx`
+- `sidekick-react-pwa/src/services/actions.ts`
+- `sidekick-react-pwa/src/services/ai/llm-client.ts`
+- `sidekick-react-pwa/src/pages/settings/SettingsPage.tsx`
+- `sidekick-react-pwa/supabase/functions/action-request/index.ts`
+- `sidekick-react-pwa/supabase/functions/agent-enqueue/index.ts`
+- `sidekick-react-pwa/supabase/functions/agent-runner/index.ts`
+- `sidekick-react-pwa/supabase/functions/_shared/capability-executor.ts`

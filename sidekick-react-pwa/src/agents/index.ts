@@ -12,6 +12,7 @@ import { runWorkflow } from './orchestrator/workflow';
 import type { AgentRequest, AgentResponse } from '../types/agents';
 import { HumanMessage } from '@langchain/core/messages';
 import { getMemoryManager } from '../services/ai/langchain-memory';
+import { draftActionProposals } from '../services/agents/actionProposals';
 
 /**
  * Main entry point for agent system
@@ -64,6 +65,17 @@ export async function processWithAgents(request: AgentRequest): Promise<AgentRes
         confidence: result.routingConfidence || 0.8,
       },
     };
+
+    const timeZonePreference = request.userContext.preferences?.timeZone;
+    const timeZone = typeof timeZonePreference === 'string' && timeZonePreference
+      ? timeZonePreference
+      : 'UTC';
+    const proposalResult = await draftActionProposals({
+      userMessage: request.messageContent,
+      assistantResponse: response.content,
+      timeZone,
+    });
+    response.proposedActions = proposalResult.proposals;
 
     // Update memory (async, don't block response)
     updateMemoryAsync(request, response);
